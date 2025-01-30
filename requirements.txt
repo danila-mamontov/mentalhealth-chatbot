@@ -3,7 +3,7 @@ cffi==1.17.0
 cramjam==2.8.3
 cryptography==43.0.0
 fastparquet==2024.5.0
-mkl-service==2.4.0
+mkl-service==2.4.1
 paramiko==3.4.1
 pyarrow==17.0.0
 pycparser==2.22
