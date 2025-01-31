@@ -99,7 +99,7 @@ def ask_next_question(user_id):
             if options:
                 for i, option in enumerate(options):
                     markup.add(InlineKeyboardButton(emoji_mapping[i+1]+'\t'+option, callback_data=f"answer_{option}"))
-            bot.send_message(user_id, question, reply_markup=markup,parse_mode='HTML')
+            bot.send_message(user_id,"--------------------------------"+"\n" +f"{(index+1)}/9)\t"+question, reply_markup=markup,parse_mode='HTML')
         else:
             bot.send_message(user_id, get_translation(user_id, "end_phq9_message"))
             save_answers(user_id)
@@ -143,7 +143,7 @@ def handle_button_response(call):
         language = user_data.at[last_index, 'language']
         answer_index = list(phq9_survey[language].values())[index].index(answer)
         user_data.at[last_index, question] = list(phq9_survey['en'].values())[index][answer_index]
-        bot.send_message(user_id, get_translation(user_id, 'your_answer') + answer + "\n--------------------------------")
+        bot.send_message(user_id, get_translation(user_id, 'your_answer') + answer)
         current_question_index[user_id] += 1
         ask_next_question(user_id)
     bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
@@ -158,9 +158,9 @@ def ask_next_main_question(user_id):
     questions = list(main_survey[language].keys())
 
     if index < len(questions):
-        bot.send_message(user_id, questions[index])
+        bot.send_message(user_id, "--------------------------------"+"\n" +f"{(index+1)}/9)\t"+ questions[index])
     else:
-        bot.send_message(user_id, get_translation(language, "end_main_survey"))
+        bot.send_message(user_id, get_translation(language, "end_main_survey_message"))
         user_survey_progress.pop(user_id, None)
 
 @bot.message_handler(content_types=['voice'])
