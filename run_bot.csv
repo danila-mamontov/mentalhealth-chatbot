@@ -2,7 +2,7 @@ import telebot
 import os
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import pandas as pd
-from survey import phq9_survey, main_survey, emoji_mapping
+from survey import phq9_survey, main_survey, emoji_mapping, keycap_numbers, checkmark
 from localization import translations
 
 # Читаем токен из переменной окружения
@@ -32,11 +32,26 @@ def delete_last_n_message(chat_id, n):
         pass
     return
 
+
 # Function to get the translation for the current language
 def get_translation(user_id,key):
     user_data = phq9_user_answers.loc[phq9_user_answers['user_id'] == user_id]
     language = user_data.iloc[-1]['language'] if not user_data.empty else "en"
     return translations[language].get(key, key)
+
+def consent_menu():
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(InlineKeyboardButton("✅ Да", callback_data="consent_yes"),
+               InlineKeyboardButton("❌ Нет", callback_data="consent_no"))
+    return markup
+
+# Main menu
+def main_menu(user_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton(get_translation(user_id, 'phq9_survey_button'), callback_data="menu_start_phq9_survey"),
+                InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"))
+    return markup
+
 
 # Handler for the /start command
 @bot.message_handler(commands=["start"])
@@ -52,12 +67,18 @@ def start(message):
 
     # Send language selection menu
     bot.send_message(user_id, 'Please choose your language:', reply_markup=language_menu())
-# Main menu
-def main_menu(user_id):
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton(get_translation(user_id, 'phq9_survey_button'), callback_data="menu_start_phq9_survey"),
-                InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"))
-    return markup
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("consent_"))
+def handle_consent(call):
+    user_id = call.message.chat.id
+    if call.data == "consent_yes":
+        bot.send_message(user_id, "Спасибо за согласие!", reply_markup=language_menu())
+    elif call.data == "consent_no":
+        bot.send_message(user_id, "Вы отказались от участия. Спасибо!")
+    bot.send_message(user_id, get_translation(user_id, 'start_message'), reply_markup=main_menu(user_id),
+                     parse_mode='HTML')
+    # bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
+
 # Handler for menu buttons
 @bot.callback_query_handler(func=lambda call: call.data.startswith("menu_"))
 def handle_menu_buttons(call):
@@ -77,12 +98,7 @@ def handle_menu_buttons(call):
         bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
     except Exception as e:
         print(f"Error while removing reply markup: {e}")
-def language_menu():
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("Continue in English", callback_data="set_language_en"),
-               InlineKeyboardButton("Weiter auf Deutsch", callback_data="set_language_de"),
-               InlineKeyboardButton("Продолжить на Русском", callback_data="set_language_ru"))
-    return markup
+
 # Function to ask the next question
 def ask_next_question(user_id):
     index = current_question_index.get(user_id, 0)
@@ -99,7 +115,7 @@ def ask_next_question(user_id):
             if options:
                 for i, option in enumerate(options):
                     markup.add(InlineKeyboardButton(emoji_mapping[i+1]+'\t'+option, callback_data=f"answer_{option}"))
-            bot.send_message(user_id,"--------------------------------"+"\n" +f"{(index+1)}/9)\t"+question, reply_markup=markup,parse_mode='HTML')
+            bot.send_message(user_id,f"{keycap_numbers[(index+1)]}\t"+question, reply_markup=markup,parse_mode='HTML')
         else:
             bot.send_message(user_id, get_translation(user_id, "end_phq9_message"))
             save_answers(user_id)
@@ -116,8 +132,8 @@ def handle_language_selection(call):
     if not user_rows.empty:
         last_index = user_rows.index[-1]
         phq9_user_answers.loc[last_index, 'language'] = language
-    # Send confirmation message in selected language
-    bot.send_message(user_id, get_translation(user_id,'start_message'), reply_markup=main_menu(user_id))
+
+    bot.send_message(user_id, "Вы согласны участвовать в исследовании?", reply_markup=consent_menu())
 
     # Remove last message
     update_message_ids(user_id, call.message.message_id)
@@ -143,7 +159,7 @@ def handle_button_response(call):
         language = user_data.at[last_index, 'language']
         answer_index = list(phq9_survey[language].values())[index].index(answer)
         user_data.at[last_index, question] = list(phq9_survey['en'].values())[index][answer_index]
-        bot.send_message(user_id, get_translation(user_id, 'your_answer') + answer)
+        bot.send_message(user_id, get_translation(user_id, 'checkmark')+"\t"+answer)
         current_question_index[user_id] += 1
         ask_next_question(user_id)
     bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
@@ -186,8 +202,8 @@ def save_answers(user_id):
     save_path = os.path.join(responses_dir,f"{user_id}", f"{user_id}_PHQ9.csv")
     user_data.to_csv(save_path, mode='a', header=not user_data.empty, index=False)
     bot.send_message(user_id, get_translation(user_id, "answer_confirmation"))
-
     bot.send_message(user_id, get_translation(user_id, "main_menu_message"), reply_markup=main_menu(user_id))
+
 # Run the bot
 if __name__ == "__main__":
     print("Bot is running...")
