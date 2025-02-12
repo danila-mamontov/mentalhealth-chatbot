@@ -46,6 +46,8 @@ def register_handlers(bot: telebot.TeleBot):
             context.save_phq9_info(user_id)
             context.set_user_info_field(user_id, "current_question_index", 0)
 
+            bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
+
             bot.edit_message_text(chat_id=user_id,
                                   message_id=call.message.message_id,
                                   text=get_translation(user_id, "end_phq9_message")+"\n\n"+get_translation(user_id, 'main_menu_message'),

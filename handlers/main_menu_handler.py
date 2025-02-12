@@ -13,6 +13,8 @@ def register_handlers(bot: telebot.TeleBot):
         if call.data == "menu_start_phq9_survey":
             context.set_user_info_field(user_id, "current_question_index", 0)
             question, options = get_phq9_question_and_options(0, user_id)
+
+            context.set_user_info_field(user_id, "message_to_del", message_id)
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_phq9_message'),
@@ -26,6 +28,7 @@ def register_handlers(bot: telebot.TeleBot):
             # ask_phq9_question(bot, user_id)
         elif call.data == "menu_start_main_survey":
             context.set_user_info_field(user_id, "current_question_index", 0)
+            context.set_user_info_field(user_id, "message_to_del", message_id)
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_main_message'),

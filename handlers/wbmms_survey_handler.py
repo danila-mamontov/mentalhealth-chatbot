@@ -44,8 +44,15 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=survey_menu(user_id, question_index)
             )
         elif respond == "finish":
-            bot.delete_message(user_id, message_id)
-            bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
+            context.set_user_info_field(user_id, "current_question_index", 0)
+
+            bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
+            bot.edit_message_text(chat_id=user_id,
+                                  message_id=call.message.message_id,
+                                  text=get_translation(user_id, "end_phq9_message") + "\n\n" + get_translation(user_id,
+                                                                                                               'main_menu_message'),
+                                  parse_mode='HTML',
+                                  reply_markup=main_menu(user_id))
         else:
             bot.send_message(user_id, get_translation(user_id, "error_message"))
             bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
