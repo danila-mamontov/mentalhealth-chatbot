@@ -6,6 +6,7 @@ from config import RESPONSES_DIR
 from utils.storage import context
 from localization import get_translation
 from handlers.wbmms_survey_handler import ask_next_main_question
+from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(content_types=['voice'])
@@ -16,9 +17,9 @@ def register_handlers(bot: telebot.TeleBot):
         file_duration = message.voice.duration
         timestamp = message.date
         current_question = context.get_user_info_field(user_id, "current_question_index")
-        file_path = os.path.join(RESPONSES_DIR, f"{user_id}", "audio",
-                                 f"{user_id}_{timestamp}_{current_question}.ogg")
 
+        filename = f"{user_id}_{timestamp}_{current_question}.ogg"
+        file_path = os.path.join(RESPONSES_DIR, f"{user_id}", "audio", filename)
         with open(file_path, 'wb') as f:
             downloaded_file = bot.download_file(file_info.file_path)
             f.write(downloaded_file)
@@ -26,4 +27,5 @@ def register_handlers(bot: telebot.TeleBot):
 
 
         context.set_user_info_field(user_id, "current_question_index", current_question + 1)
+        logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer {filename}")
         ask_next_main_question(bot, user_id)

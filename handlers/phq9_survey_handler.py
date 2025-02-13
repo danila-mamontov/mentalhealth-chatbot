@@ -3,6 +3,7 @@ from survey import keycap_numbers, get_phq9_question_and_options
 from utils.menu import phq9_menu, main_menu
 from utils.storage import context
 from localization import get_translation
+from utils.logger import logger
 
 
 # Function to ask the next question
@@ -32,6 +33,7 @@ def register_handlers(bot: telebot.TeleBot):
         context.set_user_info_field(user_id, f"phq9_{question_index}", answer_number)
         context.set_user_info_field(user_id, "current_question_index", next_question_index)
 
+        logger.log_event(user_id, f"PHQ9 QUESTION {question_index}", f"answer {answer_number}")
         if next_question_index < 9:
             question, options = get_phq9_question_and_options(next_question_index, user_id)
 
@@ -46,10 +48,10 @@ def register_handlers(bot: telebot.TeleBot):
             context.save_phq9_info(user_id)
             context.set_user_info_field(user_id, "current_question_index", 0)
 
-            bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
-
+            logger.log_event(user_id, "END PHQ9 SURVEY")
             bot.edit_message_text(chat_id=user_id,
                                   message_id=call.message.message_id,
                                   text=get_translation(user_id, "end_phq9_message")+"\n\n"+get_translation(user_id, 'main_menu_message'),
                                   parse_mode='HTML',
                                   reply_markup=main_menu(user_id))
+            bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))

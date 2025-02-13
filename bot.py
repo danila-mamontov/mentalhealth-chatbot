@@ -2,9 +2,10 @@ import os
 import telebot
 from telebot.types import BotCommand
 import pandas as pd
+from win32comext.adsi.demos.scp import logger
+
 from config import BOT_TOKEN, RESPONSES_DIR
 from handlers import start_handler, help_handler, consent_handler,gender_handler ,age_handler,main_menu_handler, phq9_survey_handler,wbmms_survey_handler,voice_handler, language_handler
-
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Регистрация обработчиков

@@ -20,7 +20,16 @@ class UserContext:
 
         user_data = self.contextVar.get()
 
-        params = {"user_id": user_id, "gender": None, "age": None, "language": None, "current_question_index": 0}
+        params = {"user_id": user_id,
+                  "gender": None,
+                  "age": None,
+                  "language": None,
+                  "first_name": None,
+                  "family_name": None,
+                  "username": None,
+                  "latitude": None,
+                  "longitude": None,
+                  "current_question_index": 0}
 
         for i in range(len(phq9_survey['en'])):
             params[f"phq9_{i}"] = None
@@ -68,11 +77,18 @@ class UserContext:
         gender = user_info["gender"]
         age = user_info["age"]
         language = user_info["language"]
-        df_user_info = pd.DataFrame(columns=['user_id','gender','age','language'], data=[[user_id, gender, age, language]])
+        first_name = user_info["first_name"]
+        family_name = user_info["family_name"]
+        username = user_info["username"]
+        latitude = user_info["latitude"]
+        longitude = user_info["longitude"]
+
+        df_user_info = pd.DataFrame(columns=['user_id','gender','age','language','first_name','family_name','username','latitude','longitude'],
+                                    data=[[user_id,gender,age,language,first_name,family_name,username,latitude,longitude]])
         if age is not None:
-            df_user_info = df_user_info.astype({'user_id': 'int64','gender': 'object','age': 'int64','language': 'object'})
+            df_user_info = df_user_info.astype({'user_id': 'int64','gender': 'object','age': 'int64','language': 'object','first_name': 'object','family_name': 'object','username': 'object','latitude': 'float64','longitude': 'float64'})
         else:
-            df_user_info = df_user_info.astype({'user_id': 'int64','gender': 'object','age': 'object','language': 'object'})
+            df_user_info = df_user_info.astype({'user_id': 'int64','gender': 'object','age': 'object','language': 'object','first_name': 'object','family_name': 'object','username': 'object','latitude': 'float64','longitude': 'float64'})
         df_user_info.to_csv(os.path.join(RESPONSES_DIR, str(user_id),"user_info.csv"), index=False)
 
     def save_phq9_info(self, user_id):

@@ -6,6 +6,7 @@ from config import RESPONSES_DIR
 import os
 import pandas as pd
 from utils.storage import context
+from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("range_"))
@@ -28,6 +29,7 @@ def register_handlers(bot: telebot.TeleBot):
 
         context.set_user_info_field(user_id, "age", int(selected_age))
         context.save_user_info(user_id)
+        logger.log_event(user_id, "SET AGE", selected_age)
 
         bot.edit_message_text(
             chat_id=call.message.chat.id,

@@ -5,6 +5,7 @@ from localization import get_translation
 from survey import keycap_numbers
 from survey import get_wbmms_question, WBMMS_survey
 from utils.storage import context
+from utils.logger import logger
 
 def ask_next_main_question(bot, user_id):
     language = context.get_user_info_field(user_id, "language")
@@ -36,6 +37,7 @@ def register_handlers(bot: telebot.TeleBot):
             else:
                 keycap_number = keycap_numbers[(question_index // 10)] + keycap_numbers[(question_index % 10 + 1)]
 
+            logger.log_event(user_id, "WBMMS GO TO QUESTION", question_index)
             bot.edit_message_text(
                 chat_id=user_id,
                 message_id=message_id,
@@ -46,6 +48,7 @@ def register_handlers(bot: telebot.TeleBot):
         elif respond == "finish":
             context.set_user_info_field(user_id, "current_question_index", 0)
 
+            logger.log_event(user_id, "END WBMMS SURVEY")
             bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
             bot.edit_message_text(chat_id=user_id,
                                   message_id=call.message.message_id,
@@ -54,5 +57,6 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=main_menu(user_id))
         else:
+            logger.log_event(user_id, "WBMMS GO TO QUESTION", "ERROR")
             bot.send_message(user_id, get_translation(user_id, "error_message"))
             bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))

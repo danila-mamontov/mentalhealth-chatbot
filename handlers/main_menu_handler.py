@@ -4,6 +4,7 @@ from localization import get_translation
 from survey import get_wbmms_question,get_phq9_question_and_options, keycap_numbers
 from utils.menu import survey_menu, phq9_menu
 from utils.storage import context
+from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("menu_"))
@@ -15,6 +16,8 @@ def register_handlers(bot: telebot.TeleBot):
             question, options = get_phq9_question_and_options(0, user_id)
 
             context.set_user_info_field(user_id, "message_to_del", message_id)
+
+            logger.log_event(user_id, "START PHQ9 SURVEY")
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_phq9_message'),
@@ -29,6 +32,8 @@ def register_handlers(bot: telebot.TeleBot):
         elif call.data == "menu_start_main_survey":
             context.set_user_info_field(user_id, "current_question_index", 0)
             context.set_user_info_field(user_id, "message_to_del", message_id)
+
+            logger.log_event(user_id, "START WBMMS SURVEY")
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_main_message'),

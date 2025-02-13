@@ -6,6 +6,7 @@ from config import RESPONSES_DIR
 import os
 import pandas as pd
 from utils.storage import context
+from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("set_gender_"))
@@ -14,6 +15,7 @@ def register_handlers(bot: telebot.TeleBot):
         gender = call.data.split("_")[-1]
         context.set_user_info_field(user_id,"gender",gender)
         context.save_user_info(user_id)
+        logger.log_event(user_id, "SET GENDER",gender)
 
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
