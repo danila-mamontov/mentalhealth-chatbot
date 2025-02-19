@@ -33,6 +33,10 @@ translations = {
 
         'age_selection': 'Please choose your age:',
 
+        'depression_diagnosis': 'Have you ever been diagnosed with a depressive disorder?',
+        'depressive_feelings': 'Do you feel that you have had/have depression?',
+        'treatment_selection': 'Do you take antidepressants currently or lately?',
+
         'welcome_message': "👋 Welcome!\n\n"
                          "This bot is part of a <b>scientific study</b> aimed at collecting data on people's emotional states.\n\n"
                          "⚠️ <b>Please note:</b> This bot <b>does not provide psychological support or counseling.</b>\n\n"
@@ -76,6 +80,7 @@ translations = {
         'end_main_survey_message': 'Thank you for participating in the survey!',
 
         'voice_out_of_survey': 'You are currently not in a survey. Please start the main survey to answer questions.',
+        'voice_recieved': 'Your voice message has been received. If you want to send another answer, please do so. Otherwise, you can proceed to the next or previous question.',
     },
     'de': {
         'who_website': 'Weitere Informationen zur Depression',
@@ -104,6 +109,11 @@ translations = {
         'gender_other': 'keine Angabe',
 
         'age_selection': 'Bitte wählen Sie Ihr Alter:',
+
+        'depression_diagnosis': 'Wurde bei Ihnen jemals eine depressive Störung diagnostiziert?',
+        'depressive_feelings': 'Haben Sie das Gefühl, dass Sie eine Depression hatten/haben?',
+
+        'treatment_selection': 'Nehmen Sie derzeit oder in letzter Zeit Antidepressiva ein?',
 
         'welcome_message': "👋 Willkommen!\n\n"
                          "Dieser Bot ist Teil einer <b>wissenschaftlichen Studie</b>, die darauf abzielt, Daten über die emotionalen Zustände von Menschen zu sammeln.\n\n"
@@ -148,6 +158,7 @@ translations = {
 
 
         'voice_out_of_survey': 'Sie nehmen derzeit nicht an einer Umfrage teil. Bitte starten Sie die Hauptumfrage, um Fragen zu beantworten.',
+        'voice_recieved': 'Ihre Sprachnachricht wurde empfangen. Wenn Sie eine weitere Antwort senden möchten, tun Sie dies bitte. Andernfalls können Sie mit der nächsten oder vorherigen Frage fortfahren.',
     },
     'ru': {
         'who_website': 'Дополнительная информация о депрессии',
@@ -161,6 +172,9 @@ translations = {
 
         'yes': 'Да',
         'no': 'Нет',
+        'no_answer': 'Без ответа',
+        'in_past': 'В прошлом',
+        'currently': 'В настоящее время',
 
         'previous': 'Назад',
         'next': 'Далее',
@@ -171,11 +185,20 @@ translations = {
         'consent_no': 'Если вы не согласны, вы не можете участвовать в исследовании. Если вы передумаете, вы можете начать опрос заново /start.',
 
         'gender_selection': 'Пожалуйста, выберите ваш пол:',
-        'gender_male': 'мужской',
-        'gender_female': 'женский',
-        'gender_other': 'без ответа',
+        'gender_male': 'Мужской',
+        'gender_female': 'Женский',
 
         'age_selection': 'Пожалуйста, выберите ваш возраст:',
+
+
+
+        'depression_diagnosis': 'Было ли у вас когда-либо диагностировано депрессивное расстройство?',
+        'depressive_feelings': 'Считаете ли Вы, что у Вас была/есть депрессия?',
+
+        'treatment_selection': 'Принимаете ли Вы в настоящее время/прошлом лекарства от депрессии?',
+
+
+
 
         'welcome_message': "👋 Здравствуйте!\n\n"
                          "Этот бот является частью <b>научного исследования</b>, целью которого является сбор данных об эмоциональном состоянии людей.\n\n"
@@ -221,5 +244,6 @@ translations = {
         'end_main_survey_message': 'Спасибо за участие в опросе!',
 
         'voice_out_of_survey': "Вы в настоящее время не участвуете в опросе. Пожалуйста, начните основной опрос, чтобы ответить на вопросы.",
+        'voice_recieved': 'Ваше голосовое сообщение получено. Если вы хотите отправить еще один ответ, пожалуйста, сделайте это. В противном случае вы можете перейти к следующему или предыдущему вопросу.',
     },
 }

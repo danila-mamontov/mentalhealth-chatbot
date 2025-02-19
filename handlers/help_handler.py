@@ -1,5 +1,5 @@
 import telebot
-from localization import get_translation
+from utils.storage import get_translation
 
 
 def register_handlers(bot: telebot.TeleBot):

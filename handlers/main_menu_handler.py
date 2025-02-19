@@ -1,9 +1,7 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from localization import get_translation
 from survey import get_wbmms_question,get_phq9_question_and_options, keycap_numbers
 from utils.menu import survey_menu, phq9_menu
-from utils.storage import context
+from utils.storage import context, get_translation
 from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
@@ -38,10 +36,13 @@ def register_handlers(bot: telebot.TeleBot):
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_main_message'),
                                   parse_mode='HTML')
-            bot.send_message(chat_id=user_id,
+            sent_message=bot.send_message(chat_id=user_id,
                              text=f"{keycap_numbers[1]}\t"+ get_wbmms_question(question_id=0,user_id=user_id),
                              parse_mode='HTML',
                              reply_markup=survey_menu(user_id, question_index=0))
 
+            context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
+
         else:
-            bot.send_message(user_id, "Invalid option selected.")
+            pass
+

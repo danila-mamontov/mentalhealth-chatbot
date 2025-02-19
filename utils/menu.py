@@ -1,27 +1,47 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
-from localization import get_translation
 from survey import marks, WBMMS_survey, emoji_mapping
+from utils.storage import get_translation
 
 
 def language_menu():
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("Continue in English", callback_data="set_language_en"),
-               InlineKeyboardButton("Weiter auf Deutsch", callback_data="set_language_de"),
-               InlineKeyboardButton("Продолжить на Русском", callback_data="set_language_ru"))
+    markup.add(InlineKeyboardButton("English", callback_data="set_language_en"),
+               InlineKeyboardButton("Deutsch", callback_data="set_language_de"),
+               InlineKeyboardButton("Русский", callback_data="set_language_ru"))
     return markup
 
 def gender_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("♂️ "+get_translation(user_id, "gender_male"), callback_data="set_gender_male"),
-               InlineKeyboardButton("♀️ "+get_translation(user_id, "gender_female"), callback_data="set_gender_female"),
-               InlineKeyboardButton(get_translation(user_id, "gender_other"), callback_data="set_gender_other"))
+    markup.add(InlineKeyboardButton("♂️ "+get_translation(user_id, "male"), callback_data="set_gender_male"),
+               InlineKeyboardButton("♀️ "+get_translation(user_id, "female"), callback_data="set_gender_female"),
+               InlineKeyboardButton(get_translation(user_id, "noanswer"), callback_data="set_gender_noanswer"))
+    return markup
+
+def depression_diagnosis_menu(user_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_depression_yes"),
+                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_depression_no"),
+                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_depression_noanswer"))
+
+def depressive_menu(user_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_depressive_yes"),
+                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_depressive_no"),
+                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_depressive_noanswer"))
+    return markup
+
+def treatment_menu(user_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_treatment_yes"),
+                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_treatment_no"),
+                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_treatment_noanswer"))
     return markup
 
 def age_range_menu(user_id):
     keyboard = InlineKeyboardMarkup(row_width=3)
 
     age_ranges = [
-        "10-19", "20-29", "30-39",
+        "18-29", "30-39",
         "40-49", "50-59", "60-69",
         "70-79", "80-89", "90+"
     ]
@@ -38,16 +58,21 @@ def exact_age_menu(user_id, start, end):
     keyboard.add(*buttons)
 
     # Кнопка "Назад"
-    keyboard.add(InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "previous"), callback_data="back_to_age_selection"))
+    keyboard.add(InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "back"), callback_data="goto_age_range"))
 
     return keyboard
 
 # Main menu
 def main_menu(user_id):
+
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton(url="https://www.who.int/en/news-room/fact-sheets/detail/depression", text=get_translation(user_id, "who_website")),
+    markup.add(InlineKeyboardButton(get_translation(user_id, "open_profile_button"), callback_data="profile_open"),
                 InlineKeyboardButton(get_translation(user_id, 'phq9_survey_button'), callback_data="menu_start_phq9_survey"),
-                InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"))
+                InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"),
+                InlineKeyboardButton(url="https://www.who.int/en/news-room/fact-sheets/detail/depression", text=get_translation(user_id, "who_website")),
+               InlineKeyboardButton(text=get_translation(user_id,"share_bot_button"),switch_inline_query=get_translation(user_id,"share_bot_text"))
+               )
+
     return markup
 
 def consent_menu(user_id):
@@ -58,7 +83,7 @@ def consent_menu(user_id):
 
 def survey_menu(user_id, question_index : int):
 
-    previous_button = InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "previous"), callback_data="go_to_question_"+str(question_index-1))
+    previous_button = InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "back"), callback_data="go_to_question_"+str(question_index-1))
     next_button     = InlineKeyboardButton(marks[2]+"\t"+get_translation(user_id, "next"), callback_data="go_to_question_"+str(question_index+1))
     if question_index == 0:
         markup = InlineKeyboardMarkup(row_width=1)
@@ -71,7 +96,16 @@ def survey_menu(user_id, question_index : int):
         markup.add(InlineKeyboardButton(marks[0]+"\t"+get_translation(user_id, "finish_button"), callback_data="go_to_question_finish"))
 
     return markup
-
+def profile_menu(user_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton(get_translation(user_id, "change_language_button"), callback_data="set_language_change"),
+                InlineKeyboardButton(get_translation(user_id, "change_age_button"), callback_data="range_change"),
+                InlineKeyboardButton(get_translation(user_id, "change_gender_button"), callback_data="set_gender_change"),
+                # InlineKeyboardButton(get_translation(user_id, "change_depression_diagnosis"), callback_data="change_depression_diagnosis"),
+                # InlineKeyboardButton(get_translation(user_id, "change_depressive"), callback_data="change_depressive"),
+                # InlineKeyboardButton(get_translation(user_id, "change_treatment"), callback_data="change_treatment"),
+                InlineKeyboardButton(get_translation(user_id, "back"), callback_data="goto_main_menu"))
+    return markup
 def phq9_menu(index ,options):
     markup = InlineKeyboardMarkup(row_width=1)
 

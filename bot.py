@@ -5,7 +5,7 @@ import pandas as pd
 from win32comext.adsi.demos.scp import logger
 
 from config import BOT_TOKEN, RESPONSES_DIR
-from handlers import start_handler, help_handler, consent_handler,gender_handler ,age_handler,main_menu_handler, phq9_survey_handler,wbmms_survey_handler,voice_handler, language_handler
+from handlers import goto_handler,start_handler, help_handler, consent_handler,gender_handler ,age_handler,main_menu_handler,profile_handler, phq9_survey_handler,wbmms_survey_handler,voice_handler, language_handler
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Регистрация обработчиков
@@ -15,6 +15,8 @@ language_handler.register_handlers(bot)
 consent_handler.register_handlers(bot)
 age_handler.register_handlers(bot)
 gender_handler.register_handlers(bot)
+profile_handler.register_handlers(bot)
+goto_handler.register_handlers(bot)
 
 main_menu_handler.register_handlers(bot)
 phq9_survey_handler.register_handlers(bot)
@@ -26,9 +28,7 @@ help_handler.register_handlers(bot)
 bot.set_my_commands([
     BotCommand("start", "Start the bot"),
     BotCommand("help", "All available commands"),
-    BotCommand("language", "Select language"),
     BotCommand("support", "Contact the support team"),
-    BotCommand("stop", "Stop the bot")
 ])
 
 if __name__ == "__main__":

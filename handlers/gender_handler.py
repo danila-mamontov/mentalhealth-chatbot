@@ -1,27 +1,39 @@
 import telebot
 from telebot.types import CallbackQuery
-from utils.menu import age_range_menu
-from localization import get_translation
-from config import RESPONSES_DIR
-import os
-import pandas as pd
-from utils.storage import context
+from utils.menu import age_range_menu, gender_menu, profile_menu
+from utils.storage import context, get_user_profile, get_translation
 from utils.logger import logger
-
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("set_gender_"))
     def handle_gender_selection(call: CallbackQuery):
         user_id = call.message.chat.id
-        gender = call.data.split("_")[-1]
-        context.set_user_info_field(user_id,"gender",gender)
-        context.save_user_info(user_id)
-        logger.log_event(user_id, "SET GENDER",gender)
+        if "change" not in call.data:
+            gender = call.data.split("_")[-1]
+            context.set_user_info_field(user_id,"gender",gender)
+            context.save_user_info(user_id)
+            logger.log_event(user_id, "SET GENDER",gender)
+            if not context.get_user_info_field(user_id, "age"):
+                bot.edit_message_text(chat_id=call.message.chat.id,
+                                      message_id=call.message.message_id,
+                                      text=get_translation(user_id, "age_selection"),
+                                      parse_mode="HTML",
+                                      reply_markup=age_range_menu(user_id))
+            else:
+                bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=get_user_profile(user_id),
+                    parse_mode='HTML',
+                    reply_markup=profile_menu(user_id),
+                )
 
-        bot.edit_message_text(chat_id=call.message.chat.id,
-                              message_id=call.message.message_id,
-                              text=get_translation(user_id, "age_selection"),
-                              parse_mode="HTML",
-                              reply_markup=age_range_menu(user_id))
+        else:
+            logger.log_event(user_id, "CHANGE GENDER", "")
+            bot.edit_message_text(chat_id=call.message.chat.id,
+                                  message_id=call.message.message_id,
+                                  text=get_translation(user_id, "gender_selection"),
+                                  parse_mode='HTML',
+                                  reply_markup=gender_menu(user_id))
 
 
 

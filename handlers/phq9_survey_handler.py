@@ -1,24 +1,9 @@
 import telebot
 from survey import keycap_numbers, get_phq9_question_and_options
 from utils.menu import phq9_menu, main_menu
-from utils.storage import context
-from localization import get_translation
+from utils.storage import context, get_translation
 from utils.logger import logger
 
-
-# Function to ask the next question
-# def ask_next_phq9_question(bot, user_id):
-#     index = context.get_user_info_field(user_id, "current_question_index")
-#
-#     if index < len(phq9_survey['en']):
-#         question, options = get_phq9_question_and_options(index, user_id)
-#         keycap_number = keycap_numbers[(index+1)]
-#         bot.send_message(user_id,f"{keycap_numbers[(index+1)]}\t"+f"<i><b>{question}</b></i>",
-#                          reply_markup=phq9_menu(user_id, index, options),
-#                          parse_mode='HTML')
-#     else:
-#         bot.send_message(user_id, get_translation(user_id, "end_phq9_message"))
-#         bot.send_message(user_id, get_translation(user_id, 'starting_main_survey'), parse_mode='HTML')
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("answer_"))
@@ -30,11 +15,11 @@ def register_handlers(bot: telebot.TeleBot):
         answer_number = int(answer_number)
         next_question_index = question_index + 1
 
-        context.set_user_info_field(user_id, f"phq9_{question_index}", answer_number)
+        context.set_user_info_field(user_id, f"phq_{question_index}", answer_number)
         context.set_user_info_field(user_id, "current_question_index", next_question_index)
 
         logger.log_event(user_id, f"PHQ9 QUESTION {question_index}", f"answer {answer_number}")
-        if next_question_index < 9:
+        if next_question_index < 8:
             question, options = get_phq9_question_and_options(next_question_index, user_id)
 
             bot.edit_message_text(chat_id=user_id,
@@ -45,7 +30,7 @@ def register_handlers(bot: telebot.TeleBot):
 
             # ask_next_phq9_question(bot, user_id)
         else:
-            context.save_phq9_info(user_id)
+            context.save_phq_info(user_id)
             context.set_user_info_field(user_id, "current_question_index", 0)
 
             logger.log_event(user_id, "END PHQ9 SURVEY")
