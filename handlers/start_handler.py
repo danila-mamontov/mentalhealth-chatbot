@@ -13,6 +13,10 @@ def register_handlers(bot: telebot.TeleBot):
     def start(message):
         user_id = message.chat.id
         user_language = message.from_user.language_code
+        print(f"User {user_id} started the bot with language {user_language}")
+        bot.send_message(user_id, "your language is: " + user_language)
+        if user_language not in ["en","de","ru"]:
+            user_language = "en"
 
         if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}")):
             os.makedirs(os.path.join(RESPONSES_DIR, str(user_id), "audio"))
@@ -31,10 +35,10 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(user_id, "START BOT", f"New user {user_id}")
             # Send language selection menu
             # bot.send_message(user_id, 'Please choose your language:', reply_markup=language_menu())
-            bot.send_message(user_id, get_translation(user_id, "welcome_message"), parse_mode='HTML')
-            bot.send_message(user_id, get_translation(user_id, "consent_message"), reply_markup=consent_menu(user_id))
+            # bot.send_message(user_id, get_translation(user_id, "welcome_message"), parse_mode='HTML')
+            bot.send_message(user_id, get_translation(user_id, "welcome_message")+"\n\n"+get_translation(user_id, "consent_message"), parse_mode='HTML', reply_markup=consent_menu(user_id))
 
         else:
             logger.log_event(user_id, "START BOT", f"Existing user {user_id}")
-            bot.send_message(user_id, get_translation(user_id,"welcome_message"), parse_mode='HTML')
-            bot.send_message(user_id, get_translation(user_id, "main_menu_message"), reply_markup=main_menu(user_id))
+            # bot.send_message(user_id, get_translation(user_id,"welcome_message"), parse_mode='HTML')
+            bot.send_message(user_id, get_translation(user_id, "welcome_message")+"\n\n"+get_translation(user_id, "main_menu_message"), parse_mode='HTML', reply_markup=main_menu(user_id))

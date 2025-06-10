@@ -28,9 +28,20 @@ def register_handlers(bot: telebot.TeleBot):
         context.set_user_info_field(user_id, "vm_ids", vm_ids)
 
         logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}")
-        bot.delete_message(user_id, context.get_user_info_field(user_id, "survey_message_id"))
+
+
+        if current_question <= 9:
+            keycap_number = keycap_numbers[(current_question + 1)]
+        else:
+            keycap_number = keycap_numbers[(current_question // 10)] + keycap_numbers[(current_question % 10 + 1)]
+
+
+        try:
+            bot.delete_message(user_id, context.get_user_info_field(user_id, "survey_message_id"))
+        except:
+            pass
         sent_message = bot.send_message(chat_id=user_id,
-                         text= get_translation(user_id, "voice_recieved")+"\n\n"+f"{keycap_numbers[(current_question+1)]}\t" + get_wbmms_question(question_id=current_question, user_id=user_id),
+                         text= get_translation(user_id, "voice_recieved")+"\n\n"+f"{keycap_number}\t" + get_wbmms_question(question_id=current_question, user_id=user_id),
                          parse_mode='HTML',
                          reply_markup=survey_menu(user_id, question_index=current_question))
 

@@ -22,7 +22,7 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML')
 
             bot.send_message(chat_id=user_id,
-                             text=get_translation(user_id, 'starting_phq9')+f"\n{keycap_numbers[1]}\t"+f"<i><b>{question}</b></i>",
+                             text=get_translation(user_id, 'starting_phq9')+f"\n\n{keycap_numbers[1]}\t"+f"<b>{question}</b>",
                              parse_mode='HTML',
                              reply_markup=phq9_menu(0, options))
 

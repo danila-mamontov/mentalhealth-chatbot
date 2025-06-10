@@ -66,10 +66,11 @@ def exact_age_menu(user_id, start, end):
 def main_menu(user_id):
 
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton(get_translation(user_id, "open_profile_button"), callback_data="profile_open"),
+    markup.add(
                 InlineKeyboardButton(get_translation(user_id, 'phq9_survey_button'), callback_data="menu_start_phq9_survey"),
-                InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"),
-                InlineKeyboardButton(url="https://www.who.int/en/news-room/fact-sheets/detail/depression", text=get_translation(user_id, "who_website")),
+                InlineKeyboardButton(get_translation(user_id, "open_profile_button"), callback_data="profile_open"),
+                # InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"),
+                InlineKeyboardButton(url="http://huskey.e-technik.uni-ulm.de", text=get_translation(user_id, "website")),
                InlineKeyboardButton(text=get_translation(user_id,"share_bot_button"),switch_inline_query=get_translation(user_id,"share_bot_text"))
                )
 
@@ -82,7 +83,6 @@ def consent_menu(user_id):
     return markup
 
 def survey_menu(user_id, question_index : int):
-
     previous_button = InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "back"), callback_data="go_to_question_"+str(question_index-1))
     next_button     = InlineKeyboardButton(marks[2]+"\t"+get_translation(user_id, "next"), callback_data="go_to_question_"+str(question_index+1))
     if question_index == 0:
@@ -92,23 +92,28 @@ def survey_menu(user_id, question_index : int):
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(previous_button, next_button)
     else:
-        markup = InlineKeyboardMarkup(row_width=1)
-        markup.add(InlineKeyboardButton(marks[0]+"\t"+get_translation(user_id, "finish_button"), callback_data="go_to_question_finish"))
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(previous_button,
+            InlineKeyboardButton(marks[0]+"\t"+get_translation(user_id, "finish_button"), callback_data="go_to_question_finish"))
 
     return markup
+
 def profile_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton(get_translation(user_id, "change_language_button"), callback_data="set_language_change"),
-                InlineKeyboardButton(get_translation(user_id, "change_age_button"), callback_data="range_change"),
-                InlineKeyboardButton(get_translation(user_id, "change_gender_button"), callback_data="set_gender_change"),
+    markup.add(InlineKeyboardButton(get_translation(user_id, "change_language_button"),
+                                    callback_data="set_language_change"),
+               InlineKeyboardButton(get_translation(user_id, "change_gender_button"),
+                                    callback_data="set_gender_change"),
+                InlineKeyboardButton(get_translation(user_id, "change_age_button"),
+                                     callback_data="range_change"),
                 # InlineKeyboardButton(get_translation(user_id, "change_depression_diagnosis"), callback_data="change_depression_diagnosis"),
                 # InlineKeyboardButton(get_translation(user_id, "change_depressive"), callback_data="change_depressive"),
                 # InlineKeyboardButton(get_translation(user_id, "change_treatment"), callback_data="change_treatment"),
                 InlineKeyboardButton(get_translation(user_id, "back"), callback_data="goto_main_menu"))
     return markup
+
 def phq9_menu(index ,options):
     markup = InlineKeyboardMarkup(row_width=1)
-
     for i, option in enumerate(options):
         markup.add(InlineKeyboardButton(emoji_mapping[i + 1] + '\t' + option, callback_data=f"answer_{index}_{i}"))
 

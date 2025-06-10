@@ -79,8 +79,10 @@ def register_handlers(bot: telebot.TeleBot):
             )
         elif respond == "finish":
             save_wbmms_answer(bot, call.message, user_id)
-
-            bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
+            try:
+                bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
+            except:
+                pass
             for vm_id in context.get_user_info_field(user_id, "vm_ids"):
                 bot.delete_message(user_id, vm_id)
 

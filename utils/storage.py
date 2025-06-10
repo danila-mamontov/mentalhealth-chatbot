@@ -37,6 +37,7 @@ class UserContext:
         user_data = self.contextVar.get()
 
         params = {"user_id": user_id,
+                    "consent": None,
                   "gender": None,
                   "age": None,
                   "language": None,
@@ -48,14 +49,15 @@ class UserContext:
                   "current_question_index": 0}
 
         for i in range(len(phq9_survey['en'])):
-            params[f"phq9_{i}"] = None
+            params[f"phq_{i}"] = None
 
         for i in range(len(WBMMS_survey['en'])):
             params["vm_ids"] = dict()
 
         user_data[user_id] = params
         self.contextVar.set(user_data)
-
+    def delete_user(self, user_id):
+        self.contextVar.set({k: v for k, v in self.contextVar.get().items() if k != user_id})
     def load_user_context(self):
         from survey import phq9_survey, WBMMS_survey
         from config import RESPONSES_DIR
@@ -104,6 +106,7 @@ class UserContext:
 
         user_data = self.contextVar.get()
         user_info = user_data.get(user_id)
+        consent = user_info["consent"]
         gender = user_info["gender"]
         age = user_info["age"]
         language = user_info["language"]
@@ -115,9 +118,10 @@ class UserContext:
         latitude = user_info["latitude"]
         longitude = user_info["longitude"]
 
-        df_user_info = pd.DataFrame(columns=['user_id','gender','age','language','treatment','depressive','first_name','family_name','username','latitude','longitude'],
-                                    data=[[user_id,gender,age,language,treatment,depressive,first_name,family_name,username,latitude,longitude]])
+        df_user_info = pd.DataFrame(columns=['user_id','consent','gender','age','language','treatment','depressive','first_name','family_name','username','latitude','longitude'],
+                                    data=[[user_id,consent,gender,age,language,treatment,depressive,first_name,family_name,username,latitude,longitude]])
         feature_types = {'user_id': 'int64',
+                            'consent': 'object',
                         'gender': 'object',
                          'language': 'object',
                             'treatment': 'object',

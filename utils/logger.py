@@ -48,4 +48,14 @@ class BotLogger:
         logger = self.get_logger(user_id)
         logger.error(f"ERROR: {error_message}")
 
+    def close(self, user_id):
+        """
+        Closes the logger for a specific user.
+        :param user_id: User ID
+        """
+        logger = self.get_logger(user_id)
+        for handler in logger.handlers:
+            handler.close()
+            logger.removeHandler(handler)
+
 logger = BotLogger()

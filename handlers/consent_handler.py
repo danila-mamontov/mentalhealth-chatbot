@@ -13,7 +13,7 @@ def register_handlers(bot: telebot.TeleBot):
             # bot.send_message(user_id, get_translation(user_id,"consent_yes"))
             context.set_user_info_field(user_id, "consent", "yes")
             context.save_user_info(user_id)
-            logger.log_event(user_id, "CONSENT", "YES")
+            logger.log_event(user_id, "SET CONSENT", "YES")
             if not context.get_user_info_field(user_id,"gender"):
                 bot.edit_message_text(chat_id=call.message.chat.id,
                                       message_id=message_id,
@@ -33,7 +33,7 @@ def register_handlers(bot: telebot.TeleBot):
         elif call.data == "consent_no":
             context.set_user_info_field(user_id, "consent", "no")
             context.save_user_info(user_id)
-            logger.log_event(user_id, "CONSENT", "NO")
+            logger.log_event(user_id, "SET CONSENT", "NO")
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=message_id,
                                   text=get_translation(user_id,"consent_no"),
