@@ -3,10 +3,11 @@ from survey import keycap_numbers, get_phq9_question_and_options, get_wbmms_ques
 from utils.menu import phq9_menu, main_menu, survey_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
+from states import SurveyStates
 
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("answer_"))
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("answer_"), state=SurveyStates.phq9)
     def handle_answer_button_response(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -57,3 +58,5 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
 
             context.set_user_info_field(user_id, "message_to_del", message_id)
+            bot.set_state(user_id, SurveyStates.wbmms, call.message.chat.id)
+
