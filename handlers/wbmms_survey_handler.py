@@ -43,8 +43,8 @@ def ask_next_main_question(bot, user_id):
 
         bot.send_message(user_id, f"{keycap_number}\t"+ get_wbmms_question(index, language=language), parse_mode='HTML')
     else:
-        bot.send_message(user_id, get_translation(language, "end_main_survey_message"))
-        bot.send_message(user_id, get_translation(language, "main_menu_message"), reply_markup=main_menu(user_id))
+        bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
+        bot.send_message(user_id, get_translation(user_id, "main_menu_message"), reply_markup=main_menu(user_id))
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=SurveyStates.wbmms)
