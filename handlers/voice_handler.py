@@ -1,5 +1,4 @@
 import telebot
-from debugpy.common.timestamp import current
 
 from utils.storage import context, get_translation
 from survey import get_wbmms_question, keycap_numbers
