@@ -3,10 +3,22 @@ from survey import keycap_numbers, get_phq9_question_and_options, get_wbmms_ques
 from utils.menu import phq9_menu, main_menu, survey_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
+from states import SurveyStates
 
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("answer_"))
+    phq_states = [
+        SurveyStates.phq9_q1,
+        SurveyStates.phq9_q2,
+        SurveyStates.phq9_q3,
+        SurveyStates.phq9_q4,
+        SurveyStates.phq9_q5,
+        SurveyStates.phq9_q6,
+        SurveyStates.phq9_q7,
+        SurveyStates.phq9_q8,
+    ]
+
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("answer_"), state=phq_states)
     def handle_answer_button_response(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -30,7 +42,8 @@ def register_handlers(bot: telebot.TeleBot):
                                   reply_markup=phq9_menu(next_question_index, options)
                                   )
 
-            # ask_next_phq9_question(bot, user_id)
+            next_state = getattr(SurveyStates, f"phq9_q{next_question_index+1}")
+            bot.set_state(user_id, next_state, call.message.chat.id)
         else:
             context.save_phq_info(user_id)
             context.set_user_info_field(user_id, "current_question_index", 0)
@@ -57,3 +70,5 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
 
             context.set_user_info_field(user_id, "message_to_del", message_id)
+            bot.set_state(user_id, SurveyStates.wbmms_q1, call.message.chat.id)
+

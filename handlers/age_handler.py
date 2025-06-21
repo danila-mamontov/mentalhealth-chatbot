@@ -5,9 +5,10 @@ from utils.chat_control import message_ids
 from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
+from states import SurveyStates
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("range_"))
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("range_"), state=SurveyStates.age)
     def handle_age_range_selection(call):
         user_id = call.message.chat.id
         if "change" not in call.data:
@@ -28,8 +29,9 @@ def register_handlers(bot: telebot.TeleBot):
                 text=get_translation(user_id, "age_selection"),
                 reply_markup=age_range_menu(user_id)
             )
+            bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
 
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("age_"))
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("age_"), state=SurveyStates.age)
     def handle_exact_age_selection(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -63,3 +65,5 @@ def register_handlers(bot: telebot.TeleBot):
             parse_mode='HTML',
             reply_markup=main_menu(user_id)
         )
+        bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+

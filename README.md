@@ -7,6 +7,14 @@
 - `/record` - Record a voice message
 - `/cancel` - Cancel current action
 
+## TeleBot State Management
+The bot now uses TeleBot's built-in finite state machine to track the
+conversation flow. States are defined in `states.py` and registered via
+`StateMemoryStorage` in `bot.py`. Handlers check the current state to decide
+what step to execute next.
+Each survey question has its own state so a single handler can iterate through
+all questions by switching to the next state after every answer.
+
 ## 2. User Flow
 ### **New User**
 1. User sends `/start`

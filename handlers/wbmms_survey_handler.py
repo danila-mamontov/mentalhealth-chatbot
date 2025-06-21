@@ -8,6 +8,7 @@ from survey import get_wbmms_question, WBMMS_survey
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
+from states import SurveyStates
 
 def save_wbmms_answer(bot, message, user_id):
     vm_ids = context.get_user_info_field(user_id, "vm_ids")
@@ -45,7 +46,24 @@ def ask_next_main_question(bot, user_id):
         bot.send_message(user_id, get_translation(language, "main_menu_message"), reply_markup=main_menu(user_id))
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"))
+    wbmms_states = [
+        SurveyStates.wbmms_q1,
+        SurveyStates.wbmms_q2,
+        SurveyStates.wbmms_q3,
+        SurveyStates.wbmms_q4,
+        SurveyStates.wbmms_q5,
+        SurveyStates.wbmms_q6,
+        SurveyStates.wbmms_q7,
+        SurveyStates.wbmms_q8,
+        SurveyStates.wbmms_q9,
+        SurveyStates.wbmms_q10,
+        SurveyStates.wbmms_q11,
+        SurveyStates.wbmms_q12,
+        SurveyStates.wbmms_q13,
+        SurveyStates.wbmms_q14,
+    ]
+
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=wbmms_states)
     def handle_control_button(call: CallbackQuery):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -77,6 +95,8 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=survey_menu(user_id, next_question_index)
             )
+            next_state = getattr(SurveyStates, f"wbmms_q{next_question_index+1}")
+            bot.set_state(user_id, next_state, call.message.chat.id)
         elif respond == "finish":
             save_wbmms_answer(bot, call.message, user_id)
             try:
@@ -95,7 +115,9 @@ def register_handlers(bot: telebot.TeleBot):
                                                                                                                'main_menu_message'),
                                   parse_mode='HTML',
                                   reply_markup=main_menu(user_id))
+            bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
         else:
             logger.log_event(user_id, "WBMMS GO TO QUESTION", "ERROR")
             bot.send_message(user_id, get_translation(user_id, "error_message"))
             bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
+
