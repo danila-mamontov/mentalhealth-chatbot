@@ -5,10 +5,10 @@ from utils.storage import context, get_translation
 from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("set_treatment_"))
+    @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no", "noanswer"))
     def handle_treatment_selection(call: CallbackQuery):
         user_id = call.message.chat.id
-        treatment = call.data.split("_")[-1]
+        treatment = call.data
         context.set_user_info_field(user_id,"treatment",treatment)
         context.save_user_info(user_id)
         logger.log_event(user_id, "SET TREATMENT",treatment)

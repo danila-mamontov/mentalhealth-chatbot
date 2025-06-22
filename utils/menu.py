@@ -5,48 +5,63 @@ from utils.storage import get_translation
 
 def language_menu():
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("English", callback_data="set_language_en"),
-               InlineKeyboardButton("Deutsch", callback_data="set_language_de"),
-               InlineKeyboardButton("Русский", callback_data="set_language_ru"))
+    markup.add(
+        InlineKeyboardButton("English", callback_data="en"),
+        InlineKeyboardButton("Deutsch", callback_data="de"),
+        InlineKeyboardButton("Русский", callback_data="ru"),
+    )
     return markup
 
 def gender_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("♂️ "+get_translation(user_id, "male"), callback_data="set_gender_male"),
-               InlineKeyboardButton("♀️ "+get_translation(user_id, "female"), callback_data="set_gender_female"),
-               InlineKeyboardButton(get_translation(user_id, "noanswer"), callback_data="set_gender_noanswer"))
+    markup.add(
+        InlineKeyboardButton("♂️ " + get_translation(user_id, "male"), callback_data="male"),
+        InlineKeyboardButton("♀️ " + get_translation(user_id, "female"), callback_data="female"),
+        InlineKeyboardButton(get_translation(user_id, "noanswer"), callback_data="noanswer"),
+    )
     return markup
 
 def depression_diagnosis_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_depression_yes"),
-                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_depression_no"),
-                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_depression_noanswer"))
+    markup.add(
+        InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
+        InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
+        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
+    )
 
 def depressive_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_depressive_yes"),
-                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_depressive_no"),
-                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_depressive_noanswer"))
+    markup.add(
+        InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
+        InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
+        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
+    )
     return markup
 
 def treatment_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id, "yes"), callback_data="set_treatment_yes"),
-                InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="set_treatment_no"),
-                InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="set_treatment_noanswer"))
+    markup.add(
+        InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
+        InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
+        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
+    )
     return markup
 
 def age_range_menu(user_id):
     keyboard = InlineKeyboardMarkup(row_width=3)
 
     age_ranges = [
-        "18-29", "30-39",
-        "40-49", "50-59", "60-69",
-        "70-79", "80-89", "90+"
+        "18-29",
+        "30-39",
+        "40-49",
+        "50-59",
+        "60-69",
+        "70-79",
+        "80-89",
+        "90+",
     ]
 
-    buttons = [InlineKeyboardButton(text=age, callback_data=f"range_{age}") for age in age_ranges]
+    buttons = [InlineKeyboardButton(text=age, callback_data=age) for age in age_ranges]
     keyboard.add(*buttons)
 
     return keyboard
@@ -54,7 +69,7 @@ def age_range_menu(user_id):
 def exact_age_menu(user_id, start, end):
     keyboard = InlineKeyboardMarkup(row_width=3)
 
-    buttons = [InlineKeyboardButton(text=str(age), callback_data=f"age_{age}") for age in range(start, end + 1)]
+    buttons = [InlineKeyboardButton(text=str(age), callback_data=str(age)) for age in range(start, end + 1)]
     keyboard.add(*buttons)
 
     # Кнопка "Назад"

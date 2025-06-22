@@ -5,11 +5,14 @@ from utils.storage import context, get_user_profile, get_translation
 from utils.logger import logger
 from states import SurveyStates
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("set_gender_"), state="*")
+    @bot.callback_query_handler(
+        func=lambda call: call.data in ("male", "female", "noanswer", "set_gender_change"),
+        state="*",
+    )
     def handle_gender_selection(call: CallbackQuery):
         user_id = call.message.chat.id
-        if "change" not in call.data:
-            gender = call.data.split("_")[-1]
+        if call.data != "set_gender_change":
+            gender = call.data
             context.set_user_info_field(user_id,"gender",gender)
             context.save_user_info(user_id)
             logger.log_event(user_id, "SET GENDER",gender)

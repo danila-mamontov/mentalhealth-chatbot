@@ -8,12 +8,21 @@ from utils.logger import logger
 from states import SurveyStates
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("range_"), state=SurveyStates.age)
+    _AGE_RANGES = {"18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90+"}
+
+    @bot.callback_query_handler(
+        func=lambda call, ranges=_AGE_RANGES: call.data in ranges or call.data == "range_change",
+        state=SurveyStates.age,
+    )
     def handle_age_range_selection(call):
         user_id = call.message.chat.id
-        if "change" not in call.data:
-            selected_range = call.data.split("_")[1]
-            start_age, end_age = map(int, selected_range.split("-"))
+        if call.data != "range_change":
+            selected_range = call.data
+            if selected_range.endswith("+"):
+                start_age = int(selected_range[:-1])
+                end_age = start_age + 9
+            else:
+                start_age, end_age = map(int, selected_range.split("-"))
 
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
@@ -31,11 +40,11 @@ def register_handlers(bot: telebot.TeleBot):
             )
             bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
 
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("age_"), state=SurveyStates.age)
+    @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state=SurveyStates.age)
     def handle_exact_age_selection(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
-        selected_age = call.data.split("_")[1]
+        selected_age = call.data
 
         context.set_user_info_field(user_id, "age", int(selected_age))
         context.save_user_info(user_id)
