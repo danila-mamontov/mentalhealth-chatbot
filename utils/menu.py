@@ -78,8 +78,14 @@ def main_menu(user_id):
 
 def consent_menu(user_id):
     markup = InlineKeyboardMarkup(row_width=2)
-    markup.add(InlineKeyboardButton("✅ "+get_translation(user_id,"yes"), callback_data="consent_yes"),
-               InlineKeyboardButton("❌ "+get_translation(user_id, "no"), callback_data="consent_no"))
+    markup.add(
+        InlineKeyboardButton(
+            "✅ " + get_translation(user_id, "yes"), callback_data="yes"
+        ),
+        InlineKeyboardButton(
+            "❌ " + get_translation(user_id, "no"), callback_data="no"
+        ),
+    )
     return markup
 
 def survey_menu(user_id, question_index : int):
