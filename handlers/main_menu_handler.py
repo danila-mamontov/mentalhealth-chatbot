@@ -22,7 +22,7 @@ def register_handlers(bot: telebot.TeleBot):
                                   text=get_translation(user_id, 'intro_phq9_message'),
                                   parse_mode='HTML')
 
-            bot.set_state(user_id, SurveyStates.phq9_q1, call.message.chat.id)
+            bot.set_state(user_id, SurveyStates.phq9, call.message.chat.id)
             bot.send_message(chat_id=user_id,
                              text=get_translation(user_id, 'starting_phq9')+f"\n\n{keycap_numbers[1]}\t"+f"<b>{question}</b>",
                              parse_mode='HTML',
@@ -38,7 +38,7 @@ def register_handlers(bot: telebot.TeleBot):
                                   message_id=message_id,
                                   text=get_translation(user_id, 'intro_main_message'),
                                   parse_mode='HTML')
-            bot.set_state(user_id, SurveyStates.wbmms_q1, call.message.chat.id)
+            bot.set_state(user_id, SurveyStates.wbmms, call.message.chat.id)
             sent_message=bot.send_message(chat_id=user_id,
                              text=f"{keycap_numbers[1]}\t"+ get_wbmms_question(question_id=0,user_id=user_id),
                              parse_mode='HTML',

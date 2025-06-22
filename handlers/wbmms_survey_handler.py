@@ -46,24 +46,7 @@ def ask_next_main_question(bot, user_id):
         bot.send_message(user_id, get_translation(language, "main_menu_message"), reply_markup=main_menu(user_id))
 
 def register_handlers(bot: telebot.TeleBot):
-    wbmms_states = [
-        SurveyStates.wbmms_q1,
-        SurveyStates.wbmms_q2,
-        SurveyStates.wbmms_q3,
-        SurveyStates.wbmms_q4,
-        SurveyStates.wbmms_q5,
-        SurveyStates.wbmms_q6,
-        SurveyStates.wbmms_q7,
-        SurveyStates.wbmms_q8,
-        SurveyStates.wbmms_q9,
-        SurveyStates.wbmms_q10,
-        SurveyStates.wbmms_q11,
-        SurveyStates.wbmms_q12,
-        SurveyStates.wbmms_q13,
-        SurveyStates.wbmms_q14,
-    ]
-
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=wbmms_states)
+    @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=SurveyStates.wbmms)
     def handle_control_button(call: CallbackQuery):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -95,8 +78,6 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=survey_menu(user_id, next_question_index)
             )
-            next_state = getattr(SurveyStates, f"wbmms_q{next_question_index+1}")
-            bot.set_state(user_id, next_state, call.message.chat.id)
         elif respond == "finish":
             save_wbmms_answer(bot, call.message, user_id)
             try:
