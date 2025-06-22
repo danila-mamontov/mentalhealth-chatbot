@@ -11,7 +11,6 @@ def register_handlers(bot: telebot.TeleBot):
         user_id = call.message.chat.id
         message_id = call.message.message_id
         if call.data == "menu_start_phq9_survey":
-            context.set_user_info_field(user_id, "current_question_index", 0)
             question, options = get_phq9_question_and_options(0, user_id)
 
             context.set_user_info_field(user_id, "message_to_del", message_id)
@@ -23,14 +22,19 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML')
 
             bot.set_state(user_id, SurveyStates.phq9, call.message.chat.id)
-            bot.send_message(chat_id=user_id,
-                             text=get_translation(user_id, 'starting_phq9')+f"\n\n{keycap_numbers[1]}\t"+f"<b>{question}</b>",
-                             parse_mode='HTML',
-                             reply_markup=phq9_menu(0, options))
+            with bot.retrieve_data(user_id, call.message.chat.id) as data:
+                data["phq_index"] = 0
+
+            bot.send_message(
+                chat_id=user_id,
+                text=get_translation(user_id, 'starting_phq9') +
+                f"\n\n{keycap_numbers[1]}\t<b>{question}</b>",
+                parse_mode='HTML',
+                reply_markup=phq9_menu(0, options),
+            )
 
             # ask_phq9_question(bot, user_id)
         elif call.data == "menu_start_main_survey":
-            context.set_user_info_field(user_id, "current_question_index", 0)
             context.set_user_info_field(user_id, "message_to_del", message_id)
 
             logger.log_event(user_id, "START WBMMS SURVEY")
@@ -39,10 +43,15 @@ def register_handlers(bot: telebot.TeleBot):
                                   text=get_translation(user_id, 'intro_main_message'),
                                   parse_mode='HTML')
             bot.set_state(user_id, SurveyStates.wbmms, call.message.chat.id)
-            sent_message=bot.send_message(chat_id=user_id,
-                             text=f"{keycap_numbers[1]}\t"+ get_wbmms_question(question_id=0,user_id=user_id),
-                             parse_mode='HTML',
-                             reply_markup=survey_menu(user_id, question_index=0))
+            with bot.retrieve_data(user_id, call.message.chat.id) as data:
+                data["wbmms_index"] = 0
+
+            sent_message = bot.send_message(
+                chat_id=user_id,
+                text=f"{keycap_numbers[1]}\t" + get_wbmms_question(question_id=0, user_id=user_id),
+                parse_mode='HTML',
+                reply_markup=survey_menu(user_id, question_index=0),
+            )
 
             context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
 

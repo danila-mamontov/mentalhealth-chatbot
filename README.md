@@ -13,8 +13,9 @@ conversation flow. States are defined in `states.py` and registered via
 `StateMemoryStorage` in `bot.py`. Handlers check the current state to decide
 what step to execute next.
 For each survey, a single state (`SurveyStates.phq9` or `SurveyStates.wbmms`) is
-used. The current question index is stored in memory so handlers simply
-increment the index after every answer and send the next question.
+used. Handlers keep the current question index with `bot.retrieve_data` so the
+index is incremented after every answer and the next question is sent
+seamlessly.
 
 ## 2. User Flow
 ### **New User**

@@ -12,14 +12,15 @@ def register_handlers(bot: telebot.TeleBot):
     def handle_answer_button_response(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
-        _, question_index, answer_number = call.data.split("_")
+        _, _, answer_number = call.data.split("_")
 
-        question_index = int(question_index)
         answer_number = int(answer_number)
-        next_question_index = question_index + 1
+        with bot.retrieve_data(user_id, call.message.chat.id) as data:
+            question_index = data.get("phq_index", 0)
+            next_question_index = question_index + 1
+            data["phq_index"] = next_question_index
 
         context.set_user_info_field(user_id, f"phq_{question_index}", answer_number)
-        context.set_user_info_field(user_id, "current_question_index", next_question_index)
 
         logger.log_event(user_id, f"PHQ9 QUESTION {question_index}", f"answer {answer_number}")
         if next_question_index < 8:
@@ -35,7 +36,6 @@ def register_handlers(bot: telebot.TeleBot):
             )
         else:
             context.save_phq_info(user_id)
-            context.set_user_info_field(user_id, "current_question_index", 0)
 
             logger.log_event(user_id, "END PHQ9 SURVEY")
 

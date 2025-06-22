@@ -11,7 +11,8 @@ def register_handlers(bot: telebot.TeleBot):
     def handle_voice_message(message):
         user_id = message.chat.id
 
-        current_question = context.get_user_info_field(user_id, "current_question_index")
+        with bot.retrieve_data(user_id) as data:
+            current_question = data.get("wbmms_index", 0)
 
         file_path = bot.get_file(message.voice.file_id).file_path
         audio_duration = message.voice.duration

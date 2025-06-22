@@ -32,7 +32,8 @@ def save_wbmms_answer(bot, message, user_id):
 
 def ask_next_main_question(bot, user_id):
     language = context.get_user_info_field(user_id, "language")
-    index = context.get_user_info_field(user_id, "current_question_index")
+    with bot.retrieve_data(user_id) as data:
+        index = data.get("wbmms_index", 0)
 
     if index < len(WBMMS_survey["en"]):
         if index <= 9:
@@ -69,7 +70,8 @@ def register_handlers(bot: telebot.TeleBot):
                     pass
 
             logger.log_event(user_id, "WBMMS GO TO QUESTION", next_question_index)
-            context.set_user_info_field(user_id, "current_question_index", next_question_index)
+            with bot.retrieve_data(user_id, call.message.chat.id) as data:
+                data["wbmms_index"] = next_question_index
             context.set_user_info_field(user_id, "vm_ids", dict())
             bot.edit_message_text(
                 chat_id=user_id,
@@ -87,7 +89,8 @@ def register_handlers(bot: telebot.TeleBot):
             for vm_id in context.get_user_info_field(user_id, "vm_ids"):
                 bot.delete_message(user_id, vm_id)
 
-            context.set_user_info_field(user_id, "current_question_index", 0)
+            with bot.retrieve_data(user_id, call.message.chat.id) as data:
+                data["wbmms_index"] = 0
             context.set_user_info_field(user_id, "vm_ids", dict())
             logger.log_event(user_id, "END WBMMS SURVEY")
             bot.edit_message_text(chat_id=user_id,

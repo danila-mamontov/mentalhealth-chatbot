@@ -41,7 +41,6 @@ def register_handlers(bot: telebot.TeleBot):
         context.save_user_info(user_id)
         logger.log_event(user_id, "SET AGE", selected_age)
 
-        context.set_user_info_field(user_id, "current_question_index", 0)
         question, options = get_phq9_question_and_options(0, user_id)
 
         context.set_user_info_field(user_id, "message_to_del", message_id)
