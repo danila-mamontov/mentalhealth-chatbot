@@ -75,3 +75,4 @@ def register_handlers(bot: telebot.TeleBot):
         )
         bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
 
+

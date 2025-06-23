@@ -3,7 +3,6 @@ from utils.storage import get_user_profile
 from utils.menu import profile_menu
 
 
-
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("profile_"))
     def handle_profile_response(call):
@@ -17,3 +16,4 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=profile_menu(user_id),
             )
+

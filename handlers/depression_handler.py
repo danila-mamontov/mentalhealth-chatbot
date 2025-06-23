@@ -18,3 +18,4 @@ def register_handlers(bot: telebot.TeleBot):
                               text=get_translation(user_id, "depression_selection"),
                               parse_mode="HTML",
                               reply_markup=main_menu(user_id))
+

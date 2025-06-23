@@ -22,3 +22,4 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             bot.send_message(user_id, "ℹ️ No data found to delete.")
 
+
