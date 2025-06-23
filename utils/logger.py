@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from utils.db import insert_log
 
 class BotLogger:
     def __init__(self, base_dir="responses"):
@@ -38,6 +39,7 @@ class BotLogger:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log_message = f"{timestamp} | Action: {action} | {details}"
         logger.info(log_message)
+        insert_log(user_id, timestamp, action, details)
 
     def log_error(self, user_id, error_message):
         """
@@ -47,6 +49,8 @@ class BotLogger:
         """
         logger = self.get_logger(user_id)
         logger.error(f"ERROR: {error_message}")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        insert_log(user_id, timestamp, "ERROR", error_message)
 
     def close(self, user_id):
         """

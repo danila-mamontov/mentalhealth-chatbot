@@ -1,9 +1,13 @@
-import os
-
-import numpy as np
-import pandas as pd
 from contextvars import ContextVar
 from localization import translations
+from utils.db import (
+    upsert_user_profile,
+    upsert_phq_answers,
+    get_connection,
+    init_db,
+)
+
+init_db()
 
 
 def get_translation(user_id,key):
@@ -12,11 +16,12 @@ def get_translation(user_id,key):
 
 # Create a new class UserContext that inherits from ContextVar
 def load_user_info(user_id):
-    from config import RESPONSES_DIR
-    if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv")):
-        return None
-    df = pd.read_csv(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv"))
-    return df.iloc[0].to_dict()
+    conn = get_connection()
+    cur = conn.execute("SELECT * FROM user_profile WHERE user_id=?", (user_id,))
+    row = cur.fetchone()
+    if row:
+        return dict(row)
+    return None
 
 def get_user_profile(user_id):
     text = get_translation(user_id, "profile_template")
@@ -56,28 +61,29 @@ class UserContext:
 
         user_data[user_id] = params
         self.contextVar.set(user_data)
+        upsert_user_profile(params)
     def delete_user(self, user_id):
         self.contextVar.set({k: v for k, v in self.contextVar.get().items() if k != user_id})
     def load_user_context(self):
         from survey import phq9_survey, WBMMS_survey
-        from config import RESPONSES_DIR
 
-        for root, dirs, files in os.walk(RESPONSES_DIR):
-            for file in files:
-                if file == "user_info.csv":
-                    user_id = int(os.path.basename(root))
-                    user_info = load_user_info(user_id)
-                    user_info["current_question_index"] = 0
+        conn = get_connection()
+        cursor = conn.cursor()
+        for row in cursor.execute("SELECT * FROM user_profile"):
+            user_id = row["user_id"]
+            user_info = dict(row)
+            user_info["current_question_index"] = 0
 
-                    for i in range(len(phq9_survey['en'])):
-                        user_info[f"phq_{i}"] = None
+            phq_row = cursor.execute("SELECT * FROM phq_answers WHERE user_id=?", (user_id,)).fetchone()
+            for i in range(len(phq9_survey['en'])):
+                key = f"phq_{i}"
+                user_info[key] = phq_row[key] if phq_row else None
 
-                    for i in range(len(WBMMS_survey['en'])):
-                        user_info["vm_ids"] = dict()
+            user_info["vm_ids"] = dict()
 
-                    user_data = self.contextVar.get()
-                    user_data[user_id] = user_info
-                    self.contextVar.set(user_data)
+            user_data = self.contextVar.get()
+            user_data[user_id] = user_info
+            self.contextVar.set(user_data)
 
     def get_user_info(self, user_id):
         user_data = self.contextVar.get()
@@ -102,57 +108,19 @@ class UserContext:
         self.contextVar.set(user_data)
 
     def save_user_info(self, user_id):
-        from config import RESPONSES_DIR
-
         user_data = self.contextVar.get()
         user_info = user_data.get(user_id)
-        consent = user_info["consent"]
-        gender = user_info["gender"]
-        age = user_info["age"]
-        language = user_info["language"]
-        treatment = user_info["treatment"]
-        depressive = user_info["depressive"]
-        first_name = user_info["first_name"]
-        family_name = user_info["family_name"]
-        username = user_info["username"]
-        latitude = user_info["latitude"]
-        longitude = user_info["longitude"]
-
-        df_user_info = pd.DataFrame(columns=['user_id','consent','gender','age','language','treatment','depressive','first_name','family_name','username','latitude','longitude'],
-                                    data=[[user_id,consent,gender,age,language,treatment,depressive,first_name,family_name,username,latitude,longitude]])
-        feature_types = {'user_id': 'int64',
-                            'consent': 'object',
-                        'gender': 'object',
-                         'language': 'object',
-                            'treatment': 'object',
-                            'depressive': 'object',
-                         'first_name': 'object',
-                         'family_name': 'object',
-                         'username': 'object',
-                         'latitude': 'float64',
-                         'longitude': 'float64'}
-        if str(age) != "nan" and age is not None:
-            feature_types['age'] = 'int64'
-            df_user_info = df_user_info.astype(feature_types)
-        else:
-            feature_types['age'] = 'object'
-            df_user_info = df_user_info.astype(feature_types)
-        df_user_info.to_csv(os.path.join(RESPONSES_DIR, str(user_id),"user_info.csv"), index=False)
+        upsert_user_profile(user_info)
 
     def save_phq_info(self, user_id):
-        from config import RESPONSES_DIR
-        from survey import phq9_survey, get_phq9_question_from_id
+        from survey import phq9_survey
 
         user_data = self.contextVar.get()
         user_info = user_data.get(user_id)
-        phq_info = {"user_id": user_id}
-
+        answers = {}
         for i in range(len(phq9_survey['en'])):
-            phq_info[f"phq_{i}"] = user_info[f"phq_{i}"]
-        df_phq_info = pd.DataFrame.from_dict(phq_info, orient='index').T
-        df_phq_info["sum"] = df_phq_info.apply(lambda x: np.sum(x[1:]), axis=1)
-        df_phq_info["depression"] = df_phq_info["sum"].apply(lambda x: 1 if x >= 10 else 0)
-        df_phq_info.to_csv(os.path.join(RESPONSES_DIR, str(user_id), f"survey_PHQ.csv"), index=False)
+            answers[f"phq_{i}"] = user_info.get(f"phq_{i}")
+        upsert_phq_answers(user_id, answers)
 
 context = UserContext()
 context.load_user_context()

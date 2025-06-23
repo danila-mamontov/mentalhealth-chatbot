@@ -1,6 +1,5 @@
 import telebot
 import os
-import pandas as pd
 from telebot.types import CallbackQuery
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers
@@ -9,6 +8,7 @@ from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
+from utils.db import insert_voice_metadata
 
 def save_wbmms_answer(bot, message, user_id):
     vm_ids = context.get_user_info_field(user_id, "vm_ids")
@@ -24,10 +24,15 @@ def save_wbmms_answer(bot, message, user_id):
         with open(file_path_to_save, 'wb') as f:
             downloaded_file = bot.download_file(audio_file_path)
             f.write(downloaded_file)
-        pd.DataFrame({'user_id': [user_id],'audio_unique_id': [audio_unique_id], 'duration': [audio_duration]}).to_csv("stats.csv",
-                                                                                                            mode='a',
-                                                                                                            header=False,
-                                                                                                            index=False)
+
+        insert_voice_metadata(
+            user_id=user_id,
+            question_id=audio_question_id,
+            file_unique_id=audio_unique_id,
+            file_path=file_path_to_save,
+            duration=audio_duration,
+            timestamp=timestamp,
+        )
 
 
 def ask_next_main_question(bot, user_id):
