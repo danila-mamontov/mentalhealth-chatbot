@@ -10,6 +10,8 @@ telebot_stub.TeleBot = object
 types_mod = types.ModuleType("telebot.types")
 types_mod.InlineKeyboardMarkup = object
 types_mod.InlineKeyboardButton = object
+types_mod.Message = object
+types_mod.CallbackQuery = object
 telebot_stub.types = types_mod
 sys.modules.setdefault("telebot.types", types_mod)
 handler_backends = types.ModuleType("telebot.handler_backends")
