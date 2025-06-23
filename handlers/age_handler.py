@@ -54,7 +54,7 @@ def register_handlers(bot: telebot.TeleBot):
 
         context.set_user_info_field(user_id, "message_to_del", message_id)
 
-        logger.log_event(user_id, "START PHQ9 SURVEY")
+        # logger.log_event(user_id, "START PHQ9 SURVEY")
         # bot.edit_message_text(chat_id=user_id,
         #                       message_id=message_id,
         #                       text=get_translation(user_id, 'intro_phq9_message'),

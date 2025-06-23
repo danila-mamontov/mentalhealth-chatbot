@@ -14,7 +14,6 @@ def register_handlers(bot: telebot.TeleBot):
         user_id = message.chat.id
         user_language = message.from_user.language_code
         print(f"User {user_id} started the bot with language {user_language}")
-        bot.send_message(user_id, "your language is: " + user_language)
         if user_language not in ["en","de","ru"]:
             user_language = "en"
 
