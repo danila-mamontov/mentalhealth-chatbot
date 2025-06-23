@@ -46,3 +46,4 @@ def register_handlers(bot: telebot.TeleBot):
                              parse_mode='HTML',
                              reply_markup=main_menu(user_id))
 
+

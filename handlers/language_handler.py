@@ -46,3 +46,4 @@ def register_handlers(bot: telebot.TeleBot):
                                   reply_markup=language_menu())
             bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
 
+
