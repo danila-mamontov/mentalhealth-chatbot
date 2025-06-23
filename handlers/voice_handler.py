@@ -64,3 +64,4 @@ def register_handlers(bot: telebot.TeleBot):
         #     context.set_user_info_field(user_id, "current_question_index", current_question + 1)
         #     logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer {filename}")
         #     ask_next_main_question(bot, user_id)
+

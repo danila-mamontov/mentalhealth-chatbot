@@ -45,3 +45,4 @@ def register_handlers(bot: telebot.TeleBot):
                                   reply_markup=None)
         # bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
 
+
