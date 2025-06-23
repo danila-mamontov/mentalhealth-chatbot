@@ -13,7 +13,8 @@ def register_handlers(bot: telebot.TeleBot):
         # remove user from in-memory context and database
         context.delete_user(user_id)
 
-        # close any open log handlers before deleting files
+        # reset bot state and close any open log handlers
+        bot.delete_state(user_id)
         logger.close(user_id)
 
         if os.path.exists(user_dir):
