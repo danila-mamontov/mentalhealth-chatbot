@@ -1,5 +1,4 @@
 import telebot
-from telebot.types import CallbackQuery
 
 from utils.storage import get_translation
 from utils.logger import logger
@@ -7,7 +6,7 @@ from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("goto_"))
-    def handle_goto_button(call: CallbackQuery):
+    def handle_goto_button(call):
         from utils.menu import main_menu, age_range_menu
         user_id = call.message.chat.id
         page = call.data

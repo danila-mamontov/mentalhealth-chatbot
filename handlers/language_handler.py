@@ -1,5 +1,4 @@
 import telebot
-from telebot.types import CallbackQuery
 from states import SurveyStates
 
 from utils.storage import context, get_user_profile, get_translation

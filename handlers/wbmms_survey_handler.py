@@ -1,6 +1,5 @@
 import telebot
 import os
-from telebot.types import CallbackQuery
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers
 from survey import get_wbmms_question, WBMMS_survey
@@ -53,7 +52,7 @@ def ask_next_main_question(bot, user_id):
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=SurveyStates.wbmms)
-    def handle_control_button(call: CallbackQuery):
+    def handle_control_button(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
         respond = call.data.split("_")[-1]

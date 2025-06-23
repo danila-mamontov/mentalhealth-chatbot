@@ -5,6 +5,7 @@ from utils.db import (
     upsert_phq_answers,
     get_connection,
     init_db,
+    delete_user_records,
 )
 
 init_db()
@@ -64,6 +65,7 @@ class UserContext:
         upsert_user_profile(params)
     def delete_user(self, user_id):
         self.contextVar.set({k: v for k, v in self.contextVar.get().items() if k != user_id})
+        delete_user_records(user_id)
     def load_user_context(self):
         from survey import phq9_survey, WBMMS_survey
 

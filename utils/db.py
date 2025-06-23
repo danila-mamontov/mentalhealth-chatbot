@@ -117,3 +117,14 @@ def insert_log(user_id: int, timestamp: str, action: str, details: str):
         (user_id, timestamp, action, details)
     )
     conn.commit()
+
+
+def delete_user_records(user_id: int) -> None:
+    """Remove all database records related to a user."""
+    conn = get_connection()
+    c = conn.cursor()
+    c.execute("DELETE FROM user_profile WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM phq_answers WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
+    conn.commit()
