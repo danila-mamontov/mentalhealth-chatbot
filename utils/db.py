@@ -51,7 +51,8 @@ def init_db():
         file_unique_id TEXT,
         file_path TEXT,
         duration INTEGER,
-        timestamp INTEGER
+        timestamp INTEGER,
+        file_size INTEGER
     )""")
 
     c.execute("""CREATE TABLE IF NOT EXISTS logs (
@@ -97,14 +98,29 @@ def upsert_phq_answers(user_id: int, answers: dict):
     conn.commit()
 
 
-def insert_voice_metadata(user_id: int, question_id: int, file_unique_id: str,
-                           file_path: str, duration: int, timestamp: int):
+def insert_voice_metadata(
+    user_id: int,
+    question_id: int,
+    file_unique_id: str,
+    file_path: str,
+    duration: int,
+    timestamp: int,
+    file_size: int,
+):
     conn = get_connection()
     c = conn.cursor()
     c.execute(
-        "INSERT INTO wbmms_voice (user_id, question_id, file_unique_id, file_path, duration, timestamp) "
-        "VALUES (?,?,?,?,?,?)",
-        (user_id, question_id, file_unique_id, file_path, duration, timestamp)
+        "INSERT INTO wbmms_voice (user_id, question_id, file_unique_id, file_path, duration, timestamp, file_size) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (
+            user_id,
+            question_id,
+            file_unique_id,
+            file_path,
+            duration,
+            timestamp,
+            file_size,
+        ),
     )
     conn.commit()
 
@@ -117,6 +133,20 @@ def insert_log(user_id: int, timestamp: str, action: str, details: str):
         (user_id, timestamp, action, details)
     )
     conn.commit()
+
+
+def get_voice_metadata(user_id: int | None = None):
+    """Return voice metadata rows."""
+    conn = get_connection()
+    c = conn.cursor()
+    if user_id is None:
+        rows = c.execute("SELECT * FROM wbmms_voice").fetchall()
+    else:
+        rows = c.execute(
+            "SELECT * FROM wbmms_voice WHERE user_id=?",
+            (user_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def delete_user_records(user_id: int) -> None:

@@ -21,9 +21,10 @@ def save_wbmms_answer(bot, message, user_id):
 
         filename_to_save = f"{user_id}_{timestamp}_{audio_question_id}.ogg"
         file_path_to_save = os.path.join(RESPONSES_DIR, f"{user_id}", "audio", filename_to_save)
-        with open(file_path_to_save, 'wb') as f:
-            downloaded_file = bot.download_file(audio_file_path)
+        downloaded_file = bot.download_file(audio_file_path)
+        with open(file_path_to_save, "wb") as f:
             f.write(downloaded_file)
+        file_size = len(downloaded_file)
 
         insert_voice_metadata(
             user_id=user_id,
@@ -32,6 +33,7 @@ def save_wbmms_answer(bot, message, user_id):
             file_path=file_path_to_save,
             duration=audio_duration,
             timestamp=timestamp,
+            file_size=file_size,
         )
 
 
