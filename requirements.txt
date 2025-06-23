@@ -11,3 +11,4 @@ PyNaCl==1.5.0
 pyTelegramBotAPI==4.22.0
 scp==0.15.0
 timeout-decorator==0.5.0
+pytest==8.1.1
