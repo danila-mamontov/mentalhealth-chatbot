@@ -75,4 +75,5 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     assert row["duration"] == 7
     assert row["timestamp"] == 111
     assert os.path.exists(row["file_path"])
+    assert row["file_size"] == 4
 
