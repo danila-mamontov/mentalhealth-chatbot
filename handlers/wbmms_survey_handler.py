@@ -105,3 +105,4 @@ def register_handlers(bot: telebot.TeleBot):
             bot.send_message(user_id, get_translation(user_id, "error_message"))
             bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
 
+

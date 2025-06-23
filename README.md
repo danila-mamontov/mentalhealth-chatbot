@@ -85,3 +85,9 @@ project_root/
 │── bot_logic.md  # This file
 ```
 
+## Database
+
+User profiles and survey answers are stored in an SQLite database. The path is
+configured via the `DB_PATH` environment variable (defaults to `bot.db`). The
+`utils/db.py` module creates the required tables on startup.
+
