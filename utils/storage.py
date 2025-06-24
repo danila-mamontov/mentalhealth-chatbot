@@ -25,10 +25,32 @@ def load_user_info(user_id):
 
 def get_user_profile(user_id):
     text = get_translation(user_id, "profile_template")
-    text = text.replace("{user_id}", str(user_id))
-    text = text.replace("{age}", str(context.get_user_info_field(user_id, "age")))
-    text = text.replace("{gender}", get_translation(user_id, context.get_user_info_field(user_id, "gender")))
-    text = text.replace("{language}", context.get_user_info_field(user_id, "language"))
+
+    fields = {
+        "user_id": user_id,
+        "age": context.get_user_info_field(user_id, "age"),
+        "gender": context.get_user_info_field(user_id, "gender"),
+        "language": context.get_user_info_field(user_id, "language"),
+        "consent": context.get_user_info_field(user_id, "consent"),
+        "treatment": context.get_user_info_field(user_id, "treatment"),
+        "depressive": context.get_user_info_field(user_id, "depressive"),
+        "first_name": context.get_user_info_field(user_id, "first_name"),
+        "family_name": context.get_user_info_field(user_id, "family_name"),
+        "username": context.get_user_info_field(user_id, "username"),
+        "latitude": context.get_user_info_field(user_id, "latitude"),
+        "longitude": context.get_user_info_field(user_id, "longitude"),
+    }
+
+    for key in ["gender", "consent", "treatment", "depressive"]:
+        val = fields.get(key)
+        if val:
+            translated = get_translation(user_id, val)
+            if translated:
+                fields[key] = translated
+
+    for key, value in fields.items():
+        text = text.replace(f"{{{key}}}", str(value) if value is not None else "-")
+
     return text
 
 

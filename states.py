@@ -14,3 +14,11 @@ class SurveyStates(StatesGroup):
     wbmms = State()
 
     main_menu = State()
+
+
+class EditProfileStates(StatesGroup):
+    """States used when editing existing profile information."""
+
+    language = State()
+    gender = State()
+    age = State()
