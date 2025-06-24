@@ -33,12 +33,14 @@ def test_delete_voice_removes_last():
     sess.record_voice(6, va2)
 
     removed = sess.delete_voice(0)
-    assert removed == 6
+    assert removed[0] == 6
+    assert removed[1] is va2
     assert 6 not in sess.voice_messages
     assert sess.question_voice_ids[0] == [5]
 
     removed = sess.delete_voice(0)
-    assert removed == 5
+    assert removed[0] == 5
+    assert removed[1] is va1
     assert sess.question_voice_ids.get(0) is None
 
 

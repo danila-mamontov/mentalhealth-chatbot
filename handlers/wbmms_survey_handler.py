@@ -7,14 +7,14 @@ import telebot
 
 CONTROL_PLACEHOLDER = "\u2060"  # invisible character so Telegram accepts the message
 
-from survey_session import SurveyManager, SurveySession
+from survey_session import SurveyManager, SurveySession, VoiceAnswer
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata
+from utils.db import insert_voice_metadata, delete_voice_metadata
 
 
 def _save_voice_answers(
@@ -51,6 +51,7 @@ def _save_voice_answers(
         )
         meta.saved = True
         meta.file_size = len(data)
+        meta.file_path = file_path
 
     # remove original user messages for this question from chat once saved
     if question_index is not None:
@@ -60,6 +61,17 @@ def _save_voice_answers(
     for mid in ids:
         try:
             bot.delete_message(user_id, mid)
+        except Exception:
+            pass
+
+
+def _purge_saved_voice(meta: VoiceAnswer) -> None:
+    """Remove a previously persisted voice recording from storage."""
+
+    path = delete_voice_metadata(meta.user_id, meta.file_unique_id)
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
         except Exception:
             pass
 
@@ -182,12 +194,16 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             logger.log_event(user_id, "WBMMS NEXT", _id)
             _render_question(bot, session, question_id)
         elif action == "survey_delete":
-            msg_id = session.delete_voice(session.current_index)
-            if msg_id:
-                try:
-                    bot.delete_message(user_id, msg_id)
-                except Exception:
-                    pass
+            result = session.delete_voice(session.current_index)
+            if result:
+                msg_id, meta = result
+                if meta and meta.saved:
+                    _purge_saved_voice(meta)
+                if msg_id:
+                    try:
+                        bot.delete_message(user_id, msg_id)
+                    except Exception:
+                        pass
             _render_question(bot, session, question_id)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
