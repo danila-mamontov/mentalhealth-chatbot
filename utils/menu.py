@@ -33,16 +33,6 @@ def yes_no_menu(user_id) -> InlineKeyboardMarkup:
     return markup
 
 
-def depression_diagnosis_menu(user_id):
-    return yes_no_menu(user_id)
-
-
-def depressive_menu(user_id):
-    return yes_no_menu(user_id)
-
-
-def treatment_menu(user_id):
-    return yes_no_menu(user_id)
 
 def age_range_menu(user_id):
     keyboard = InlineKeyboardMarkup(row_width=3)

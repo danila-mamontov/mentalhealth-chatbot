@@ -1,5 +1,5 @@
 import telebot
-from utils.menu import depressive_menu
+from utils.menu import yes_no_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
@@ -21,7 +21,7 @@ def register_handlers(bot: telebot.TeleBot):
             message_id=call.message.message_id,
             text=get_translation(user_id, "depressive_feelings"),
             parse_mode="HTML",
-            reply_markup=depressive_menu(user_id),
+            reply_markup=yes_no_menu(user_id),
         )
         bot.set_state(user_id, SurveyStates.depressive, call.message.chat.id)
 
