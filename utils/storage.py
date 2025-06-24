@@ -1,22 +1,27 @@
-import os
-
-import numpy as np
-import pandas as pd
-from contextvars import ContextVar
 from localization import translations
+from utils.db import (
+    upsert_user_profile,
+    upsert_phq_answers,
+    get_connection,
+    init_db,
+    delete_user_records,
+)
+
+init_db()
 
 
-def get_translation(user_id,key):
+def get_translation(user_id, key):
     language = context.get_user_info_field(user_id, "language")
     return translations[key].get(language)
 
-# Create a new class UserContext that inherits from ContextVar
+# Database helpers
 def load_user_info(user_id):
-    from config import RESPONSES_DIR
-    if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv")):
-        return None
-    df = pd.read_csv(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv"))
-    return df.iloc[0].to_dict()
+    conn = get_connection()
+    cur = conn.execute("SELECT * FROM user_profile WHERE user_id=?", (user_id,))
+    row = cur.fetchone()
+    if row:
+        return dict(row)
+    return None
 
 def get_user_profile(user_id):
     text = get_translation(user_id, "profile_template")
@@ -28,131 +33,107 @@ def get_user_profile(user_id):
 
 
 class UserContext:
+    """Manage user data with persistent storage in the database."""
+
     def __init__(self):
-        self.contextVar = ContextVar("user_context", default={})
+        # store ephemeral session data only
+        self._session = {}
+
+    def _ensure_session(self, user_id):
+        self._session.setdefault(user_id, {
+            "current_question_index": 0,
+            "vm_ids": {},
+            "message_to_del": None,
+            "survey_message_id": None,
+        })
 
     def add_new_user(self, user_id):
-        from survey import phq9_survey, WBMMS_survey
+        params = {
+            "user_id": user_id,
+            "consent": None,
+            "gender": None,
+            "age": None,
+            "language": None,
+            "treatment": None,
+            "depressive": None,
+            "first_name": None,
+            "family_name": None,
+            "username": None,
+            "latitude": None,
+            "longitude": None,
+        }
 
-        user_data = self.contextVar.get()
+        upsert_user_profile(params)
 
-        params = {"user_id": user_id,
-                    "consent": None,
-                  "gender": None,
-                  "age": None,
-                  "language": None,
-                  "treatment": None,
-                  "depressive": None,
-                  "first_name": None,
-                  "family_name": None,
-                  "username": None,
-                  "current_question_index": 0}
+        # prepare ephemeral fields
+        self._session[user_id] = {
+            "current_question_index": 0,
+            "vm_ids": {},
+            "message_to_del": None,
+            "survey_message_id": None,
+        }
 
-        for i in range(len(phq9_survey['en'])):
-            params[f"phq_{i}"] = None
-
-        for i in range(len(WBMMS_survey['en'])):
-            params["vm_ids"] = dict()
-
-        user_data[user_id] = params
-        self.contextVar.set(user_data)
     def delete_user(self, user_id):
-        self.contextVar.set({k: v for k, v in self.contextVar.get().items() if k != user_id})
+        self._session.pop(user_id, None)
+        delete_user_records(user_id)
+
     def load_user_context(self):
-        from survey import phq9_survey, WBMMS_survey
-        from config import RESPONSES_DIR
+        """Placeholder for backward compatibility."""
+        pass
 
-        for root, dirs, files in os.walk(RESPONSES_DIR):
-            for file in files:
-                if file == "user_info.csv":
-                    user_id = int(os.path.basename(root))
-                    user_info = load_user_info(user_id)
-                    user_info["current_question_index"] = 0
-
-                    for i in range(len(phq9_survey['en'])):
-                        user_info[f"phq_{i}"] = None
-
-                    for i in range(len(WBMMS_survey['en'])):
-                        user_info["vm_ids"] = dict()
-
-                    user_data = self.contextVar.get()
-                    user_data[user_id] = user_info
-                    self.contextVar.set(user_data)
+    def _load_profile(self, user_id):
+        conn = get_connection()
+        cur = conn.execute("SELECT * FROM user_profile WHERE user_id=?", (user_id,))
+        row = cur.fetchone()
+        return dict(row) if row else None
 
     def get_user_info(self, user_id):
-        user_data = self.contextVar.get()
-        return user_data.get(user_id)
+        profile = self._load_profile(user_id)
+        if profile is None:
+            return None
+        self._ensure_session(user_id)
+        profile.update(self._session[user_id])
+        return profile
 
     def get_user_info_field(self, user_id, field):
-        user_info = self.get_user_info(user_id)
-        field_value = user_info.get(field)
-        if field == "user_id" or field == "age" or field == "current_question_index":
-            if str(field_value) == "nan" or field_value is None:
-                return None
-            return int(field_value)
-        else:
-            return field_value
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id"}:
+            self._ensure_session(user_id)
+            return self._session[user_id].get(field)
 
+        profile = self._load_profile(user_id)
+        if profile is None:
+            return None
+        value = profile.get(field)
+        if field in {"user_id", "age"} and value is not None:
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+        return value
 
     def set_user_info_field(self, user_id, field, value):
-        user_data = self.contextVar.get()
-        user_info = user_data.get(user_id)
-        user_info[field] = value
-        user_data[user_id] = user_info
-        self.contextVar.set(user_data)
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id"} or field.startswith("phq_"):
+            self._ensure_session(user_id)
+            self._session[user_id][field] = value
+            return
+
+        conn = get_connection()
+        conn.execute(f"UPDATE user_profile SET {field}=? WHERE user_id=?", (value, user_id))
+        conn.commit()
 
     def save_user_info(self, user_id):
-        from config import RESPONSES_DIR
-
-        user_data = self.contextVar.get()
-        user_info = user_data.get(user_id)
-        consent = user_info["consent"]
-        gender = user_info["gender"]
-        age = user_info["age"]
-        language = user_info["language"]
-        treatment = user_info["treatment"]
-        depressive = user_info["depressive"]
-        first_name = user_info["first_name"]
-        family_name = user_info["family_name"]
-        username = user_info["username"]
-        latitude = user_info["latitude"]
-        longitude = user_info["longitude"]
-
-        df_user_info = pd.DataFrame(columns=['user_id','consent','gender','age','language','treatment','depressive','first_name','family_name','username','latitude','longitude'],
-                                    data=[[user_id,consent,gender,age,language,treatment,depressive,first_name,family_name,username,latitude,longitude]])
-        feature_types = {'user_id': 'int64',
-                            'consent': 'object',
-                        'gender': 'object',
-                         'language': 'object',
-                            'treatment': 'object',
-                            'depressive': 'object',
-                         'first_name': 'object',
-                         'family_name': 'object',
-                         'username': 'object',
-                         'latitude': 'float64',
-                         'longitude': 'float64'}
-        if str(age) != "nan" and age is not None:
-            feature_types['age'] = 'int64'
-            df_user_info = df_user_info.astype(feature_types)
-        else:
-            feature_types['age'] = 'object'
-            df_user_info = df_user_info.astype(feature_types)
-        df_user_info.to_csv(os.path.join(RESPONSES_DIR, str(user_id),"user_info.csv"), index=False)
+        profile = self._load_profile(user_id)
+        if profile is not None:
+            upsert_user_profile(profile)
 
     def save_phq_info(self, user_id):
-        from config import RESPONSES_DIR
-        from survey import phq9_survey, get_phq9_question_from_id
+        from survey import phq9_survey
 
-        user_data = self.contextVar.get()
-        user_info = user_data.get(user_id)
-        phq_info = {"user_id": user_id}
-
+        self._ensure_session(user_id)
+        answers = {}
         for i in range(len(phq9_survey['en'])):
-            phq_info[f"phq_{i}"] = user_info[f"phq_{i}"]
-        df_phq_info = pd.DataFrame.from_dict(phq_info, orient='index').T
-        df_phq_info["sum"] = df_phq_info.apply(lambda x: np.sum(x[1:]), axis=1)
-        df_phq_info["depression"] = df_phq_info["sum"].apply(lambda x: 1 if x >= 10 else 0)
-        df_phq_info.to_csv(os.path.join(RESPONSES_DIR, str(user_id), f"survey_PHQ.csv"), index=False)
+            answers[f"phq_{i}"] = self._session[user_id].get(f"phq_{i}")
+        upsert_phq_answers(user_id, answers)
 
 context = UserContext()
 context.load_user_context()

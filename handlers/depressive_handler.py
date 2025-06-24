@@ -1,12 +1,11 @@
 import telebot
-from telebot.types import CallbackQuery
 from utils.menu import main_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no", "noanswer"))
-    def handle_depressive_selection(call: CallbackQuery):
+    def handle_depressive_selection(call):
         user_id = call.message.chat.id
         depressive = call.data
         context.set_user_info_field(user_id,"depressive",depressive)
@@ -18,3 +17,4 @@ def register_handlers(bot: telebot.TeleBot):
                               text=get_translation(user_id, "depressive_selection"),
                               parse_mode="HTML",
                               reply_markup=main_menu(user_id))
+

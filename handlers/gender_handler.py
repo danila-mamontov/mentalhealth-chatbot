@@ -1,5 +1,4 @@
 import telebot
-from telebot.types import CallbackQuery
 from utils.menu import age_range_menu, gender_menu, profile_menu
 from utils.storage import context, get_user_profile, get_translation
 from utils.logger import logger
@@ -9,7 +8,7 @@ def register_handlers(bot: telebot.TeleBot):
         func=lambda call: call.data in ("male", "female", "noanswer", "set_gender_change"),
         state="*",
     )
-    def handle_gender_selection(call: CallbackQuery):
+    def handle_gender_selection(call):
         user_id = call.message.chat.id
         if call.data != "set_gender_change":
             gender = call.data
@@ -41,6 +40,7 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=gender_menu(user_id))
             bot.set_state(user_id, SurveyStates.gender, call.message.chat.id)
+
 
 
 

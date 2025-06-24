@@ -1,5 +1,4 @@
 import telebot
-from telebot.types import CallbackQuery
 from states import SurveyStates
 from utils.menu import gender_menu, profile_menu
 from utils.logger import logger
@@ -7,7 +6,7 @@ from utils.storage import context, get_user_profile, get_translation
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.consent)
-    def handle_consent(call: CallbackQuery):
+    def handle_consent(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
         if call.data == "yes":
@@ -44,4 +43,5 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=None)
         # bot.edit_message_reply_markup(user_id, call.message.message_id, reply_markup=None)
+
 

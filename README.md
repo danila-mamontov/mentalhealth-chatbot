@@ -85,3 +85,9 @@ project_root/
 │── bot_logic.md  # This file
 ```
 
+### Database
+The bot now stores profiles, survey answers, voice metadata and logs in a
+SQLite database. By default the database file is created at
+`responses/bot.db`. You can override the location using the `DB_PATH`
+environment variable.
+

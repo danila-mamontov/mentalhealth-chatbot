@@ -1,5 +1,4 @@
 import telebot
-from telebot.types import CallbackQuery
 from states import SurveyStates
 
 from utils.storage import context, get_user_profile, get_translation
@@ -45,4 +44,5 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
             bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
+
 
