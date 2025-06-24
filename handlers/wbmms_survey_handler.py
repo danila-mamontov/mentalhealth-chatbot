@@ -195,6 +195,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                     parse_mode="HTML",
                     reply_markup=delete_voice_menu(user_id, count),
                 )
+        elif action == "survey_del_back":
+            _render_question(bot, session, question_id)
         elif action.startswith("survey_del_"):
             index = int(action.rsplit("_", 1)[-1])
             ids = session.question_voice_ids.get(session.current_index, [])
@@ -217,8 +219,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                             pass
                 prefix = get_translation(user_id, "voice_deleted")
             _render_question(bot, session, question_id, prefix)
-        elif action == "survey_del_back":
-            _render_question(bot, session, question_id)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)

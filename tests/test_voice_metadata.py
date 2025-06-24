@@ -222,5 +222,49 @@ def test_delete_unsaved_voice_not_persisted(tmp_path, monkeypatch):
     assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
 
 
+def test_manage_audio_back_does_not_error(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    # Prepare fake bot capturing registered callback
+    class Bot:
+        def __init__(self):
+            self.cb = None
+
+        def callback_query_handler(self, *a, **k):
+            def wrapper(func):
+                self.cb = func
+                return func
+            return wrapper
+
+    bot = Bot()
+    wsh.register_handlers(bot)
+
+    session = ss.SurveySession(1)
+    ss.SurveyManager._sessions[1] = session
+    monkeypatch.setattr(wsh.context, "get_user_info_field", lambda uid, key: 5)
+
+    called = {}
+
+    def fake_render(*a, **k):
+        called["ok"] = True
+
+    monkeypatch.setattr(wsh, "_render_question", fake_render)
+
+    call = SimpleNamespace(
+        message=SimpleNamespace(chat=SimpleNamespace(id=1), message_id=10),
+        data="survey_del_back",
+        id=1,
+    )
+
+    # Should not raise and must invoke _render_question
+    bot.cb(call)
+    assert called.get("ok")
+
+
 
 
