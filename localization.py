@@ -81,11 +81,6 @@ translations = {
         'de': 'Umfrage beenden',
         'ru': 'Завершить опрос'
     },
-    'delete_button': {
-        'en': 'Delete voice',
-        'de': 'Sprachnachricht löschen',
-        'ru': 'Удалить запись'
-    },
 
     'language_selection': {
         'en': 'Please select your language:',

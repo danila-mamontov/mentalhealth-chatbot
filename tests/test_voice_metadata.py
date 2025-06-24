@@ -219,55 +219,6 @@ def test_delete_unsaved_voice_not_persisted(tmp_path, monkeypatch):
     assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
 
 
-def test_delete_saved_voice_removes_db_and_file(tmp_path, monkeypatch):
-    db_file = tmp_path / "bot.db"
-    monkeypatch.setenv("DB_PATH", str(db_file))
-
-    import config
-    import utils.db as db
-    import importlib
-    importlib.reload(config)
-    importlib.reload(db)
-    db.init_db()
-
-    import handlers.wbmms_survey_handler as wsh
-    importlib.reload(wsh)
-
-    responses_dir = tmp_path / "resp"
-    monkeypatch.setattr(wsh, "RESPONSES_DIR", str(responses_dir))
-
-    import survey_session as ss
-    importlib.reload(ss)
-
-    sess = ss.SurveySession(1)
-    va = ss.VoiceAnswer(1, 0, "uid", "fid", "remote", 1, 1, 0)
-    sess.record_voice(5, va)
-
-    class Bot:
-        def __init__(self):
-            self.deleted = []
-
-        def download_file(self, path):
-            assert path == "remote"
-            return b"data"
-
-        def delete_message(self, chat_id, message_id):
-            self.deleted.append(message_id)
-
-    bot = Bot()
-
-    wsh._save_voice_answers(bot, sess, question_index=0)
-    saved_path = db.get_connection().execute("SELECT file_path FROM wbmms_voice").fetchone()[0]
-    assert os.path.exists(saved_path)
-
-    removed = sess.delete_voice(0)
-    meta = removed[1]
-    assert meta.saved
-    wsh._purge_saved_voice(meta)
-
-    assert not os.path.exists(saved_path)
-    assert db.get_connection().execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
-
 
 def test_manual_deleted_voice_not_saved(tmp_path, monkeypatch):
     db_file = tmp_path / "bot.db"
