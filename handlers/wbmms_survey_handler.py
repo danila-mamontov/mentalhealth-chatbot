@@ -15,11 +15,23 @@ from states import SurveyStates
 from utils.db import insert_voice_metadata
 
 
-def _save_voice_answers(bot: telebot.TeleBot, session: SurveySession) -> None:
-    """Persist all recorded voice answers for ``session``."""
+def _save_voice_answers(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    question_index: int | None = None,
+) -> None:
+    """Persist any unsaved voice answers.
+
+    If ``question_index`` is provided, only answers for that question are
+    persisted. Previously saved answers are skipped.
+    """
 
     user_id = session.user_id
     for _, meta in session.iter_voice_answers():
+        if meta.saved:
+            continue
+        if question_index is not None and meta.question_id != question_index:
+            continue
         filename = f"{user_id}_{meta.timestamp}_{meta.question_id}.ogg"
         file_path = os.path.join(RESPONSES_DIR, str(user_id), "audio", filename)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -35,6 +47,8 @@ def _save_voice_answers(bot: telebot.TeleBot, session: SurveySession) -> None:
             timestamp=meta.timestamp,
             file_size=len(data),
         )
+        meta.saved = True
+        meta.file_size = len(data)
 
 
 def _render_question(
@@ -90,10 +104,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
         action = call.data
         if action == "survey_prev":
+            _save_voice_answers(bot, session, session.current_index)
             _id = session.prev_question()
             logger.log_event(user_id, "WBMMS PREV", _id)
             _render_question(bot, session, call.message.message_id)
         elif action == "survey_next":
+            _save_voice_answers(bot, session, session.current_index)
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
             _render_question(bot, session, call.message.message_id)

@@ -13,6 +13,7 @@ class VoiceAnswer:
     duration: int
     timestamp: int
     file_size: int
+    saved: bool = False
 
 
 class SurveySession:

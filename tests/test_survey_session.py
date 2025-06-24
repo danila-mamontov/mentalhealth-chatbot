@@ -95,6 +95,9 @@ def test_save_voice_answers_persists(tmp_path, monkeypatch):
 
     wsh._save_voice_answers(Bot(), sess)
 
+    assert va.saved
+    assert va.file_size == 4
+
     row = conn.execute("SELECT * FROM wbmms_voice").fetchone()
     assert row["user_id"] == 1
     assert row["question_id"] == 2

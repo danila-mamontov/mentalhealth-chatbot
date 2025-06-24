@@ -62,6 +62,9 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
 
     wsh._save_voice_answers(FakeBot(), sess)
 
+    assert va.saved
+    assert va.file_size == 4
+
     conn = db.get_connection()
     row = conn.execute("SELECT * FROM wbmms_voice").fetchone()
 
