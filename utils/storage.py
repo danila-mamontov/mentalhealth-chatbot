@@ -34,11 +34,6 @@ def get_user_profile(user_id):
         "consent": context.get_user_info_field(user_id, "consent"),
         "treatment": context.get_user_info_field(user_id, "treatment"),
         "depressive": context.get_user_info_field(user_id, "depressive"),
-        "first_name": context.get_user_info_field(user_id, "first_name"),
-        "family_name": context.get_user_info_field(user_id, "family_name"),
-        "username": context.get_user_info_field(user_id, "username"),
-        "latitude": context.get_user_info_field(user_id, "latitude"),
-        "longitude": context.get_user_info_field(user_id, "longitude"),
     }
 
     for key in ["gender", "consent", "treatment", "depressive"]:

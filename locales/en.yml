@@ -1,5 +1,5 @@
 open_profile_button: "Settings"
-profile_template: "<b>Your profile:</b>\nUser ID: {user_id}\nFirst name: {first_name}\nFamily name: {family_name}\nUsername: {username}\nLanguage: {language}\nGender: {gender}\nAge: {age}\nConsent: {consent}\nTreatment: {treatment}\nDepressive: {depressive}\nLatitude: {latitude}\nLongitude: {longitude}\n"
+profile_template: "<b>Your profile:</b>\nUser ID: {user_id}\nLanguage: {language}\nGender: {gender}\nAge: {age}\nConsent: {consent}\nTreatment: {treatment}\nDepressive: {depressive}\n"
 change_language_button: "Change Language"
 change_age_button: "Change Age"
 change_gender_button: "Change Gender"

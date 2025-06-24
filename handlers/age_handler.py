@@ -2,8 +2,8 @@ import telebot
 
 from survey import get_phq9_question_and_options, keycap_numbers
 from utils.chat_control import message_ids
-from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu
-from utils.storage import context, get_translation
+from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu, profile_menu
+from utils.storage import context, get_translation, get_user_profile
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
 
@@ -70,13 +70,23 @@ def register_handlers(bot: telebot.TeleBot):
         #                  parse_mode='HTML',
         #                  reply_markup=phq9_menu(0, options))
 
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=get_translation(user_id, "main_menu_message"),
-            parse_mode='HTML',
-            reply_markup=main_menu(user_id)
-        )
+        state = bot.get_state(user_id)
+        if state == str(SurveyStates.age):
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_translation(user_id, "main_menu_message"),
+                parse_mode='HTML',
+                reply_markup=main_menu(user_id)
+            )
+        else:
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_user_profile(user_id),
+                parse_mode='HTML',
+                reply_markup=profile_menu(user_id)
+            )
         bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
 
 
