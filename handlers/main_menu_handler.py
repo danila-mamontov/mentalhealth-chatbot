@@ -1,6 +1,7 @@
 import telebot
 from survey import get_wbmms_question,get_phq9_question_and_options, keycap_numbers
 from utils.menu import survey_menu, phq9_menu
+from handlers.wbmms_survey_handler import CONTROL_PLACEHOLDER
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
@@ -46,14 +47,20 @@ def register_handlers(bot: telebot.TeleBot):
             with bot.retrieve_data(user_id, call.message.chat.id) as data:
                 data["wbmms_index"] = 0
 
-            sent_message = bot.send_message(
+            sent_q = bot.send_message(
                 chat_id=user_id,
                 text=f"{keycap_numbers[1]}\t" + get_wbmms_question(question_id=0, user_id=user_id),
+                parse_mode='HTML',
+            )
+            sent_controls = bot.send_message(
+                chat_id=user_id,
+                text=CONTROL_PLACEHOLDER,
                 parse_mode='HTML',
                 reply_markup=survey_menu(user_id, question_index=0),
             )
 
-            context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
+            context.set_user_info_field(user_id, "survey_message_id", sent_q.message_id)
+            context.set_user_info_field(user_id, "survey_controls_id", sent_controls.message_id)
 
         else:
             pass

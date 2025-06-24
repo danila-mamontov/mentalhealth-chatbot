@@ -266,6 +266,21 @@ This survey aims to understand your emotional state and mental health level <b>o
         'de':'Ihre Sprachnachricht wurde empfangen. Wenn Sie eine weitere Antwort senden möchten, tun Sie dies bitte. Andernfalls können Sie mit der nächsten oder vorherigen Frage fortfahren.',
         'ru':'Ваше голосовое сообщение получено. Если вы хотите отправить другой ответ, пожалуйста, сделайте это. В противном случае, вы можете перейти к следующему или предыдущему вопросу.'
     },
+    'delete_voice_button': {
+        'en': 'Delete voice',
+        'de': 'Sprachnachricht löschen',
+        'ru': 'Удалить запись'
+    },
+    'select_voice_delete': {
+        'en': 'Select a voice message to delete:',
+        'de': 'Wählen Sie eine Sprachnachricht zum Löschen:',
+        'ru': 'Выберите сообщение для удаления:'
+    },
+    'voice_deleted': {
+        'en': 'Voice message deleted.',
+        'de': 'Sprachnachricht gelöscht.',
+        'ru': 'Сообщение удалено.'
+    },
 
     "share_bot_button": {
         'en': 'Share the bot',

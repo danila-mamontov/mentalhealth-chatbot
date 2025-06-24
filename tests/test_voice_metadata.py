@@ -39,32 +39,34 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     os.makedirs(responses_dir / "1" / "audio", exist_ok=True)
     monkeypatch.setattr(wsh, "RESPONSES_DIR", str(responses_dir))
 
-    class DummyContext:
-        def __init__(self):
-            self.data = {1: {"vm_ids": {}}}
-        def get_user_info_field(self, user_id, field):
-            return self.data[user_id][field]
-        def set_user_info_field(self, user_id, field, value):
-            self.data[user_id][field] = value
+    import survey_session as ss
+    importlib.reload(ss)
 
-    ctx = DummyContext()
-    ctx.data[1]["vm_ids"] = {
-        10: {
-            "current_question": 3,
-            "file_unique_id": "uid123",
-            "file_path": "server_path",
-            "timestamp": 111,
-            "audio_duration": 7,
-        }
-    }
-    monkeypatch.setattr(wsh, "context", ctx)
+    sess = ss.SurveyManager.get_session(1)
+    va = ss.VoiceAnswer(
+        user_id=1,
+        question_id=3,
+        file_unique_id="uid123",
+        file_id="id123",
+        file_path="server_path",
+        duration=7,
+        timestamp=111,
+        file_size=0,
+    )
+    sess.record_voice(10, va)
 
     class FakeBot:
         def download_file(self, path):
             assert path == "server_path"
             return b"data"
 
-    wsh.save_wbmms_answer(FakeBot(), None, 1)
+        def delete_message(self, chat_id, message_id):
+            pass
+
+    wsh._save_voice_answers(FakeBot(), sess)
+
+    assert va.saved
+    assert va.file_size == 4
 
     conn = db.get_connection()
     row = conn.execute("SELECT * FROM wbmms_voice").fetchone()
@@ -76,4 +78,149 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     assert row["timestamp"] == 111
     assert os.path.exists(row["file_path"])
     assert row["file_size"] == 4
+
+
+def test_render_question_handles_not_modified(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+    va1 = ss.VoiceAnswer(1, 0, "u1", "f1", "path", 1, 1, 0)
+    va2 = ss.VoiceAnswer(1, 0, "u2", "f2", "path", 1, 2, 0)
+    sess.record_voice(10, va1)
+    sess.record_voice(11, va2)
+
+    class Bot:
+        def __init__(self):
+            self.sent = []
+
+        def edit_message_text(self, **kwargs):
+            raise Exception("Bad Request: message is not modified")
+
+        def delete_message(self, chat_id, message_id):
+            pass
+
+        def send_voice(self, chat_id, file_id):
+            self.sent.append(file_id)
+            return SimpleNamespace(message_id=len(self.sent))
+
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            return SimpleNamespace(message_id=99)
+
+    bot = Bot()
+    monkeypatch.setattr(wsh, "get_wbmms_question", lambda *a, **k: "Q")
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+    monkeypatch.setattr(wsh, "get_translation", lambda uid, key: "txt")
+
+    wsh._render_question(bot, sess, 99, prefix="msg")
+    assert bot.sent == ["f1", "f2"]
+
+
+def test_update_controls_resends(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+
+    class Bot:
+        def __init__(self):
+            self.sent = []
+            self.deleted = []
+
+        def delete_message(self, chat_id, message_id):
+            self.deleted.append(message_id)
+
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            self.sent.append(text)
+            return SimpleNamespace(message_id=len(self.sent))
+
+    bot = Bot()
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+
+    wsh.context.set_user_info_field(1, "survey_controls_id", None)
+
+    wsh._update_controls(bot, sess, prefix="one")
+    first_id = wsh.context.get_user_info_field(1, "survey_controls_id")
+    wsh._update_controls(bot, sess, prefix="two")
+
+    assert bot.deleted[-1] == first_id
+    assert bot.sent == ["one", "two"]
+
+
+def test_save_voice_answers_deletes_messages(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+    va1 = ss.VoiceAnswer(1, 0, "u1", "f1", "path1", 1, 1, 0)
+    va2 = ss.VoiceAnswer(1, 0, "u2", "f2", "path2", 2, 2, 0)
+    sess.record_voice(10, va1)
+    sess.record_voice(11, va2)
+
+    class Bot:
+        def __init__(self):
+            self.deleted = []
+
+        def download_file(self, path):
+            return b"d"
+
+        def delete_message(self, chat_id, message_id):
+            self.deleted.append(message_id)
+
+    bot = Bot()
+    wsh._save_voice_answers(bot, sess, question_index=0)
+
+    assert set(bot.deleted) == {10, 11}
+    assert va1.saved and va2.saved
+
+
+def test_delete_unsaved_voice_not_persisted(tmp_path, monkeypatch):
+    db_file = tmp_path / "bot.db"
+    monkeypatch.setenv("DB_PATH", str(db_file))
+
+    import config
+    import utils.db as db
+    import importlib
+    importlib.reload(config)
+    importlib.reload(db)
+    db.init_db()
+
+    import handlers.wbmms_survey_handler as wsh
+    importlib.reload(wsh)
+
+    monkeypatch.setattr(wsh, "RESPONSES_DIR", str(tmp_path / "resp"))
+
+    import survey_session as ss
+    importlib.reload(ss)
+
+    sess = ss.SurveySession(1)
+    va = ss.VoiceAnswer(1, 0, "uid", "fid", "remote", 1, 1, 0)
+    sess.record_voice(5, va)
+
+    removed = sess.delete_voice(0)
+    assert removed[1] is va
+
+    class Bot:
+        def download_file(self, path):
+            raise AssertionError("should not download")
+
+    wsh._save_voice_answers(Bot(), sess, question_index=0)
+
+    conn = db.get_connection()
+    assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
+
+
+
 

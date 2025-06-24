@@ -1,53 +1,39 @@
 import telebot
 
 from utils.storage import context, get_translation
-from survey import get_wbmms_question, keycap_numbers
-from utils.menu import survey_menu
 from utils.logger import logger
+from survey_session import SurveyManager, VoiceAnswer
+from handlers import wbmms_survey_handler as wsh
+from states import SurveyStates
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.message_handler(content_types=['voice'])
+    @bot.message_handler(content_types=['voice'], state=SurveyStates.wbmms)
     def handle_voice_message(message):
         user_id = message.chat.id
-
-        with bot.retrieve_data(user_id) as data:
-            current_question = data.get("wbmms_index", 0)
-            vm_ids = data.get("vm_ids", {})
+        session = SurveyManager.get_session(user_id)
+        current_question = session.current_index
 
         file_path = bot.get_file(message.voice.file_id).file_path
         audio_duration = message.voice.duration
         file_unique_id = message.voice.file_unique_id
+        file_id = message.voice.file_id
 
-        vm_ids[message.message_id] = {
-            "current_question": current_question,
-            "file_unique_id": file_unique_id,
-            "file_path": file_path,
-            "timestamp": message.date,
-            "audio_duration": audio_duration,
-        }
-
-        with bot.retrieve_data(user_id) as data:
-            data["vm_ids"] = vm_ids
+        va = VoiceAnswer(
+            user_id=user_id,
+            question_id=current_question,
+            file_unique_id=file_unique_id,
+            file_id=file_id,
+            file_path=file_path,
+            duration=audio_duration,
+            timestamp=message.date,
+            file_size=0,
+        )
+        session.record_voice(message.message_id, va)
 
         logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}")
 
-
-        if current_question <= 9:
-            keycap_number = keycap_numbers[(current_question + 1)]
-        else:
-            keycap_number = keycap_numbers[(current_question // 10)] + keycap_numbers[(current_question % 10 + 1)]
-
-
-        try:
-            bot.delete_message(user_id, context.get_user_info_field(user_id, "survey_message_id"))
-        except:
-            pass
-        sent_message = bot.send_message(chat_id=user_id,
-                         text= get_translation(user_id, "voice_recieved")+"\n\n"+f"{keycap_number}\t" + get_wbmms_question(question_id=current_question, user_id=user_id),
-                         parse_mode='HTML',
-                         reply_markup=survey_menu(user_id, question_index=current_question))
-
-        context.set_user_info_field(user_id, "survey_message_id", sent_message.message_id)
+        prefix = get_translation(user_id, "voice_recieved")
+        wsh._update_controls(bot, session, prefix)
 
         # if audio_duration < 5:
         #     bot.send_message(message.chat.id, "⚠️ Голосовое сообщение слишком короткое!")

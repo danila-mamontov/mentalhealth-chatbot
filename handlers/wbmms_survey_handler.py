@@ -1,119 +1,231 @@
-import telebot
+"""Handlers for the WBMMS voice survey using :mod:`survey_session`."""
+
+from __future__ import annotations
+
 import os
-from utils.menu import survey_menu, main_menu
-from survey import keycap_numbers
-from survey import get_wbmms_question, WBMMS_survey
+import telebot
+
+CONTROL_PLACEHOLDER = "\u2060"  # invisible character so Telegram accepts the message
+
+from survey_session import SurveyManager, SurveySession, VoiceAnswer
+from utils.menu import survey_menu, main_menu, delete_voice_menu
+from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata
-
-def save_wbmms_answer(bot, message, user_id):
-    with bot.retrieve_data(user_id) as data:
-        vm_ids = data.get("vm_ids", {})
-    for vm_id in vm_ids:
-        audio_question_id = vm_ids[vm_id]["current_question"]
-        audio_unique_id = vm_ids[vm_id]["file_unique_id"]
-        audio_file_path = vm_ids[vm_id]["file_path"]
-        timestamp = vm_ids[vm_id]["timestamp"]
-        audio_duration = vm_ids[vm_id]["audio_duration"]
-
-        filename_to_save = f"{user_id}_{timestamp}_{audio_question_id}.ogg"
-        file_path_to_save = os.path.join(RESPONSES_DIR, f"{user_id}", "audio", filename_to_save)
-        downloaded_file = bot.download_file(audio_file_path)
-        with open(file_path_to_save, "wb") as f:
-            f.write(downloaded_file)
-        file_size = len(downloaded_file)
-
-        insert_voice_metadata(
-            user_id=user_id,
-            question_id=audio_question_id,
-            file_unique_id=audio_unique_id,
-            file_path=file_path_to_save,
-            duration=audio_duration,
-            timestamp=timestamp,
-            file_size=file_size,
-        )
+from utils.db import insert_voice_metadata, delete_voice_metadata
 
 
-def ask_next_main_question(bot, user_id):
-    language = context.get_user_info_field(user_id, "language")
-    with bot.retrieve_data(user_id) as data:
-        index = data.get("wbmms_index", 0)
+def _save_voice_answers(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    question_index: int | None = None,
+) -> None:
+    """Persist any unsaved voice answers.
 
-    if index < len(WBMMS_survey["en"]):
-        if index <= 9:
-            keycap_number = keycap_numbers[(index+1)]
-        else:
-            keycap_number = keycap_numbers[(index//10)]+keycap_numbers[(index%10+1)]
+    If ``question_index`` is provided, only answers for that question are
+    persisted. Previously saved answers are skipped.
+    """
 
-        bot.send_message(user_id, f"{keycap_number}\t"+ get_wbmms_question(index, language=language), parse_mode='HTML')
+    user_id = session.user_id
+    for msg_id, meta in list(session.iter_voice_answers()):
+        if question_index is not None and meta.question_id != question_index:
+            continue
+
+        try:
+            bot.delete_message(user_id, msg_id)
+        except Exception:
+            pass
+
+        if not meta.saved:
+            filename = f"{user_id}_{meta.timestamp}_{meta.question_id}.ogg"
+            file_path = os.path.join(RESPONSES_DIR, str(user_id), "audio", filename)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            data = bot.download_file(meta.file_path)
+            with open(file_path, "wb") as f:
+                f.write(data)
+            insert_voice_metadata(
+                user_id=user_id,
+                question_id=meta.question_id,
+                file_unique_id=meta.file_unique_id,
+                file_path=file_path,
+                duration=meta.duration,
+                timestamp=meta.timestamp,
+                file_size=len(data),
+            )
+            meta.saved = True
+            meta.file_size = len(data)
+            meta.file_path = file_path
+
+
+
+
+def _render_question(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    message_id: int,
+    prefix: str | None = None,
+) -> None:
+    """Update survey prompt and show any recorded voices."""
+
+    user_id = session.user_id
+    index = session.current_index
+    if index <= 9:
+        keycap = keycap_numbers[index + 1]
     else:
-        bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
-        bot.send_message(user_id, get_translation(user_id, "main_menu_message"), reply_markup=main_menu(user_id))
+        keycap = keycap_numbers[index // 10] + keycap_numbers[index % 10 + 1]
+    text = f"{keycap}\t" + get_wbmms_question(index, user_id=user_id)
 
-def register_handlers(bot: telebot.TeleBot):
-    @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=SurveyStates.wbmms)
-    def handle_control_button(call):
-        user_id = call.message.chat.id
-        message_id = call.message.message_id
-        respond = call.data.split("_")[-1]
+    try:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=text,
+            parse_mode="HTML",
+        )
+    except Exception as e:  # Telegram may raise if text is unchanged
+        if "not modified" not in str(e).lower():
+            raise
 
+    # remove previously displayed voices
+    for vid in session.displayed_voice_ids:
+        try:
+            bot.delete_message(user_id, vid)
+        except Exception:
+            pass
+    session.displayed_voice_ids.clear()
 
-        if respond != "finish":
-            next_question_index = int(respond)
-            save_wbmms_answer(bot, call.message, user_id)
+    for msg_id in session.question_voice_ids.get(index, []):
+        meta = session.voice_messages.get(msg_id)
+        if meta:
+            sent = bot.send_voice(user_id, meta.file_id)
+            session.displayed_voice_ids.append(sent.message_id)
 
-            if next_question_index <= 9:
-                keycap_number = keycap_numbers[(next_question_index + 1)]
-            else:
-                keycap_number = keycap_numbers[(next_question_index // 10)] + keycap_numbers[(next_question_index % 10 + 1)]
-
-            with bot.retrieve_data(user_id) as data:
-                vm_ids = data.get("vm_ids", {})
-            for vm_id in vm_ids:
-                try:
-                    bot.delete_message(user_id, vm_id)
-                except:
-                    pass
-
-            logger.log_event(user_id, "WBMMS GO TO QUESTION", next_question_index)
-            with bot.retrieve_data(user_id, call.message.chat.id) as data:
-                data["wbmms_index"] = next_question_index
-                data["vm_ids"] = {}
+    # update controls message after voices
+    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+    controls_text = prefix if prefix is not None else CONTROL_PLACEHOLDER
+    if controls_id:
+        try:
             bot.edit_message_text(
                 chat_id=user_id,
-                message_id=message_id,
-                text=f"{keycap_number}\t" + get_wbmms_question(next_question_index, user_id=user_id),
-                parse_mode='HTML',
-                reply_markup=survey_menu(user_id, next_question_index)
+                message_id=controls_id,
+                text=controls_text,
+                parse_mode="HTML",
+                reply_markup=survey_menu(user_id, index),
             )
-        elif respond == "finish":
-            save_wbmms_answer(bot, call.message, user_id)
-            try:
-                bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
-            except:
-                pass
-            with bot.retrieve_data(user_id) as data:
-                vm_ids = data.get("vm_ids", {})
-            for vm_id in vm_ids:
-                bot.delete_message(user_id, vm_id)
+        except Exception as e:
+            if "not modified" not in str(e).lower():
+                try:
+                    sent = bot.send_message(
+                        chat_id=user_id,
+                        text=controls_text,
+                        parse_mode="HTML",
+                        reply_markup=survey_menu(user_id, index),
+                    )
+                    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+                except Exception:
+                    pass
+    else:
+        sent = bot.send_message(
+            chat_id=user_id,
+            text=controls_text,
+            parse_mode="HTML",
+            reply_markup=survey_menu(user_id, index),
+        )
+        context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 
-            with bot.retrieve_data(user_id, call.message.chat.id) as data:
-                data["wbmms_index"] = 0
-                data["vm_ids"] = {}
+
+def _update_controls(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    prefix: str | None = None,
+) -> None:
+    """Show the control buttons at the bottom of the chat."""
+
+    user_id = session.user_id
+    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+    if controls_id:
+        try:
+            bot.delete_message(user_id, controls_id)
+        except Exception:
+            pass
+
+    sent = bot.send_message(
+        chat_id=user_id,
+        text=prefix if prefix is not None else CONTROL_PLACEHOLDER,
+        parse_mode="HTML",
+        reply_markup=survey_menu(user_id, session.current_index),
+    )
+    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+
+
+def register_handlers(bot: telebot.TeleBot) -> None:
+    @bot.callback_query_handler(func=lambda c: c.data.startswith("survey_"), state=SurveyStates.wbmms)
+    def handle_survey_buttons(call: telebot.types.CallbackQuery) -> None:
+        user_id = call.message.chat.id
+        session = SurveyManager.get_session(user_id)
+
+        action = call.data
+        question_id = context.get_user_info_field(user_id, "survey_message_id")
+        if action == "survey_prev":
+            _save_voice_answers(bot, session, session.current_index)
+            _id = session.prev_question()
+            logger.log_event(user_id, "WBMMS PREV", _id)
+            _render_question(bot, session, question_id)
+        elif action == "survey_next":
+            _save_voice_answers(bot, session, session.current_index)
+            _id = session.next_question()
+            logger.log_event(user_id, "WBMMS NEXT", _id)
+            _render_question(bot, session, question_id)
+        elif action == "survey_delete":
+            count = len(session.question_voice_ids.get(session.current_index, []))
+            if count == 0:
+                bot.answer_callback_query(call.id)
+            else:
+                bot.edit_message_text(
+                    chat_id=user_id,
+                    message_id=call.message.message_id,
+                    text=get_translation(user_id, "select_voice_delete"),
+                    parse_mode="HTML",
+                    reply_markup=delete_voice_menu(user_id, count),
+                )
+        elif action.startswith("survey_del_"):
+            index = int(action.rsplit("_", 1)[-1])
+            ids = session.question_voice_ids.get(session.current_index, [])
+            prefix = None
+            if 0 <= index < len(ids):
+                msg_id = ids.pop(index)
+                meta = session.voice_messages.pop(msg_id, None)
+                try:
+                    bot.delete_message(user_id, msg_id)
+                except Exception:
+                    pass
+                if not ids:
+                    session.question_voice_ids.pop(session.current_index, None)
+                if meta and meta.saved:
+                    path = delete_voice_metadata(user_id, meta.file_unique_id)
+                    if path and os.path.exists(path):
+                        try:
+                            os.remove(path)
+                        except OSError:
+                            pass
+                prefix = get_translation(user_id, "voice_deleted")
+            _render_question(bot, session, question_id, prefix)
+        elif action == "survey_del_back":
+            _render_question(bot, session, question_id)
+        elif action == "survey_finish":
+            _save_voice_answers(bot, session)
+            SurveyManager.remove_session(user_id)
             logger.log_event(user_id, "END WBMMS SURVEY")
-            bot.edit_message_text(chat_id=user_id,
-                                  message_id=call.message.message_id,
-                                  text=get_translation(user_id, "end_phq9_message") + "\n\n" + get_translation(user_id,
-                                                                                                               'main_menu_message'),
-                                  parse_mode='HTML',
-                                  reply_markup=main_menu(user_id))
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=call.message.message_id,
+                text=get_translation(user_id, "end_phq9_message")
+                + "\n\n"
+                + get_translation(user_id, "main_menu_message"),
+                parse_mode="HTML",
+                reply_markup=main_menu(user_id),
+            )
             bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
-        else:
-            logger.log_event(user_id, "WBMMS GO TO QUESTION", "ERROR")
-            bot.send_message(user_id, get_translation(user_id, "error_message"))
-            bot.send_message(user_id, get_translation(user_id, "end_main_survey_message"))
-
 
