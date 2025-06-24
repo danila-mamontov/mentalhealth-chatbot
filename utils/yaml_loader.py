@@ -40,6 +40,14 @@ def load_simple_yaml(path: str) -> Dict[str, Any]:
                 else:
                     key, rest = line.split(':', 1)
                 key = key.strip()
+                if (key.startswith('"') and key.endswith('"')) or (
+                    key.startswith("'") and key.endswith("'")
+                ):
+                    try:
+                        key = ast.literal_eval(key)
+                    except Exception:
+                        key = key[1:-1]
+                        key = key.replace("\\n", "\n").replace("\\t", "\t")
                 rest = rest.strip()
                 if rest == "":
                     data[key] = []
