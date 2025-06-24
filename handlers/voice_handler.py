@@ -12,20 +12,22 @@ def register_handlers(bot: telebot.TeleBot):
 
         with bot.retrieve_data(user_id) as data:
             current_question = data.get("wbmms_index", 0)
+            vm_ids = data.get("vm_ids", {})
 
         file_path = bot.get_file(message.voice.file_id).file_path
         audio_duration = message.voice.duration
         file_unique_id = message.voice.file_unique_id
 
-        vm_ids = context.get_user_info_field(user_id, "vm_ids")
-        vm_ids[message.message_id] = {"current_question": current_question,
-                                      "file_unique_id": file_unique_id,
-                                      "file_path": file_path,
-                                      "timestamp": message.date,
-                                      "audio_duration": audio_duration}
+        vm_ids[message.message_id] = {
+            "current_question": current_question,
+            "file_unique_id": file_unique_id,
+            "file_path": file_path,
+            "timestamp": message.date,
+            "audio_duration": audio_duration,
+        }
 
-
-        context.set_user_info_field(user_id, "vm_ids", vm_ids)
+        with bot.retrieve_data(user_id) as data:
+            data["vm_ids"] = vm_ids
 
         logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}")
 

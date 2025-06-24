@@ -1,12 +1,11 @@
 import telebot
-from telebot.types import CallbackQuery
 from utils.menu import depressive_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no", "noanswer"))
-    def handle_treatment_selection(call: CallbackQuery):
+    def handle_treatment_selection(call):
         user_id = call.message.chat.id
         treatment = call.data
         context.set_user_info_field(user_id,"treatment",treatment)

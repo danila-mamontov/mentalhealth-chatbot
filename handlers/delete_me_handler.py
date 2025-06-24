@@ -1,17 +1,21 @@
 import os
 import shutil
 import telebot
-from telebot.types import Message
 from utils.logger import logger
 from utils.storage import context
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=['delete_me'])
-    def delete_user_data(message: Message):
+    def delete_user_data(message):
         user_id = message.chat.id
         user_dir = os.path.join("responses", str(user_id))
-        logger.close(user_id)
+
+        # remove user from in-memory context and database
         context.delete_user(user_id)
+
+        # reset bot state and close any open log handlers
+        bot.delete_state(user_id)
+        logger.close(user_id)
 
         if os.path.exists(user_dir):
             try:

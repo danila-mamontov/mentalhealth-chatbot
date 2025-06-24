@@ -1,6 +1,5 @@
 import telebot
 import os
-from telebot.types import CallbackQuery
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers
 from survey import get_wbmms_question, WBMMS_survey
@@ -11,7 +10,8 @@ from states import SurveyStates
 from utils.db import insert_voice_metadata
 
 def save_wbmms_answer(bot, message, user_id):
-    vm_ids = context.get_user_info_field(user_id, "vm_ids")
+    with bot.retrieve_data(user_id) as data:
+        vm_ids = data.get("vm_ids", {})
     for vm_id in vm_ids:
         audio_question_id = vm_ids[vm_id]["current_question"]
         audio_unique_id = vm_ids[vm_id]["file_unique_id"]
@@ -21,9 +21,10 @@ def save_wbmms_answer(bot, message, user_id):
 
         filename_to_save = f"{user_id}_{timestamp}_{audio_question_id}.ogg"
         file_path_to_save = os.path.join(RESPONSES_DIR, f"{user_id}", "audio", filename_to_save)
-        with open(file_path_to_save, 'wb') as f:
-            downloaded_file = bot.download_file(audio_file_path)
+        downloaded_file = bot.download_file(audio_file_path)
+        with open(file_path_to_save, "wb") as f:
             f.write(downloaded_file)
+        file_size = len(downloaded_file)
 
         insert_voice_metadata(
             user_id=user_id,
@@ -32,6 +33,7 @@ def save_wbmms_answer(bot, message, user_id):
             file_path=file_path_to_save,
             duration=audio_duration,
             timestamp=timestamp,
+            file_size=file_size,
         )
 
 
@@ -53,7 +55,7 @@ def ask_next_main_question(bot, user_id):
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("go_to_question_"), state=SurveyStates.wbmms)
-    def handle_control_button(call: CallbackQuery):
+    def handle_control_button(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
         respond = call.data.split("_")[-1]
@@ -68,7 +70,9 @@ def register_handlers(bot: telebot.TeleBot):
             else:
                 keycap_number = keycap_numbers[(next_question_index // 10)] + keycap_numbers[(next_question_index % 10 + 1)]
 
-            for vm_id in context.get_user_info_field(user_id, "vm_ids"):
+            with bot.retrieve_data(user_id) as data:
+                vm_ids = data.get("vm_ids", {})
+            for vm_id in vm_ids:
                 try:
                     bot.delete_message(user_id, vm_id)
                 except:
@@ -77,7 +81,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(user_id, "WBMMS GO TO QUESTION", next_question_index)
             with bot.retrieve_data(user_id, call.message.chat.id) as data:
                 data["wbmms_index"] = next_question_index
-            context.set_user_info_field(user_id, "vm_ids", dict())
+                data["vm_ids"] = {}
             bot.edit_message_text(
                 chat_id=user_id,
                 message_id=message_id,
@@ -91,12 +95,14 @@ def register_handlers(bot: telebot.TeleBot):
                 bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
             except:
                 pass
-            for vm_id in context.get_user_info_field(user_id, "vm_ids"):
+            with bot.retrieve_data(user_id) as data:
+                vm_ids = data.get("vm_ids", {})
+            for vm_id in vm_ids:
                 bot.delete_message(user_id, vm_id)
 
             with bot.retrieve_data(user_id, call.message.chat.id) as data:
                 data["wbmms_index"] = 0
-            context.set_user_info_field(user_id, "vm_ids", dict())
+                data["vm_ids"] = {}
             logger.log_event(user_id, "END WBMMS SURVEY")
             bot.edit_message_text(chat_id=user_id,
                                   message_id=call.message.message_id,

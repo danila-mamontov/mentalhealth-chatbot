@@ -3,11 +3,11 @@ from utils.storage import get_user_profile
 from utils.menu import profile_menu
 
 
-def register_handlers(bot: telebot.TeleBot) -> None:
+def register_handlers(bot: telebot.TeleBot):
     """Register profile callbacks."""
 
     @bot.callback_query_handler(func=lambda call: call.data.startswith("profile_"))
-    def handle_profile_response(call: telebot.types.CallbackQuery) -> None:
+    def handle_profile_response(call):
         user_id = call.message.chat.id
         command = call.data.split("_")[1]
         if command == "open":

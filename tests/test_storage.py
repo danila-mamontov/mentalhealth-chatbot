@@ -1,8 +1,11 @@
+import os
 import sys
 import types
 
 sys.modules.setdefault("numpy", types.ModuleType("numpy"))
 sys.modules.setdefault("pandas", types.ModuleType("pandas"))
+
+os.environ["DB_PATH"] = ":memory:"
 
 from utils import storage
 from localization import translations
