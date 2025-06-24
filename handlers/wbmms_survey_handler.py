@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 import telebot
 
-CONTROL_PLACEHOLDER = "\u2060"  # invisible character so Telegram accepts the message
-
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
 from utils.menu import survey_menu, main_menu, delete_voice_menu
 from survey import keycap_numbers, get_wbmms_question
@@ -15,6 +13,11 @@ from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
 from utils.db import insert_voice_metadata, delete_voice_metadata
+
+
+def get_controls_placeholder(user_id: int) -> str:
+    """Return default controls message prompting for a voice reply."""
+    return get_translation(user_id, "voice_answer_expected")
 
 
 def _save_voice_answers(
@@ -104,7 +107,8 @@ def _render_question(
 
     # update controls message after voices
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    controls_text = prefix if prefix is not None else CONTROL_PLACEHOLDER
+    controls_text = prefix if prefix is not None else get_controls_placeholder(user_id)
+    voice_count = len(session.question_voice_ids.get(index, []))
     if controls_id:
         try:
             bot.edit_message_text(
@@ -112,7 +116,7 @@ def _render_question(
                 message_id=controls_id,
                 text=controls_text,
                 parse_mode="HTML",
-                reply_markup=survey_menu(user_id, index),
+                reply_markup=survey_menu(user_id, index, voice_count),
             )
         except Exception as e:
             if "not modified" not in str(e).lower():
@@ -121,7 +125,7 @@ def _render_question(
                         chat_id=user_id,
                         text=controls_text,
                         parse_mode="HTML",
-                        reply_markup=survey_menu(user_id, index),
+                        reply_markup=survey_menu(user_id, index, voice_count),
                     )
                     context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
                 except Exception:
@@ -131,7 +135,7 @@ def _render_question(
             chat_id=user_id,
             text=controls_text,
             parse_mode="HTML",
-            reply_markup=survey_menu(user_id, index),
+            reply_markup=survey_menu(user_id, index, voice_count),
         )
         context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 
@@ -151,11 +155,12 @@ def _update_controls(
         except Exception:
             pass
 
+    count = len(session.question_voice_ids.get(session.current_index, []))
     sent = bot.send_message(
         chat_id=user_id,
-        text=prefix if prefix is not None else CONTROL_PLACEHOLDER,
+        text=prefix if prefix is not None else get_controls_placeholder(user_id),
         parse_mode="HTML",
-        reply_markup=survey_menu(user_id, session.current_index),
+        reply_markup=survey_menu(user_id, session.current_index, count),
     )
     context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 

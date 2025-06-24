@@ -103,7 +103,7 @@ def consent_menu(user_id):
     )
     return markup
 
-def survey_menu(user_id, question_index: int):
+def survey_menu(user_id, question_index: int, voice_count: int = 0):
     if question_index == 0:
         markup = InlineKeyboardMarkup(row_width=1)
         markup.add(
@@ -111,12 +111,13 @@ def survey_menu(user_id, question_index: int):
                 marks[2] + "\t" + get_translation(user_id, "next"), callback_data="survey_next"
             )
         )
-        markup.add(
-            InlineKeyboardButton(
-                "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
-                callback_data="survey_delete",
+        if voice_count:
+            markup.add(
+                InlineKeyboardButton(
+                    "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
+                    callback_data="survey_delete",
+                )
             )
-        )
     elif question_index < len(WBMMS_survey["en"]) - 1:
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
@@ -127,12 +128,13 @@ def survey_menu(user_id, question_index: int):
                 marks[2] + "\t" + get_translation(user_id, "next"), callback_data="survey_next"
             ),
         )
-        markup.add(
-            InlineKeyboardButton(
-                "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
-                callback_data="survey_delete",
+        if voice_count:
+            markup.add(
+                InlineKeyboardButton(
+                    "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
+                    callback_data="survey_delete",
+                )
             )
-        )
     else:
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
@@ -143,12 +145,13 @@ def survey_menu(user_id, question_index: int):
                 marks[0] + "\t" + get_translation(user_id, "finish_button"), callback_data="survey_finish"
             ),
         )
-        markup.add(
-            InlineKeyboardButton(
-                "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
-                callback_data="survey_delete",
+        if voice_count:
+            markup.add(
+                InlineKeyboardButton(
+                    "\U0001F5D1\uFE0F " + get_translation(user_id, "delete_voice_button"),
+                    callback_data="survey_delete",
+                )
             )
-        )
     return markup
 
 

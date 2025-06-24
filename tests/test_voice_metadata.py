@@ -113,7 +113,7 @@ def test_render_question_handles_not_modified(monkeypatch):
 
     bot = Bot()
     monkeypatch.setattr(wsh, "get_wbmms_question", lambda *a, **k: "Q")
-    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi, vc=0: "menu")
     monkeypatch.setattr(wsh, "get_translation", lambda uid, key: "txt")
 
     wsh._render_question(bot, sess, 99, prefix="msg")
@@ -143,7 +143,7 @@ def test_update_controls_resends(monkeypatch):
             return SimpleNamespace(message_id=len(self.sent))
 
     bot = Bot()
-    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi, vc=0: "menu")
 
     wsh.context.set_user_info_field(1, "survey_controls_id", None)
 
