@@ -73,3 +73,40 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     assert os.path.exists(row["file_path"])
     assert row["file_size"] == 4
 
+
+def test_render_question_handles_not_modified(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+    va1 = ss.VoiceAnswer(1, 0, "u1", "f1", "path", 1, 1, 0)
+    va2 = ss.VoiceAnswer(1, 0, "u2", "f2", "path", 1, 2, 0)
+    sess.record_voice(10, va1)
+    sess.record_voice(11, va2)
+
+    class Bot:
+        def __init__(self):
+            self.sent = []
+
+        def edit_message_text(self, **kwargs):
+            raise Exception("Bad Request: message is not modified")
+
+        def delete_message(self, chat_id, message_id):
+            pass
+
+        def send_voice(self, chat_id, file_id):
+            self.sent.append(file_id)
+            return SimpleNamespace(message_id=len(self.sent))
+
+    bot = Bot()
+    monkeypatch.setattr(wsh, "get_wbmms_question", lambda *a, **k: "Q")
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+    monkeypatch.setattr(wsh, "get_translation", lambda uid, key: "txt")
+
+    wsh._render_question(bot, sess, 99, prefix="msg")
+    assert bot.sent == ["f1", "f2"]
+

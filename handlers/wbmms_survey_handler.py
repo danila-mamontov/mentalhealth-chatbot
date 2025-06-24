@@ -55,13 +55,17 @@ def _render_question(
     if prefix:
         text = prefix + "\n\n" + text
 
-    bot.edit_message_text(
-        chat_id=user_id,
-        message_id=message_id,
-        text=text,
-        parse_mode="HTML",
-        reply_markup=survey_menu(user_id, index),
-    )
+    try:
+        bot.edit_message_text(
+            chat_id=user_id,
+            message_id=message_id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=survey_menu(user_id, index),
+        )
+    except Exception as e:  # Telegram may raise if text is unchanged
+        if "not modified" not in str(e).lower():
+            raise
 
     # remove previously displayed voices
     for vid in session.displayed_voice_ids:
