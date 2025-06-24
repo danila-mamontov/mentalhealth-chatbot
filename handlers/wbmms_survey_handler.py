@@ -29,11 +29,24 @@ def _save_voice_answers(
     """
 
     user_id = session.user_id
-    for msg_id, meta in session.iter_voice_answers():
+    for msg_id, meta in list(session.iter_voice_answers()):
         if meta.saved:
             continue
         if question_index is not None and meta.question_id != question_index:
             continue
+
+        try:
+            bot.delete_message(user_id, msg_id)
+        except Exception as e:
+            if "message to delete" in str(e).lower():
+                # user removed the message manually; discard metadata
+                session.voice_messages.pop(msg_id, None)
+                qids = session.question_voice_ids.get(meta.question_id, [])
+                if msg_id in qids:
+                    qids.remove(msg_id)
+                    if not qids:
+                        session.question_voice_ids.pop(meta.question_id, None)
+                continue
         filename = f"{user_id}_{meta.timestamp}_{meta.question_id}.ogg"
         file_path = os.path.join(RESPONSES_DIR, str(user_id), "audio", filename)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -52,17 +65,6 @@ def _save_voice_answers(
         meta.saved = True
         meta.file_size = len(data)
         meta.file_path = file_path
-
-    # remove original user messages for this question from chat once saved
-    if question_index is not None:
-        ids = session.question_voice_ids.get(question_index, [])
-    else:
-        ids = [i for sub in session.question_voice_ids.values() for i in sub]
-    for mid in ids:
-        try:
-            bot.delete_message(user_id, mid)
-        except Exception:
-            pass
 
 
 def _purge_saved_voice(meta: VoiceAnswer) -> None:
