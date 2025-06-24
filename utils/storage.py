@@ -43,6 +43,15 @@ def get_user_profile(user_id):
             if translated:
                 fields[key] = translated
 
+    lines = []
+    for line in text.split("\n"):
+        if "{treatment}" in line and not fields.get("treatment"):
+            continue
+        if "{depressive}" in line and not fields.get("depressive"):
+            continue
+        lines.append(line)
+    text = "\n".join(lines)
+
     for key, value in fields.items():
         text = text.replace(f"{{{key}}}", str(value) if value is not None else "-")
 
