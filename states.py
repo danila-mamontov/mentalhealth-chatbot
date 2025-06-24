@@ -13,4 +13,15 @@ class SurveyStates(StatesGroup):
     phq9 = State()
     wbmms = State()
 
+    treatment = State()
+    depressive = State()
+
     main_menu = State()
+
+
+class EditProfileStates(StatesGroup):
+    """States used when editing existing profile information."""
+
+    language = State()
+    gender = State()
+    age = State()

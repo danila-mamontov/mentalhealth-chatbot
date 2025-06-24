@@ -6,7 +6,7 @@ import os
 import telebot
 
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
-from utils.menu import survey_menu, main_menu, delete_voice_menu
+from utils.menu import survey_menu, main_menu, delete_voice_menu, yes_no_menu
 from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -224,11 +224,9 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.edit_message_text(
                 chat_id=user_id,
                 message_id=call.message.message_id,
-                text=get_translation(user_id, "end_phq9_message")
-                + "\n\n"
-                + get_translation(user_id, "main_menu_message"),
+                text=get_translation(user_id, "treatment_selection"),
                 parse_mode="HTML",
-                reply_markup=main_menu(user_id),
+                reply_markup=yes_no_menu(user_id),
             )
-            bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+            bot.set_state(user_id, SurveyStates.treatment, call.message.chat.id)
 

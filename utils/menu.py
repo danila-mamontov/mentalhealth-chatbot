@@ -21,31 +21,18 @@ def gender_menu(user_id):
     )
     return markup
 
-def depression_diagnosis_menu(user_id):
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
-        InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
-        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
-    )
 
-def depressive_menu(user_id):
+def yes_no_menu(user_id) -> InlineKeyboardMarkup:
+    """Return a markup with Yes, No and No answer options."""
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(
         InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
         InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
-        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
+        InlineKeyboardButton(get_translation(user_id, "noanswer"), callback_data="noanswer"),
     )
     return markup
 
-def treatment_menu(user_id):
-    markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        InlineKeyboardButton("✅ " + get_translation(user_id, "yes"), callback_data="yes"),
-        InlineKeyboardButton("❌ " + get_translation(user_id, "no"), callback_data="no"),
-        InlineKeyboardButton(get_translation(user_id, "no_answer"), callback_data="noanswer"),
-    )
-    return markup
+
 
 def age_range_menu(user_id):
     keyboard = InlineKeyboardMarkup(row_width=3)

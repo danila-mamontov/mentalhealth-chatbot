@@ -1,5 +1,5 @@
 open_profile_button: "Настройки"
-profile_template: "<b>Ваш профиль:</b>\nID пользователя: {user_id}\nЯзык: {language}\nПол: {gender}\nВозраст: {age}\n"
+profile_template: "<b>Ваш профиль:</b>\nID пользователя: {user_id}\nЯзык: {language}\nПол: {gender}\nВозраст: {age}\nСогласие: {consent}\nЛечение: {treatment}\nДепрессивность: {depressive}\n"
 change_language_button: "Изменить язык"
 change_age_button: "Изменить возраст"
 change_gender_button: "Изменить пол"

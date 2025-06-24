@@ -2,17 +2,17 @@ import telebot
 
 from survey import get_phq9_question_and_options, keycap_numbers
 from utils.chat_control import message_ids
-from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu
-from utils.storage import context, get_translation
+from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu, profile_menu
+from utils.storage import context, get_translation, get_user_profile
 from utils.logger import logger
-from states import SurveyStates
+from states import SurveyStates, EditProfileStates
 
 def register_handlers(bot: telebot.TeleBot):
     _AGE_RANGES = {"18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90+"}
 
     @bot.callback_query_handler(
         func=lambda call, ranges=_AGE_RANGES: call.data in ranges or call.data == "range_change",
-        state=SurveyStates.age,
+        state="*",
     )
     def handle_age_range_selection(call):
         user_id = call.message.chat.id
@@ -38,9 +38,13 @@ def register_handlers(bot: telebot.TeleBot):
                 text=get_translation(user_id, "age_selection"),
                 reply_markup=age_range_menu(user_id)
             )
-            bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+            current = bot.get_state(user_id)
+            if current == str(SurveyStates.age):
+                bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+            else:
+                bot.set_state(user_id, EditProfileStates.age, call.message.chat.id)
 
-    @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state=SurveyStates.age)
+    @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state="*")
     def handle_exact_age_selection(call):
         user_id = call.message.chat.id
         message_id = call.message.message_id
@@ -66,13 +70,23 @@ def register_handlers(bot: telebot.TeleBot):
         #                  parse_mode='HTML',
         #                  reply_markup=phq9_menu(0, options))
 
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            message_id=call.message.message_id,
-            text=get_translation(user_id, "main_menu_message"),
-            parse_mode='HTML',
-            reply_markup=main_menu(user_id)
-        )
+        state = bot.get_state(user_id)
+        if state == str(SurveyStates.age):
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_translation(user_id, "main_menu_message"),
+                parse_mode='HTML',
+                reply_markup=main_menu(user_id)
+            )
+        else:
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_user_profile(user_id),
+                parse_mode='HTML',
+                reply_markup=profile_menu(user_id)
+            )
         bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
 
 

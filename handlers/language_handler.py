@@ -1,5 +1,5 @@
 import telebot
-from states import SurveyStates
+from states import SurveyStates, EditProfileStates
 
 from utils.storage import context, get_user_profile, get_translation
 from utils.menu import consent_menu, language_menu, profile_menu
@@ -21,7 +21,8 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(user_id, "language", language)
             context.save_user_info(user_id)
             logger.log_event(user_id, "SET LANGUAGE", language)
-            if bot.get_state(user_id) == str(SurveyStates.language):
+            state = bot.get_state(user_id)
+            if state == str(SurveyStates.language):
                 bot.set_state(user_id, SurveyStates.consent, call.message.chat.id)
                 bot.edit_message_text(chat_id=user_id,
                                       message_id=message_id,
@@ -36,6 +37,7 @@ def register_handlers(bot: telebot.TeleBot):
                     parse_mode='HTML',
                     reply_markup=profile_menu(user_id),
                 )
+                bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
         else:
             logger.log_event(user_id, "CHANGE LANGUAGE", "")
             bot.edit_message_text(chat_id=user_id,
@@ -43,6 +45,6 @@ def register_handlers(bot: telebot.TeleBot):
                                   text=get_translation(user_id, "language_selection"),
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
-            bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
+            bot.set_state(user_id, EditProfileStates.language, call.message.chat.id)
 
 

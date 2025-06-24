@@ -5,7 +5,23 @@ from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 
 from config import BOT_TOKEN, RESPONSES_DIR
-from handlers import goto_handler,start_handler, help_handler, delete_me_handler, consent_handler,gender_handler ,age_handler,main_menu_handler,profile_handler, phq9_survey_handler,wbmms_survey_handler,voice_handler, language_handler
+from handlers import (
+    goto_handler,
+    start_handler,
+    help_handler,
+    delete_me_handler,
+    consent_handler,
+    gender_handler,
+    age_handler,
+    main_menu_handler,
+    profile_handler,
+    phq9_survey_handler,
+    wbmms_survey_handler,
+    voice_handler,
+    language_handler,
+    treatment_handler,
+    depressive_handler,
+)
 bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 
@@ -23,6 +39,8 @@ goto_handler.register_handlers(bot)
 main_menu_handler.register_handlers(bot)
 phq9_survey_handler.register_handlers(bot)
 wbmms_survey_handler.register_handlers(bot)
+treatment_handler.register_handlers(bot)
+depressive_handler.register_handlers(bot)
 voice_handler.register_handlers(bot)
 help_handler.register_handlers(bot)
 
