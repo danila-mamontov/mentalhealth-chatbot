@@ -47,6 +47,7 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
         user_id=1,
         question_id=3,
         file_unique_id="uid123",
+        file_id="id123",
         file_path="server_path",
         duration=7,
         timestamp=111,

@@ -12,28 +12,34 @@ def test_survey_manager_singleton():
     assert sess3 is not sess1
 
 
-def test_record_voice_replaces_previous():
+def test_record_voice_multiple():
     sess = ss.SurveySession(1)
-    va1 = ss.VoiceAnswer(1, 0, "uid1", "path1", 1, 10, 0)
-    va2 = ss.VoiceAnswer(1, 0, "uid2", "path2", 2, 11, 0)
+    va1 = ss.VoiceAnswer(1, 0, "uid1", "id1", "path1", 1, 10, 0)
+    va2 = ss.VoiceAnswer(1, 0, "uid2", "id2", "path2", 2, 11, 0)
 
-    assert sess.record_voice(5, va1) is None
-    old = sess.record_voice(6, va2)
-    assert old == 5
-    assert 6 in sess.voice_messages
-    assert 5 not in sess.voice_messages
-    assert sess.question_voice_id[0] == 6
+    sess.record_voice(5, va1)
+    sess.record_voice(6, va2)
+
+    assert sess.question_voice_ids[0] == [5, 6]
+    assert sess.voice_messages[5] is va1
+    assert sess.voice_messages[6] is va2
 
 
-def test_delete_voice_removes_entry():
+def test_delete_voice_removes_last():
     sess = ss.SurveySession(1)
-    va = ss.VoiceAnswer(1, 0, "uid", "path", 1, 1, 0)
-    sess.record_voice(5, va)
+    va1 = ss.VoiceAnswer(1, 0, "uid1", "id1", "path1", 1, 1, 0)
+    va2 = ss.VoiceAnswer(1, 0, "uid2", "id2", "path2", 2, 2, 0)
+    sess.record_voice(5, va1)
+    sess.record_voice(6, va2)
+
+    removed = sess.delete_voice(0)
+    assert removed == 6
+    assert 6 not in sess.voice_messages
+    assert sess.question_voice_ids[0] == [5]
 
     removed = sess.delete_voice(0)
     assert removed == 5
-    assert sess.voice_messages == {}
-    assert sess.question_voice_id == {}
+    assert sess.question_voice_ids.get(0) is None
 
 
 def test_question_navigation():
@@ -71,6 +77,7 @@ def test_save_voice_answers_persists(tmp_path, monkeypatch):
         user_id=1,
         question_id=2,
         file_unique_id="uid",
+        file_id="id",
         file_path="server",  # remote path
         duration=3,
         timestamp=111,

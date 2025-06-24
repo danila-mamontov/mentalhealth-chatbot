@@ -37,18 +37,45 @@ def _save_voice_answers(bot: telebot.TeleBot, session: SurveySession) -> None:
         )
 
 
-def _render_question(bot: telebot.TeleBot, user_id: int, message_id: int, index: int) -> None:
+def _render_question(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    message_id: int,
+    prefix: str | None = None,
+) -> None:
+    """Update survey prompt and show any recorded voices."""
+
+    user_id = session.user_id
+    index = session.current_index
     if index <= 9:
         keycap = keycap_numbers[index + 1]
     else:
         keycap = keycap_numbers[index // 10] + keycap_numbers[index % 10 + 1]
+    text = f"{keycap}\t" + get_wbmms_question(index, user_id=user_id)
+    if prefix:
+        text = prefix + "\n\n" + text
+
     bot.edit_message_text(
         chat_id=user_id,
         message_id=message_id,
-        text=f"{keycap}\t" + get_wbmms_question(index, user_id=user_id),
+        text=text,
         parse_mode="HTML",
         reply_markup=survey_menu(user_id, index),
     )
+
+    # remove previously displayed voices
+    for vid in session.displayed_voice_ids:
+        try:
+            bot.delete_message(user_id, vid)
+        except Exception:
+            pass
+    session.displayed_voice_ids.clear()
+
+    for msg_id in session.question_voice_ids.get(index, []):
+        meta = session.voice_messages.get(msg_id)
+        if meta:
+            sent = bot.send_voice(user_id, meta.file_id)
+            session.displayed_voice_ids.append(sent.message_id)
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
@@ -61,11 +88,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if action == "survey_prev":
             _id = session.prev_question()
             logger.log_event(user_id, "WBMMS PREV", _id)
-            _render_question(bot, user_id, call.message.message_id, session.current_index)
+            _render_question(bot, session, call.message.message_id)
         elif action == "survey_next":
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
-            _render_question(bot, user_id, call.message.message_id, session.current_index)
+            _render_question(bot, session, call.message.message_id)
         elif action == "survey_delete":
             msg_id = session.delete_voice(session.current_index)
             if msg_id:
@@ -73,6 +100,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                     bot.delete_message(user_id, msg_id)
                 except Exception:
                     pass
+            _render_question(bot, session, call.message.message_id)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)

@@ -1,12 +1,14 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 @dataclass
 class VoiceAnswer:
     """Metadata for a single voice response."""
+
     user_id: int
     question_id: int
     file_unique_id: str
+    file_id: str
     file_path: str
     duration: int
     timestamp: int
@@ -23,8 +25,10 @@ class SurveySession:
         self.answers: Dict[int, object] = {}
         # telegram message id -> VoiceAnswer
         self.voice_messages: Dict[int, VoiceAnswer] = {}
-        # question index -> last voice message id
-        self.question_voice_id: Dict[int, int] = {}
+        # question index -> list of voice message ids in order
+        self.question_voice_ids: Dict[int, List[int]] = {}
+        # ids of voice messages currently displayed in chat
+        self.displayed_voice_ids: List[int] = []
 
     # progress helpers
     def next_question(self) -> int:
@@ -43,33 +47,37 @@ class SurveySession:
         return self.current_index
 
     # voice handling
-    def record_voice(self, message_id: int, meta: VoiceAnswer) -> Optional[int]:
-        """Store voice metadata for later persistence.
+    def record_voice(self, message_id: int, meta: VoiceAnswer) -> None:
+        """Store voice metadata for later persistence."""
 
-        Returns the ``message_id`` of any previously recorded voice for the
-        same question so the caller can remove it from Telegram.
-        """
-        old_id = self.question_voice_id.get(meta.question_id)
-        if old_id is not None:
-            self.voice_messages.pop(old_id, None)
         self.voice_messages[message_id] = meta
-        self.question_voice_id[meta.question_id] = message_id
-        return old_id
+        self.question_voice_ids.setdefault(meta.question_id, []).append(message_id)
 
     def delete_voice(self, question_index: int) -> Optional[int]:
-        """Remove stored voice for a question.
+        """Remove the most recent stored voice for a question.
 
         Returns the Telegram ``message_id`` if one was removed.
         """
-        message_id = self.question_voice_id.pop(question_index, None)
-        if message_id is not None:
-            self.voice_messages.pop(message_id, None)
+
+        ids = self.question_voice_ids.get(question_index)
+        if not ids:
+            return None
+        message_id = ids.pop()
+        self.voice_messages.pop(message_id, None)
+        if not ids:
+            self.question_voice_ids.pop(question_index, None)
         return message_id
 
     def iter_voice_answers(self):
         """Yield stored voice answers."""
         for msg_id, meta in self.voice_messages.items():
             yield msg_id, meta
+
+    def get_question_voice_answers(self, question_index: int) -> List[VoiceAnswer]:
+        """Return voice answers stored for ``question_index`` in order."""
+
+        ids = self.question_voice_ids.get(question_index, [])
+        return [self.voice_messages[i] for i in ids if i in self.voice_messages]
 
 
 class SurveyManager:
