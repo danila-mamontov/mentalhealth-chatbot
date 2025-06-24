@@ -8,7 +8,7 @@ import telebot
 from survey_session import SurveyManager, SurveySession
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
-from utils.storage import get_translation
+from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
@@ -66,8 +66,6 @@ def _render_question(
     else:
         keycap = keycap_numbers[index // 10] + keycap_numbers[index % 10 + 1]
     text = f"{keycap}\t" + get_wbmms_question(index, user_id=user_id)
-    if prefix:
-        text = prefix + "\n\n" + text
 
     try:
         bot.edit_message_text(
@@ -75,7 +73,6 @@ def _render_question(
             message_id=message_id,
             text=text,
             parse_mode="HTML",
-            reply_markup=survey_menu(user_id, index),
         )
     except Exception as e:  # Telegram may raise if text is unchanged
         if "not modified" not in str(e).lower():
@@ -95,6 +92,39 @@ def _render_question(
             sent = bot.send_voice(user_id, meta.file_id)
             session.displayed_voice_ids.append(sent.message_id)
 
+    # update controls message after voices
+    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+    controls_text = prefix if prefix is not None else " "
+    if controls_id:
+        try:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=controls_id,
+                text=controls_text,
+                parse_mode="HTML",
+                reply_markup=survey_menu(user_id, index),
+            )
+        except Exception as e:
+            if "not modified" not in str(e).lower():
+                try:
+                    sent = bot.send_message(
+                        chat_id=user_id,
+                        text=controls_text,
+                        parse_mode="HTML",
+                        reply_markup=survey_menu(user_id, index),
+                    )
+                    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+                except Exception:
+                    pass
+    else:
+        sent = bot.send_message(
+            chat_id=user_id,
+            text=controls_text,
+            parse_mode="HTML",
+            reply_markup=survey_menu(user_id, index),
+        )
+        context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+
 
 def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.callback_query_handler(func=lambda c: c.data.startswith("survey_"), state=SurveyStates.wbmms)
@@ -103,16 +133,17 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         session = SurveyManager.get_session(user_id)
 
         action = call.data
+        question_id = context.get_user_info_field(user_id, "survey_message_id")
         if action == "survey_prev":
             _save_voice_answers(bot, session, session.current_index)
             _id = session.prev_question()
             logger.log_event(user_id, "WBMMS PREV", _id)
-            _render_question(bot, session, call.message.message_id)
+            _render_question(bot, session, question_id)
         elif action == "survey_next":
             _save_voice_answers(bot, session, session.current_index)
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
-            _render_question(bot, session, call.message.message_id)
+            _render_question(bot, session, question_id)
         elif action == "survey_delete":
             msg_id = session.delete_voice(session.current_index)
             if msg_id:
@@ -120,7 +151,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                     bot.delete_message(user_id, msg_id)
                 except Exception:
                     pass
-            _render_question(bot, session, call.message.message_id)
+            _render_question(bot, session, question_id)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)

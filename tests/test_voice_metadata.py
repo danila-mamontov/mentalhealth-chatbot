@@ -105,6 +105,9 @@ def test_render_question_handles_not_modified(monkeypatch):
             self.sent.append(file_id)
             return SimpleNamespace(message_id=len(self.sent))
 
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            return SimpleNamespace(message_id=99)
+
     bot = Bot()
     monkeypatch.setattr(wsh, "get_wbmms_question", lambda *a, **k: "Q")
     monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
