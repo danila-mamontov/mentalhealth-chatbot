@@ -71,7 +71,6 @@ def test_start_handler_new_user(monkeypatch):
     monkeypatch.setattr(uc, "save_user_info", lambda user_id: None)
     monkeypatch.setattr(start_handler, "context", uc)
     monkeypatch.setattr(start_handler, "logger", SimpleNamespace(log_event=lambda *a, **k: None))
-    monkeypatch.setattr(start_handler, "consent_menu", lambda uid: "consent")
     monkeypatch.setattr(start_handler, "main_menu", lambda uid: "main")
     monkeypatch.setattr(start_handler, "get_translation", lambda uid, key: f"{key}_{uid}")
     monkeypatch.setattr(start_handler.os.path, "exists", lambda p: False)
@@ -80,8 +79,8 @@ def test_start_handler_new_user(monkeypatch):
     from_user = SimpleNamespace(language_code="en", first_name="A", last_name="B", username="user")
     msg = SimpleNamespace(chat=SimpleNamespace(id=5), from_user=from_user, location=None)
     bot.handlers["start"](msg)
-    assert bot.states[5] == SurveyStates.consent
-    assert bot.sent_messages[0]["reply_markup"] == "consent"
+    assert bot.states[5] == SurveyStates.main_menu
+    assert bot.sent_messages[0]["reply_markup"] == "main"
 
 
 def test_delete_me_and_restart(monkeypatch):
@@ -100,7 +99,6 @@ def test_delete_me_and_restart(monkeypatch):
     # stub logger and menus
     monkeypatch.setattr(start_handler, "logger", SimpleNamespace(log_event=lambda *a, **k: None))
     monkeypatch.setattr(delete_me_handler, "logger", SimpleNamespace(close=lambda uid: None))
-    monkeypatch.setattr(start_handler, "consent_menu", lambda uid: "consent")
     monkeypatch.setattr(start_handler, "main_menu", lambda uid: "main")
     monkeypatch.setattr(start_handler, "get_translation", lambda uid, key: f"{key}_{uid}")
 
@@ -118,8 +116,8 @@ def test_delete_me_and_restart(monkeypatch):
     bot.handlers["delete_user_data"](msg)
     assert uc.get_user_info(7) is None
 
-    # starting again should show consent menu again
+    # starting again should show main menu again
     bot.handlers["start"](msg)
-    assert bot.sent_messages[-1]["reply_markup"] == "consent"
+    assert bot.sent_messages[-1]["reply_markup"] == "main"
 
 
