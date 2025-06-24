@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+import codecs
 
 
 def load_simple_yaml(path: str) -> Dict[str, Any]:
@@ -17,8 +18,10 @@ def load_simple_yaml(path: str) -> Dict[str, Any]:
                 item = line[4:].strip()
                 if item.startswith('"') and item.endswith('"'):
                     item = item[1:-1]
+                    item = codecs.decode(item, "unicode_escape")
                 elif item.startswith("'") and item.endswith("'"):
                     item = item[1:-1]
+                    item = codecs.decode(item, "unicode_escape")
                 data[current_key].append(item)
             else:
                 if current_list is not None:
@@ -43,7 +46,9 @@ def load_simple_yaml(path: str) -> Dict[str, Any]:
                     else:
                         if rest.startswith('"') and rest.endswith('"'):
                             rest = rest[1:-1]
+                            rest = codecs.decode(rest, "unicode_escape")
                         elif rest.startswith("'") and rest.endswith("'"):
                             rest = rest[1:-1]
+                            rest = codecs.decode(rest, "unicode_escape")
                         data[key] = rest
     return data
