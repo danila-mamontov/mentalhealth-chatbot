@@ -95,6 +95,9 @@ def test_save_voice_answers_persists(tmp_path, monkeypatch):
             assert path == "server"
             return b"data"
 
+        def delete_message(self, chat_id, message_id):
+            pass
+
     wsh._save_voice_answers(Bot(), sess)
 
     assert va.saved

@@ -14,7 +14,7 @@ from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata
+from utils.db import insert_voice_metadata, delete_voice_metadata
 
 
 def _save_voice_answers(
@@ -30,16 +30,24 @@ def _save_voice_answers(
 
     user_id = session.user_id
     for msg_id, meta in list(session.iter_voice_answers()):
-        if meta.saved:
-            continue
         if question_index is not None and meta.question_id != question_index:
             continue
 
         try:
             bot.delete_message(user_id, msg_id)
         except Exception as e:
-            if "message to delete" in str(e).lower():
-                # user removed the message manually; discard metadata
+            text = str(e).lower()
+            if hasattr(e, "result_json"):
+                text += " " + str(e.result_json.get("description", "")).lower()
+            if any(s in text for s in ["message to delete", "message not found", "message can't", "message_id_invalid"]):
+                # user removed the message manually; discard metadata and clean saved files
+                if meta.saved:
+                    path = delete_voice_metadata(user_id, meta.file_unique_id)
+                    if path and os.path.exists(path):
+                        try:
+                            os.remove(path)
+                        except OSError:
+                            pass
                 session.voice_messages.pop(msg_id, None)
                 qids = session.question_voice_ids.get(meta.question_id, [])
                 if msg_id in qids:
@@ -47,24 +55,28 @@ def _save_voice_answers(
                     if not qids:
                         session.question_voice_ids.pop(meta.question_id, None)
                 continue
-        filename = f"{user_id}_{meta.timestamp}_{meta.question_id}.ogg"
-        file_path = os.path.join(RESPONSES_DIR, str(user_id), "audio", filename)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        data = bot.download_file(meta.file_path)
-        with open(file_path, "wb") as f:
-            f.write(data)
-        insert_voice_metadata(
-            user_id=user_id,
-            question_id=meta.question_id,
-            file_unique_id=meta.file_unique_id,
-            file_path=file_path,
-            duration=meta.duration,
-            timestamp=meta.timestamp,
-            file_size=len(data),
-        )
-        meta.saved = True
-        meta.file_size = len(data)
-        meta.file_path = file_path
+            else:
+                raise
+
+        if not meta.saved:
+            filename = f"{user_id}_{meta.timestamp}_{meta.question_id}.ogg"
+            file_path = os.path.join(RESPONSES_DIR, str(user_id), "audio", filename)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            data = bot.download_file(meta.file_path)
+            with open(file_path, "wb") as f:
+                f.write(data)
+            insert_voice_metadata(
+                user_id=user_id,
+                question_id=meta.question_id,
+                file_unique_id=meta.file_unique_id,
+                file_path=file_path,
+                duration=meta.duration,
+                timestamp=meta.timestamp,
+                file_size=len(data),
+            )
+            meta.saved = True
+            meta.file_size = len(data)
+            meta.file_path = file_path
 
 
 

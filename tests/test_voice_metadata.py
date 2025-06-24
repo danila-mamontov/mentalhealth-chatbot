@@ -60,6 +60,9 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
             assert path == "server_path"
             return b"data"
 
+        def delete_message(self, chat_id, message_id):
+            pass
+
     wsh._save_voice_answers(FakeBot(), sess)
 
     assert va.saved
@@ -261,4 +264,51 @@ def test_manual_deleted_voice_not_saved(tmp_path, monkeypatch):
     assert sess.voice_messages == {}
     conn = db.get_connection()
     assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
+
+
+def test_manual_deleted_saved_voice_removed(tmp_path, monkeypatch):
+    db_file = tmp_path / "bot.db"
+    monkeypatch.setenv("DB_PATH", str(db_file))
+
+    import config
+    import utils.db as db
+    import importlib
+    importlib.reload(config)
+    importlib.reload(db)
+    db.init_db()
+
+    import handlers.wbmms_survey_handler as wsh
+    importlib.reload(wsh)
+
+    monkeypatch.setattr(wsh, "RESPONSES_DIR", str(tmp_path / "resp"))
+
+    import survey_session as ss
+    importlib.reload(ss)
+
+    sess = ss.SurveySession(1)
+    va = ss.VoiceAnswer(1, 0, "uid", "fid", "remote", 1, 1, 0)
+    sess.record_voice(5, va)
+    va.saved = True
+    local_dir = tmp_path / "resp" / "1" / "audio"
+    os.makedirs(local_dir, exist_ok=True)
+    local_path = local_dir / "old.ogg"
+    local_path.write_bytes(b"data")
+    va.file_path = str(local_path)
+    va.file_size = len(b"data")
+    db.insert_voice_metadata(1, 0, "uid", str(local_path), 1, 1, len(b"data"))
+
+    class Bot:
+        def delete_message(self, chat_id, message_id):
+            raise Exception("Bad Request: message to delete not found")
+
+        def download_file(self, path):
+            raise AssertionError("should not download")
+
+    bot = Bot()
+    wsh._save_voice_answers(bot, sess, question_index=0)
+
+    conn = db.get_connection()
+    assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 0
+    assert not os.path.exists(local_path)
+    assert sess.voice_messages == {}
 
