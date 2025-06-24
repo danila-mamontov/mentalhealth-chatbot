@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import telebot
 
+CONTROL_PLACEHOLDER = "\u2060"  # invisible character so Telegram accepts the message
+
 from survey_session import SurveyManager, SurveySession
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
@@ -94,7 +96,7 @@ def _render_question(
 
     # update controls message after voices
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    controls_text = prefix if prefix is not None else " "
+    controls_text = prefix if prefix is not None else CONTROL_PLACEHOLDER
     if controls_id:
         try:
             bot.edit_message_text(
