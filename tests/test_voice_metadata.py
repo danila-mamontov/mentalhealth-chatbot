@@ -39,32 +39,27 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     os.makedirs(responses_dir / "1" / "audio", exist_ok=True)
     monkeypatch.setattr(wsh, "RESPONSES_DIR", str(responses_dir))
 
-    class DummyContext:
-        def __init__(self):
-            self.data = {1: {"vm_ids": {}}}
-        def get_user_info_field(self, user_id, field):
-            return self.data[user_id][field]
-        def set_user_info_field(self, user_id, field, value):
-            self.data[user_id][field] = value
+    import survey_session as ss
+    importlib.reload(ss)
 
-    ctx = DummyContext()
-    ctx.data[1]["vm_ids"] = {
-        10: {
-            "current_question": 3,
-            "file_unique_id": "uid123",
-            "file_path": "server_path",
-            "timestamp": 111,
-            "audio_duration": 7,
-        }
-    }
-    monkeypatch.setattr(wsh, "context", ctx)
+    sess = ss.SurveyManager.get_session(1)
+    va = ss.VoiceAnswer(
+        user_id=1,
+        question_id=3,
+        file_unique_id="uid123",
+        file_path="server_path",
+        duration=7,
+        timestamp=111,
+        file_size=0,
+    )
+    sess.record_voice(10, va)
 
     class FakeBot:
         def download_file(self, path):
             assert path == "server_path"
             return b"data"
 
-    wsh.save_wbmms_answer(FakeBot(), None, 1)
+    wsh._save_voice_answers(FakeBot(), sess)
 
     conn = db.get_connection()
     row = conn.execute("SELECT * FROM wbmms_voice").fetchone()

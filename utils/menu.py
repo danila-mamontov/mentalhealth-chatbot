@@ -103,20 +103,37 @@ def consent_menu(user_id):
     )
     return markup
 
-def survey_menu(user_id, question_index : int):
-    previous_button = InlineKeyboardButton(marks[1]+"\t"+get_translation(user_id, "back"), callback_data="go_to_question_"+str(question_index-1))
-    next_button     = InlineKeyboardButton(marks[2]+"\t"+get_translation(user_id, "next"), callback_data="go_to_question_"+str(question_index+1))
+def survey_menu(user_id, question_index: int):
+    delete_button = InlineKeyboardButton(
+        "🗑\t" + get_translation(user_id, "delete_button"), callback_data="survey_delete"
+    )
     if question_index == 0:
-        markup = InlineKeyboardMarkup(row_width=1)
-        markup.add(next_button)
-    elif question_index < len(WBMMS_survey["en"])-1:
         markup = InlineKeyboardMarkup(row_width=2)
-        markup.add(previous_button, next_button)
+        markup.add(delete_button, InlineKeyboardButton(
+            marks[2] + "\t" + get_translation(user_id, "next"), callback_data="survey_next"
+        ))
+    elif question_index < len(WBMMS_survey["en"]) - 1:
+        markup = InlineKeyboardMarkup(row_width=3)
+        markup.add(
+            InlineKeyboardButton(
+                marks[1] + "\t" + get_translation(user_id, "back"), callback_data="survey_prev"
+            ),
+            delete_button,
+            InlineKeyboardButton(
+                marks[2] + "\t" + get_translation(user_id, "next"), callback_data="survey_next"
+            ),
+        )
     else:
-        markup = InlineKeyboardMarkup(row_width=2)
-        markup.add(previous_button,
-            InlineKeyboardButton(marks[0]+"\t"+get_translation(user_id, "finish_button"), callback_data="go_to_question_finish"))
-
+        markup = InlineKeyboardMarkup(row_width=3)
+        markup.add(
+            InlineKeyboardButton(
+                marks[1] + "\t" + get_translation(user_id, "back"), callback_data="survey_prev"
+            ),
+            delete_button,
+            InlineKeyboardButton(
+                marks[0] + "\t" + get_translation(user_id, "finish_button"), callback_data="survey_finish"
+            ),
+        )
     return markup
 
 def profile_menu(user_id):
