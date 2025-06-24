@@ -29,17 +29,11 @@ def register_handlers(bot: telebot.TeleBot):
             file_size=0,
         )
         session.record_voice(message.message_id, va)
-        # remove original voice so we can re-send after the question text
-        try:
-            bot.delete_message(user_id, message.message_id)
-        except Exception:
-            pass
 
         logger.log_event(user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}")
 
-        survey_msg_id = context.get_user_info_field(user_id, "survey_message_id")
         prefix = get_translation(user_id, "voice_recieved")
-        wsh._render_question(bot, session, survey_msg_id, prefix)
+        wsh._update_controls(bot, session, prefix)
 
         # if audio_duration < 5:
         #     bot.send_message(message.chat.id, "⚠️ Голосовое сообщение слишком короткое!")

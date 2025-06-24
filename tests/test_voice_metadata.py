@@ -116,3 +116,69 @@ def test_render_question_handles_not_modified(monkeypatch):
     wsh._render_question(bot, sess, 99, prefix="msg")
     assert bot.sent == ["f1", "f2"]
 
+
+def test_update_controls_resends(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+
+    class Bot:
+        def __init__(self):
+            self.sent = []
+            self.deleted = []
+
+        def delete_message(self, chat_id, message_id):
+            self.deleted.append(message_id)
+
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            self.sent.append(text)
+            return SimpleNamespace(message_id=len(self.sent))
+
+    bot = Bot()
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi: "menu")
+
+    wsh.context.set_user_info_field(1, "survey_controls_id", None)
+
+    wsh._update_controls(bot, sess, prefix="one")
+    first_id = wsh.context.get_user_info_field(1, "survey_controls_id")
+    wsh._update_controls(bot, sess, prefix="two")
+
+    assert bot.deleted[-1] == first_id
+    assert bot.sent == ["one", "two"]
+
+
+def test_save_voice_answers_deletes_messages(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+    va1 = ss.VoiceAnswer(1, 0, "u1", "f1", "path1", 1, 1, 0)
+    va2 = ss.VoiceAnswer(1, 0, "u2", "f2", "path2", 2, 2, 0)
+    sess.record_voice(10, va1)
+    sess.record_voice(11, va2)
+
+    class Bot:
+        def __init__(self):
+            self.deleted = []
+
+        def download_file(self, path):
+            return b"d"
+
+        def delete_message(self, chat_id, message_id):
+            self.deleted.append(message_id)
+
+    bot = Bot()
+    wsh._save_voice_answers(bot, sess, question_index=0)
+
+    assert set(bot.deleted) == {10, 11}
+    assert va1.saved and va2.saved
+

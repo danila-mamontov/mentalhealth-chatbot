@@ -29,7 +29,7 @@ def _save_voice_answers(
     """
 
     user_id = session.user_id
-    for _, meta in session.iter_voice_answers():
+    for msg_id, meta in session.iter_voice_answers():
         if meta.saved:
             continue
         if question_index is not None and meta.question_id != question_index:
@@ -51,6 +51,17 @@ def _save_voice_answers(
         )
         meta.saved = True
         meta.file_size = len(data)
+
+    # remove original user messages for this question from chat once saved
+    if question_index is not None:
+        ids = session.question_voice_ids.get(question_index, [])
+    else:
+        ids = [i for sub in session.question_voice_ids.values() for i in sub]
+    for mid in ids:
+        try:
+            bot.delete_message(user_id, mid)
+        except Exception:
+            pass
 
 
 def _render_question(
@@ -126,6 +137,30 @@ def _render_question(
             reply_markup=survey_menu(user_id, index),
         )
         context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+
+
+def _update_controls(
+    bot: telebot.TeleBot,
+    session: SurveySession,
+    prefix: str | None = None,
+) -> None:
+    """Show the control buttons at the bottom of the chat."""
+
+    user_id = session.user_id
+    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+    if controls_id:
+        try:
+            bot.delete_message(user_id, controls_id)
+        except Exception:
+            pass
+
+    sent = bot.send_message(
+        chat_id=user_id,
+        text=prefix if prefix is not None else CONTROL_PLACEHOLDER,
+        parse_mode="HTML",
+        reply_markup=survey_menu(user_id, session.current_index),
+    )
+    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
