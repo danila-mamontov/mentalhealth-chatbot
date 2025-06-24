@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 import codecs
+import ast
 
 
 def load_simple_yaml(path: str) -> Dict[str, Any]:
@@ -16,12 +17,16 @@ def load_simple_yaml(path: str) -> Dict[str, Any]:
                 if current_list is None:
                     raise ValueError(f"List item outside of a list in {path}")
                 item = line[4:].strip()
-                if item.startswith('"') and item.endswith('"'):
-                    item = item[1:-1]
-                    item = codecs.decode(item, "unicode_escape")
-                elif item.startswith("'") and item.endswith("'"):
-                    item = item[1:-1]
-                    item = codecs.decode(item, "unicode_escape")
+                if (item.startswith('"') and item.endswith('"')) or (
+                    item.startswith("'") and item.endswith("'")
+                ):
+                    # use Python parser to handle escapes like \n without
+                    # corrupting non-ASCII characters
+                    try:
+                        item = ast.literal_eval(item)
+                    except Exception:
+                        item = item[1:-1]
+                        item = item.replace("\\n", "\n").replace("\\t", "\t")
                 data[current_key].append(item)
             else:
                 if current_list is not None:
@@ -44,11 +49,13 @@ def load_simple_yaml(path: str) -> Dict[str, Any]:
                     if rest in {"~", "null"}:
                         data[key] = None
                     else:
-                        if rest.startswith('"') and rest.endswith('"'):
-                            rest = rest[1:-1]
-                            rest = codecs.decode(rest, "unicode_escape")
-                        elif rest.startswith("'") and rest.endswith("'"):
-                            rest = rest[1:-1]
-                            rest = codecs.decode(rest, "unicode_escape")
+                        if (rest.startswith('"') and rest.endswith('"')) or (
+                            rest.startswith("'") and rest.endswith("'")
+                        ):
+                            try:
+                                rest = ast.literal_eval(rest)
+                            except Exception:
+                                rest = rest[1:-1]
+                                rest = rest.replace("\\n", "\n").replace("\\t", "\t")
                         data[key] = rest
     return data
