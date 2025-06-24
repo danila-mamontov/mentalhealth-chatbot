@@ -1,5 +1,6 @@
 import telebot
-from utils.menu import age_range_menu, gender_menu, profile_menu
+from survey import get_phq9_question_and_options, keycap_numbers
+from utils.menu import age_range_menu, gender_menu, profile_menu, phq9_menu
 from utils.storage import context, get_user_profile, get_translation
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
@@ -24,6 +25,28 @@ def register_handlers(bot: telebot.TeleBot):
                     text=get_translation(user_id, "age_selection"),
                     parse_mode="HTML",
                     reply_markup=age_range_menu(user_id),
+                )
+            elif state == str(SurveyStates.gender):
+                question, options = get_phq9_question_and_options(0, user_id)
+
+                logger.log_event(user_id, "START PHQ9 SURVEY")
+                bot.edit_message_text(
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.message_id,
+                    text=get_translation(user_id, "intro_phq9_message"),
+                    parse_mode="HTML",
+                )
+
+                bot.set_state(user_id, SurveyStates.phq9, call.message.chat.id)
+                with bot.retrieve_data(user_id, call.message.chat.id) as data:
+                    data["phq_index"] = 0
+
+                bot.send_message(
+                    chat_id=call.message.chat.id,
+                    text=get_translation(user_id, "starting_phq9")
+                    + f"\n\n{keycap_numbers[1]}\t<b>{question}</b>",
+                    parse_mode="HTML",
+                    reply_markup=phq9_menu(0, options),
                 )
             else:
                 bot.edit_message_text(

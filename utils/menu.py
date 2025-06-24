@@ -71,7 +71,6 @@ def main_menu(user_id):
     markup.add(
                 InlineKeyboardButton(get_translation(user_id, 'phq9_survey_button'), callback_data="menu_start_phq9_survey"),
                 InlineKeyboardButton(get_translation(user_id, "open_profile_button"), callback_data="profile_open"),
-                # InlineKeyboardButton(get_translation(user_id,'main_survey_button'), callback_data="menu_start_main_survey"),
                 InlineKeyboardButton(url="http://huskey.e-technik.uni-ulm.de", text=get_translation(user_id, "website")),
                InlineKeyboardButton(text=get_translation(user_id,"share_bot_button"),switch_inline_query=get_translation(user_id,"share_bot_text"))
                )

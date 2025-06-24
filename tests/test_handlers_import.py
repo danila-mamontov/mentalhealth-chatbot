@@ -88,3 +88,10 @@ def test_register_handlers():
         module = importlib.import_module(f'handlers.{mod_name}')
         assert hasattr(module, 'register_handlers')
         module.register_handlers(bot)
+
+
+def test_package_attributes():
+    pkg = importlib.import_module('handlers')
+    for mod_name in handlers:
+        module = importlib.import_module(f'handlers.{mod_name}')
+        assert getattr(pkg, mod_name) is module
