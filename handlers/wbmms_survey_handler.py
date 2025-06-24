@@ -10,7 +10,8 @@ from states import SurveyStates
 from utils.db import insert_voice_metadata
 
 def save_wbmms_answer(bot, message, user_id):
-    vm_ids = context.get_user_info_field(user_id, "vm_ids")
+    with bot.retrieve_data(user_id) as data:
+        vm_ids = data.get("vm_ids", {})
     for vm_id in vm_ids:
         audio_question_id = vm_ids[vm_id]["current_question"]
         audio_unique_id = vm_ids[vm_id]["file_unique_id"]
@@ -67,7 +68,9 @@ def register_handlers(bot: telebot.TeleBot):
             else:
                 keycap_number = keycap_numbers[(next_question_index // 10)] + keycap_numbers[(next_question_index % 10 + 1)]
 
-            for vm_id in context.get_user_info_field(user_id, "vm_ids"):
+            with bot.retrieve_data(user_id) as data:
+                vm_ids = data.get("vm_ids", {})
+            for vm_id in vm_ids:
                 try:
                     bot.delete_message(user_id, vm_id)
                 except:
@@ -76,7 +79,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(user_id, "WBMMS GO TO QUESTION", next_question_index)
             with bot.retrieve_data(user_id, call.message.chat.id) as data:
                 data["wbmms_index"] = next_question_index
-            context.set_user_info_field(user_id, "vm_ids", dict())
+                data["vm_ids"] = {}
             bot.edit_message_text(
                 chat_id=user_id,
                 message_id=message_id,
@@ -90,12 +93,14 @@ def register_handlers(bot: telebot.TeleBot):
                 bot.delete_message(user_id, context.get_user_info_field(user_id, "message_to_del"))
             except:
                 pass
-            for vm_id in context.get_user_info_field(user_id, "vm_ids"):
+            with bot.retrieve_data(user_id) as data:
+                vm_ids = data.get("vm_ids", {})
+            for vm_id in vm_ids:
                 bot.delete_message(user_id, vm_id)
 
             with bot.retrieve_data(user_id, call.message.chat.id) as data:
                 data["wbmms_index"] = 0
-            context.set_user_info_field(user_id, "vm_ids", dict())
+                data["vm_ids"] = {}
             logger.log_event(user_id, "END WBMMS SURVEY")
             bot.edit_message_text(chat_id=user_id,
                                   message_id=call.message.message_id,
