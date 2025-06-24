@@ -61,10 +61,10 @@ class UserContext:
             params["vm_ids"] = dict()
 
         user_data[user_id] = params
-        self.contextVar.set(user_data)
         upsert_user_profile(params)
     def delete_user(self, user_id):
-        self.contextVar.set({k: v for k, v in self.contextVar.get().items() if k != user_id})
+        user_data = self.contextVar.get()
+        user_data.pop(user_id, None)
         delete_user_records(user_id)
     def load_user_context(self):
         from survey import phq9_survey, WBMMS_survey
@@ -85,7 +85,6 @@ class UserContext:
 
             user_data = self.contextVar.get()
             user_data[user_id] = user_info
-            self.contextVar.set(user_data)
 
     def get_user_info(self, user_id):
         user_data = self.contextVar.get()
@@ -107,7 +106,6 @@ class UserContext:
         user_info = user_data.get(user_id)
         user_info[field] = value
         user_data[user_id] = user_info
-        self.contextVar.set(user_data)
 
     def save_user_info(self, user_id):
         user_data = self.contextVar.get()
