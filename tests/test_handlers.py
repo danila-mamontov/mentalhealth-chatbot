@@ -1,9 +1,12 @@
 from types import SimpleNamespace
+import os
 import sys
 import types
 
 sys.modules.setdefault("numpy", types.ModuleType("numpy"))
 sys.modules.setdefault("pandas", types.ModuleType("pandas"))
+
+os.environ["DB_PATH"] = ":memory:"
 
 telebot_stub = types.ModuleType("telebot")
 telebot_stub.TeleBot = object
