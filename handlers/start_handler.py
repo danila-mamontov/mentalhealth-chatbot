@@ -41,12 +41,20 @@ def register_handlers(bot: telebot.TeleBot):
                 "fr": "Français",
                 "zh": "中文",
             }
+            flags = {
+                "en": "🇬🇧",
+                "de": "🇩🇪",
+                "ru": "🇷🇺",
+                "fr": "🇫🇷",
+                "zh": "🇨🇳",
+            }
             lang_name = names.get(user_language, user_language)
+            flag = flags.get(user_language, "🏳️")
 
             bot.set_state(user_id, SurveyStates.language_confirm, message.chat.id)
             bot.send_message(
                 user_id,
-                get_translation(user_id, "language_confirm").format(language=lang_name),
+                get_translation(user_id, "language_confirm").format(language=lang_name, flag=flag),
                 parse_mode='HTML',
                 reply_markup=consent_menu(user_id),
             )
