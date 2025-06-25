@@ -40,6 +40,8 @@ def register_handlers(bot: telebot.TeleBot):
                 "ru": "Русский",
                 "fr": "Français",
                 "zh": "中文",
+                "hi": "हिन्दी",
+                "ar": "العربية",
             }
             flags = {
                 "en": "🇬🇧",
@@ -47,6 +49,8 @@ def register_handlers(bot: telebot.TeleBot):
                 "ru": "🇷🇺",
                 "fr": "🇫🇷",
                 "zh": "🇨🇳",
+                "hi": "🇮🇳",
+                "ar": "🇦🇪",
             }
             lang_name = names.get(user_language, user_language)
             flag = flags.get(user_language, "🏳️")
