@@ -1,5 +1,8 @@
 from utils.db import load_session, save_session
 
+from contextlib import contextmanager
+
+
 class SqliteStateStorage:
     """Simple persistent state storage using SQLite."""
 
@@ -22,6 +25,14 @@ class SqliteStateStorage:
 
     def get_data(self, user_id, chat_id=None, **kwargs):
         return self._data.setdefault((user_id, chat_id), {})
+
+    @contextmanager
+    def get_interactive_data(self, user_id=None, chat_id=None, **kwargs):
+        data = self.get_data(user_id, chat_id)
+        try:
+            yield data
+        finally:
+            self.set_data(user_id, chat_id, data)
 
     def set_data(self, user_id, chat_id=None, data=None, **kwargs):
         self._data[(user_id, chat_id)] = data or {}
