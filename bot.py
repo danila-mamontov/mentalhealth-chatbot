@@ -47,7 +47,6 @@ help_handler.register_handlers(bot)
 bot.set_my_commands([
     BotCommand("start", "Start the bot"),
     BotCommand("help", "All available commands"),
-    BotCommand("support", "Contact the support team"),
     BotCommand("delete_me", "Delete all your data"),
 ])
 

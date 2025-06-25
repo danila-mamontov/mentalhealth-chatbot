@@ -11,9 +11,7 @@ translations = {
         'help': 'Here are all available commands:\n'
                 '/start - Start the bot\n'
                 '/language - Change the language\n'
-                '/help - Get help\n'
-                '/support - Contact the support team\n'
-                'If you need further assistance, please contact the support team.',
+                '/help - Get help\n',
 
         'yes': 'Yes',
         'no': 'No',
@@ -88,9 +86,7 @@ translations = {
         'help': 'Hier sind alle verfügbaren Befehle:\n'
                 '/start - Starten Sie den Bot\n'
                 '/language - Ändern Sie die Sprache\n'
-                '/help - Hilfe erhalten\n'
-                '/support - Kontaktieren Sie das Support-Team\n'
-                'Wenn Sie weitere Unterstützung benötigen, wenden Sie sich bitte an das Support-Team.',
+                '/help - Hilfe erhalten\n',
 
         'yes': 'Ja',
         'no': 'Nein',
@@ -166,9 +162,7 @@ translations = {
         'help': 'Вот все доступные команды:\n'
                 '/start - Начать бота\n'
                 '/language - Изменить язык\n'
-                '/help - Получить помощь\n'
-                '/support - Связаться с командой поддержки\n'
-                'Если вам нужна дополнительная помощь, обратитесь в службу поддержки.',
+                '/help - Получить помощь\n',
 
         'yes': 'Да',
         'no': 'Нет',
