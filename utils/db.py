@@ -2,6 +2,21 @@ import sqlite3
 from threading import Lock
 from config import DB_PATH
 
+# Supported language codes for statistics
+LANGS = ["en", "de", "ru", "fr", "zh", "hi", "ar"]
+
+# Age ranges used for aggregation (label, start, end)
+AGE_RANGES = [
+    ("18_29", 18, 29),
+    ("30_39", 30, 39),
+    ("40_49", 40, 49),
+    ("50_59", 50, 59),
+    ("60_69", 60, 69),
+    ("70_79", 70, 79),
+    ("80_89", 80, 89),
+    ("90_plus", 90, None),
+]
+
 _conn = None
 _lock = Lock()
 
@@ -62,7 +77,114 @@ def init_db():
         action TEXT,
         details TEXT
     )""")
+
+    c.execute("""CREATE TABLE IF NOT EXISTS stats (
+        id INTEGER PRIMARY KEY CHECK (id=1),
+        total_audio_files INTEGER DEFAULT 0,
+        total_audio_duration INTEGER DEFAULT 0,
+        total_audio_size INTEGER DEFAULT 0,
+        users_total INTEGER DEFAULT 0,
+        male_count INTEGER DEFAULT 0,
+        female_count INTEGER DEFAULT 0,
+        noanswer_count INTEGER DEFAULT 0,
+        lang_en INTEGER DEFAULT 0,
+        lang_de INTEGER DEFAULT 0,
+        lang_ru INTEGER DEFAULT 0,
+        lang_fr INTEGER DEFAULT 0,
+        lang_zh INTEGER DEFAULT 0,
+        lang_hi INTEGER DEFAULT 0,
+        lang_ar INTEGER DEFAULT 0,
+        age_18_29 INTEGER DEFAULT 0,
+        age_30_39 INTEGER DEFAULT 0,
+        age_40_49 INTEGER DEFAULT 0,
+        age_50_59 INTEGER DEFAULT 0,
+        age_60_69 INTEGER DEFAULT 0,
+        age_70_79 INTEGER DEFAULT 0,
+        age_80_89 INTEGER DEFAULT 0,
+        age_90_plus INTEGER DEFAULT 0
+    )""")
+    c.execute("INSERT OR IGNORE INTO stats(id) VALUES (1)")
     conn.commit()
+
+
+def update_stats() -> None:
+    """Recalculate aggregated statistics and store them in the stats table."""
+    conn = get_connection()
+    c = conn.cursor()
+
+    total_audio_files, total_audio_duration, total_audio_size = c.execute(
+        "SELECT COUNT(*), COALESCE(SUM(duration),0), COALESCE(SUM(file_size),0) FROM wbmms_voice"
+    ).fetchone()
+
+    users_total = c.execute("SELECT COUNT(*) FROM user_profile").fetchone()[0]
+    male_count = c.execute("SELECT COUNT(*) FROM user_profile WHERE gender='male'").fetchone()[0]
+    female_count = c.execute("SELECT COUNT(*) FROM user_profile WHERE gender='female'").fetchone()[0]
+    noanswer_count = users_total - male_count - female_count
+
+    lang_counts = {l: c.execute(
+        "SELECT COUNT(*) FROM user_profile WHERE language=?", (l,)
+    ).fetchone()[0] for l in LANGS}
+
+    age_counts = {}
+    for label, start, end in AGE_RANGES:
+        if end is None:
+            age_counts[label] = c.execute(
+                "SELECT COUNT(*) FROM user_profile WHERE age>=?", (start,)
+            ).fetchone()[0]
+        else:
+            age_counts[label] = c.execute(
+                "SELECT COUNT(*) FROM user_profile WHERE age BETWEEN ? AND ?",
+                (start, end),
+            ).fetchone()[0]
+
+    c.execute(
+        """
+        UPDATE stats SET
+            total_audio_files=?,
+            total_audio_duration=?,
+            total_audio_size=?,
+            users_total=?,
+            male_count=?,
+            female_count=?,
+            noanswer_count=?,
+            lang_en=?, lang_de=?, lang_ru=?, lang_fr=?, lang_zh=?, lang_hi=?, lang_ar=?,
+            age_18_29=?, age_30_39=?, age_40_49=?, age_50_59=?, age_60_69=?,
+            age_70_79=?, age_80_89=?, age_90_plus=?
+        WHERE id=1
+        """,
+        (
+            total_audio_files,
+            total_audio_duration,
+            total_audio_size,
+            users_total,
+            male_count,
+            female_count,
+            noanswer_count,
+            lang_counts.get("en", 0),
+            lang_counts.get("de", 0),
+            lang_counts.get("ru", 0),
+            lang_counts.get("fr", 0),
+            lang_counts.get("zh", 0),
+            lang_counts.get("hi", 0),
+            lang_counts.get("ar", 0),
+            age_counts.get("18_29", 0),
+            age_counts.get("30_39", 0),
+            age_counts.get("40_49", 0),
+            age_counts.get("50_59", 0),
+            age_counts.get("60_69", 0),
+            age_counts.get("70_79", 0),
+            age_counts.get("80_89", 0),
+            age_counts.get("90_plus", 0),
+        ),
+    )
+    conn.commit()
+
+
+def get_stats() -> dict:
+    """Return aggregated statistics from the stats table."""
+    conn = get_connection()
+    row = conn.execute("SELECT * FROM stats WHERE id=1").fetchone()
+    return dict(row) if row else {}
 
 
 def upsert_user_profile(user_info: dict):
@@ -79,6 +201,7 @@ def upsert_user_profile(user_info: dict):
           f"ON CONFLICT(user_id) DO UPDATE SET {update_assignments}"
     c.execute(sql, values)
     conn.commit()
+    update_stats()
 
 
 def upsert_phq_answers(user_id: int, answers: dict):
@@ -123,6 +246,7 @@ def insert_voice_metadata(
         ),
     )
     conn.commit()
+    update_stats()
 
 
 def insert_log(user_id: int, timestamp: str, action: str, details: str):
@@ -158,3 +282,4 @@ def delete_user_records(user_id: int) -> None:
     c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
     conn.commit()
+    update_stats()
