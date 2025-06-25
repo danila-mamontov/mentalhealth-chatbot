@@ -5,6 +5,8 @@ from utils.db import (
     get_connection,
     init_db,
     delete_user_records,
+    load_session,
+    save_session,
 )
 
 init_db()
@@ -66,13 +68,18 @@ class UserContext:
         self._session = {}
 
     def _ensure_session(self, user_id):
-        self._session.setdefault(user_id, {
-            "current_question_index": 0,
-            "vm_ids": {},
-            "message_to_del": None,
-            "survey_message_id": None,
-            "survey_controls_id": None,
-        })
+        if user_id not in self._session:
+            data = load_session(user_id) or {}
+            session = {
+                "current_question_index": data.get("current_question_index", 0),
+                "vm_ids": data.get("vm_ids", {}),
+                "message_to_del": data.get("message_to_del"),
+                "survey_message_id": data.get("survey_message_id"),
+                "survey_controls_id": data.get("survey_controls_id"),
+            }
+            for i in range(8):
+                session[f"phq_{i}"] = data.get(f"phq_{i}")
+            self._session[user_id] = session
 
     def add_new_user(self, user_id):
         params = {
@@ -100,6 +107,7 @@ class UserContext:
             "survey_message_id": None,
             "survey_controls_id": None,
         }
+        save_session(user_id, self._session[user_id])
 
     def delete_user(self, user_id):
         self._session.pop(user_id, None)
@@ -143,6 +151,7 @@ class UserContext:
         if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"} or field.startswith("phq_"):
             self._ensure_session(user_id)
             self._session[user_id][field] = value
+            save_session(user_id, self._session[user_id])
             return
 
         conn = get_connection()
@@ -153,6 +162,10 @@ class UserContext:
         profile = self._load_profile(user_id)
         if profile is not None:
             upsert_user_profile(profile)
+
+    def save_session(self, user_id):
+        self._ensure_session(user_id)
+        save_session(user_id, self._session[user_id])
 
     def save_phq_info(self, user_id):
         from survey import phq9_survey
