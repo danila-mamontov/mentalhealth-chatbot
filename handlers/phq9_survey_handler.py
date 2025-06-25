@@ -57,7 +57,7 @@ def register_handlers(bot: telebot.TeleBot):
                 chat_id=user_id,
                 text=get_controls_placeholder(user_id),
                 parse_mode="HTML",
-                reply_markup=survey_menu(user_id, question_index=0),
+                reply_markup=survey_menu(user_id, question_index=0, voice_count=0),
             )
 
             context.set_user_info_field(user_id, "survey_message_id", sent_q.message_id)

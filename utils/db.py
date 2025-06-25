@@ -125,24 +125,6 @@ def insert_voice_metadata(
     conn.commit()
 
 
-def delete_voice_metadata(user_id: int, file_unique_id: str) -> str | None:
-    """Remove stored voice metadata and return the local file path if found."""
-
-    conn = get_connection()
-    c = conn.cursor()
-    row = c.execute(
-        "SELECT file_path FROM wbmms_voice WHERE user_id=? AND file_unique_id=?",
-        (user_id, file_unique_id),
-    ).fetchone()
-    file_path = row["file_path"] if row else None
-    c.execute(
-        "DELETE FROM wbmms_voice WHERE user_id=? AND file_unique_id=?",
-        (user_id, file_unique_id),
-    )
-    conn.commit()
-    return file_path
-
-
 def insert_log(user_id: int, timestamp: str, action: str, details: str):
     conn = get_connection()
     c = conn.cursor()
