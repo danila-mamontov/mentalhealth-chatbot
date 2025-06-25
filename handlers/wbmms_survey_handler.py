@@ -118,39 +118,8 @@ def _render_question(
         session.question_voice_ids.pop(index, None)
     session.displayed_voice_ids.extend(new_ids)
 
-    # update controls message after voices
-    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    controls_text = prefix if prefix is not None else get_controls_placeholder(user_id)
-    voice_count = len(session.question_voice_ids.get(index, []))
-    if controls_id:
-        try:
-            bot.edit_message_text(
-                chat_id=user_id,
-                message_id=controls_id,
-                text=controls_text,
-                parse_mode="HTML",
-                reply_markup=survey_menu(user_id, index, voice_count),
-            )
-        except Exception as e:
-            if "not modified" not in str(e).lower():
-                try:
-                    sent = bot.send_message(
-                        chat_id=user_id,
-                        text=controls_text,
-                        parse_mode="HTML",
-                        reply_markup=survey_menu(user_id, index, voice_count),
-                    )
-                    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
-                except Exception:
-                    pass
-    else:
-        sent = bot.send_message(
-            chat_id=user_id,
-            text=controls_text,
-            parse_mode="HTML",
-            reply_markup=survey_menu(user_id, index, voice_count),
-        )
-        context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+    # update controls after sending voices so they appear below
+    _update_controls(bot, session, prefix)
 
 
 def _update_controls(
