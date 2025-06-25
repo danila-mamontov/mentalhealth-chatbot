@@ -37,3 +37,4 @@ voice_recieved: "Ihre Sprachnachricht wurde empfangen. Wenn Sie eine weitere Ant
 share_bot_button: "Teilen Sie den Bot"
 share_bot_text: "Ich lade ein, an einer wissenschaftlichen Studie über psychische Gesundheit teilzunehmen. Verwende diesen Bot, um Wissenschaftlern zu helfen und einen Beitrag zur Wissenschaft zu leisten!"
 voice_answer_expected: "Bitte antworten Sie mit einer Sprachnachricht."
+voice_too_short: "Sprachnachrichten müssen mindestens 30 Sekunden lang sein."
