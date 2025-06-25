@@ -1,15 +1,20 @@
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from survey import marks, WBMMS_survey, emoji_mapping
 from utils.storage import get_translation
+from localization import get_available_languages
 
 
 def language_menu():
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        InlineKeyboardButton("English", callback_data="en"),
-        InlineKeyboardButton("Deutsch", callback_data="de"),
-        InlineKeyboardButton("Русский", callback_data="ru"),
-    )
+    names = {
+        "en": "English",
+        "de": "Deutsch",
+        "ru": "Русский",
+        "fr": "Français",
+        "zh": "中文",
+    }
+    for code in get_available_languages():
+        markup.add(InlineKeyboardButton(names.get(code, code), callback_data=code))
     return markup
 
 def gender_menu(user_id):

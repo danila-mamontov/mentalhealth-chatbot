@@ -3,13 +3,14 @@ from states import SurveyStates, EditProfileStates
 
 from utils.storage import context, get_user_profile, get_translation
 from utils.menu import consent_menu, language_menu, profile_menu
+from localization import get_available_languages
 from utils.logger import logger
 
 
 # Handler for language selection buttons
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(
-        func=lambda call: call.data in ("en", "de", "ru", "set_language_change"),
+        func=lambda call: call.data in tuple(get_available_languages()) + ("set_language_change",),
         state="*",
     )
     def handle_language_selection(call):
