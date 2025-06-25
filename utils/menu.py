@@ -12,6 +12,8 @@ def language_menu():
         "ru": "Русский",
         "fr": "Français",
         "zh": "中文",
+        "hi": "हिन्दी",
+        "ar": "العربية",
     }
     for code in get_available_languages():
         markup.add(InlineKeyboardButton(names.get(code, code), callback_data=code))
