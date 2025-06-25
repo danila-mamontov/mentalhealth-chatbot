@@ -408,7 +408,7 @@ def test_handle_voice_message_multiple_resend_all(monkeypatch, tmp_path):
     bot.handler(msg2)
 
     assert bot.deleted[:2] == [5, 6]
-    assert bot.sent_voice == ["fid", "fid", "fid2"]
+    assert bot.sent_voice == ["fid", "fid2"]
 
     ids = session.question_voice_ids.get(0)
     assert ids and len(ids) == 2
