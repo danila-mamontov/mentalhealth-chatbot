@@ -215,6 +215,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)
             logger.log_event(user_id, "END WBMMS SURVEY")
+            if question_id:
+                try:
+                    bot.delete_message(user_id, question_id)
+                except Exception:
+                    pass
+                context.set_user_info_field(user_id, "survey_message_id", None)
             bot.edit_message_text(
                 chat_id=user_id,
                 message_id=call.message.message_id,
