@@ -4,6 +4,7 @@ from states import SurveyStates
 
 from config import RESPONSES_DIR
 from utils.storage import context, get_translation
+from localization import get_available_languages
 from utils.menu import main_menu, consent_menu
 from utils.logger import logger
 
@@ -14,7 +15,7 @@ def register_handlers(bot: telebot.TeleBot):
         user_id = message.chat.id
         user_language = message.from_user.language_code
         print(f"User {user_id} started the bot with language {user_language}")
-        if user_language not in ["en","de","ru"]:
+        if user_language not in get_available_languages():
             user_language = "en"
 
         if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}")):

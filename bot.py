@@ -1,6 +1,5 @@
 import os
 import telebot
-from telebot.types import BotCommand
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 
@@ -43,13 +42,6 @@ treatment_handler.register_handlers(bot)
 depressive_handler.register_handlers(bot)
 voice_handler.register_handlers(bot)
 help_handler.register_handlers(bot)
-
-bot.set_my_commands([
-    BotCommand("start", "Start the bot"),
-    BotCommand("help", "All available commands"),
-    BotCommand("support", "Contact the support team"),
-    BotCommand("delete_me", "Delete all your data"),
-])
 
 if __name__ == "__main__":
     print("Bot is running...")

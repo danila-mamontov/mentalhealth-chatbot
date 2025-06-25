@@ -65,6 +65,7 @@ def test_help_handler(monkeypatch):
     assert bot.sent_messages[0]["text"] == "help_10"
 
 
+
 def test_start_handler_new_user(monkeypatch):
     bot = FakeBot()
     uc = storage.UserContext()

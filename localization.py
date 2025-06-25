@@ -14,3 +14,8 @@ def _load_translations():
 
 
 translations = _load_translations()
+
+def get_available_languages():
+    """Return a list of available language codes."""
+    sample_key = next(iter(translations))
+    return list(translations[sample_key].keys())
