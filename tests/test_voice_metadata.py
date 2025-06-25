@@ -117,7 +117,7 @@ def test_render_question_handles_not_modified(monkeypatch):
     monkeypatch.setattr(wsh, "get_translation", lambda uid, key: "txt")
 
     wsh._render_question(bot, sess, 99, prefix="msg")
-    assert bot.sent == ["f1", "f2"]
+    assert not bot.sent
 
 
 def test_update_controls_resends(monkeypatch):

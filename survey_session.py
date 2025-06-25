@@ -28,8 +28,6 @@ class SurveySession:
         self.voice_messages: Dict[int, VoiceAnswer] = {}
         # question index -> list of voice message ids in order
         self.question_voice_ids: Dict[int, List[int]] = {}
-        # ids of voice messages currently displayed in chat
-        self.displayed_voice_ids: List[int] = []
 
     # progress helpers
     def next_question(self) -> int:
