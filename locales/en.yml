@@ -37,3 +37,4 @@ voice_recieved: "Your voice message has been received. If you want to send anoth
 share_bot_button: "Share the bot"
 share_bot_text: "I invite you to participate in a scientific study on mental health. Use this bot to help scientists and contribute to science!"
 voice_answer_expected: "Please answer with a voice message."
+voice_too_short: "Voice messages must be at least 30 seconds long."

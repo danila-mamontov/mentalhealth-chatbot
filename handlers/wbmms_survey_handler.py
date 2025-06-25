@@ -181,11 +181,37 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             logger.log_event(user_id, "WBMMS PREV", _id)
             _render_question(bot, session, question_id)
         elif action == "survey_next":
+            answers = session.get_question_voice_answers(session.current_index)
+            total = sum(a.duration for a in answers)
+            if total < 30:
+                try:
+                    bot.answer_callback_query(
+                        call.id,
+                        text=get_translation(user_id, "voice_too_short"),
+                        show_alert=True,
+                    )
+                except Exception:
+                    pass
+                return
+
             _save_voice_answers(bot, session, session.current_index)
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
             _render_question(bot, session, question_id)
         elif action == "survey_finish":
+            answers = session.get_question_voice_answers(session.current_index)
+            total = sum(a.duration for a in answers)
+            if total < 30:
+                try:
+                    bot.answer_callback_query(
+                        call.id,
+                        text=get_translation(user_id, "voice_too_short"),
+                        show_alert=True,
+                    )
+                except Exception:
+                    pass
+                return
+
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)
             logger.log_event(user_id, "END WBMMS SURVEY")
