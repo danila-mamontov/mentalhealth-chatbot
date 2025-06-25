@@ -23,6 +23,10 @@ class SqliteStateStorage:
         session["fsm_state"] = None
         save_session(user_id, session)
 
+    # Compatibility helpers used by TeleBot
+    def reset_state(self, user_id, chat_id=None, **kwargs):
+        self.delete_state(user_id, chat_id, **kwargs)
+
     def get_data(self, user_id, chat_id=None, **kwargs):
         return self._data.setdefault((user_id, chat_id), {})
 
@@ -37,5 +41,11 @@ class SqliteStateStorage:
     def set_data(self, user_id, chat_id=None, data=None, **kwargs):
         self._data[(user_id, chat_id)] = data or {}
 
+    def save_data(self, user_id, chat_id=None, data=None, **kwargs):
+        self.set_data(user_id, chat_id, data, **kwargs)
+
     def reset_data(self, user_id, chat_id=None, **kwargs):
         self._data.pop((user_id, chat_id), None)
+
+    def delete_data(self, user_id, chat_id=None, **kwargs):
+        self.reset_data(user_id, chat_id, **kwargs)
