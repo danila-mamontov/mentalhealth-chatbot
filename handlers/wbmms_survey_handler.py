@@ -6,13 +6,13 @@ import os
 import telebot
 
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
-from utils.menu import survey_menu, main_menu, delete_voice_menu
+from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata, delete_voice_metadata
+from utils.db import insert_voice_metadata
 
 
 def get_controls_placeholder(user_id: int) -> str:
@@ -183,42 +183,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
             _render_question(bot, session, question_id)
-        elif action == "survey_delete":
-            count = len(session.question_voice_ids.get(session.current_index, []))
-            if count == 0:
-                bot.answer_callback_query(call.id)
-            else:
-                bot.edit_message_text(
-                    chat_id=user_id,
-                    message_id=call.message.message_id,
-                    text=get_translation(user_id, "select_voice_delete"),
-                    parse_mode="HTML",
-                    reply_markup=delete_voice_menu(user_id, count),
-                )
-        elif action == "survey_del_back":
-            _render_question(bot, session, question_id)
-        elif action.startswith("survey_del_"):
-            index = int(action.rsplit("_", 1)[-1])
-            ids = session.question_voice_ids.get(session.current_index, [])
-            prefix = None
-            if 0 <= index < len(ids):
-                msg_id = ids.pop(index)
-                meta = session.voice_messages.pop(msg_id, None)
-                try:
-                    bot.delete_message(user_id, msg_id)
-                except Exception:
-                    pass
-                if not ids:
-                    session.question_voice_ids.pop(session.current_index, None)
-                if meta and meta.saved:
-                    path = delete_voice_metadata(user_id, meta.file_unique_id)
-                    if path and os.path.exists(path):
-                        try:
-                            os.remove(path)
-                        except OSError:
-                            pass
-                prefix = get_translation(user_id, "voice_deleted")
-            _render_question(bot, session, question_id, prefix)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)
