@@ -2,6 +2,7 @@ import telebot
 from states import SurveyStates, EditProfileStates
 
 from utils.storage import context, get_user_profile, get_translation
+from utils.db import save_session
 from utils.menu import consent_menu, language_menu, profile_menu
 from localization import get_available_languages
 from utils.logger import logger
@@ -25,6 +26,7 @@ def register_handlers(bot: telebot.TeleBot):
             state = bot.get_state(user_id)
             if state == str(SurveyStates.language):
                 bot.set_state(user_id, SurveyStates.consent, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.consent)})
                 bot.edit_message_text(chat_id=user_id,
                                       message_id=message_id,
                                       text=get_translation(user_id, "consent_message"),
@@ -39,6 +41,7 @@ def register_handlers(bot: telebot.TeleBot):
                     reply_markup=profile_menu(user_id),
                 )
                 bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
         else:
             logger.log_event(user_id, "CHANGE LANGUAGE", "")
             bot.edit_message_text(chat_id=user_id,
@@ -47,5 +50,6 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
             bot.set_state(user_id, EditProfileStates.language, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(EditProfileStates.language)})
 
 

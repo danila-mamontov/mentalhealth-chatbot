@@ -1,6 +1,7 @@
 import telebot
 from utils.menu import age_range_menu, gender_menu, profile_menu
 from utils.storage import context, get_user_profile, get_translation
+from utils.db import save_session
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
 def register_handlers(bot: telebot.TeleBot):
@@ -18,6 +19,7 @@ def register_handlers(bot: telebot.TeleBot):
             state = bot.get_state(user_id)
             if state == str(SurveyStates.gender) and not context.get_user_info_field(user_id, "age"):
                 bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.age)})
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
@@ -34,6 +36,7 @@ def register_handlers(bot: telebot.TeleBot):
                     reply_markup=profile_menu(user_id),
                 )
                 bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
 
         else:
             logger.log_event(user_id, "CHANGE GENDER", "")
@@ -45,6 +48,7 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=gender_menu(user_id),
             )
             bot.set_state(user_id, EditProfileStates.gender, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(EditProfileStates.gender)})
 
 
 

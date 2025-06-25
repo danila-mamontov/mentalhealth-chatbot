@@ -13,7 +13,7 @@ from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata
+from utils.db import insert_voice_metadata, save_session
 
 
 def get_controls_placeholder(user_id: int) -> str:
@@ -231,4 +231,5 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 reply_markup=main_menu(user_id),
             )
             bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
 

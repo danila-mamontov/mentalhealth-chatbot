@@ -78,6 +78,16 @@ def init_db():
         details TEXT
     )""")
 
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS user_session (
+            user_id INTEGER PRIMARY KEY,
+            fsm_state TEXT,
+            current_question_index INTEGER,
+            survey_message_id INTEGER,
+            survey_controls_id INTEGER
+        )"""
+    )
+
     c.execute("""CREATE TABLE IF NOT EXISTS stats (
         id INTEGER PRIMARY KEY CHECK (id=1),
         total_audio_files INTEGER DEFAULT 0,
@@ -281,5 +291,43 @@ def delete_user_records(user_id: int) -> None:
     c.execute("DELETE FROM phq_answers WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM user_session WHERE user_id=?", (user_id,))
     conn.commit()
     update_stats()
+
+
+def load_session(user_id: int) -> dict | None:
+    """Return saved session info for a user."""
+    conn = get_connection()
+    row = conn.execute(
+        "SELECT * FROM user_session WHERE user_id=?",
+        (user_id,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def save_session(user_id: int, state: dict) -> None:
+    """Persist session info for a user."""
+    conn = get_connection()
+    columns = [
+        "user_id",
+        "fsm_state",
+        "current_question_index",
+        "survey_message_id",
+        "survey_controls_id",
+    ]
+    values = [
+        user_id,
+        state.get("fsm_state"),
+        state.get("current_question_index"),
+        state.get("survey_message_id"),
+        state.get("survey_controls_id"),
+    ]
+    placeholders = ",".join(["?"] * len(columns))
+    updates = ",".join([f"{c}=excluded.{c}" for c in columns[1:]])
+    conn.execute(
+        f"INSERT INTO user_session ({','.join(columns)}) VALUES ({placeholders}) "
+        f"ON CONFLICT(user_id) DO UPDATE SET {updates}",
+        values,
+    )
+    conn.commit()

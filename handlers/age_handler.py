@@ -4,6 +4,7 @@ from survey import get_phq9_question_and_options, keycap_numbers
 from utils.chat_control import message_ids
 from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu, profile_menu
 from utils.storage import context, get_translation, get_user_profile
+from utils.db import save_session
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
 
@@ -41,8 +42,10 @@ def register_handlers(bot: telebot.TeleBot):
             current = bot.get_state(user_id)
             if current == str(SurveyStates.age):
                 bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.age)})
             else:
                 bot.set_state(user_id, EditProfileStates.age, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(EditProfileStates.age)})
 
     @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state="*")
     def handle_exact_age_selection(call):
@@ -88,5 +91,6 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=profile_menu(user_id)
             )
         bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+        save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
 
 
