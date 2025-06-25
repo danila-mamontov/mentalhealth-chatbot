@@ -58,23 +58,10 @@ def register_handlers(bot: telebot.TeleBot):
         except Exception:
             pass
 
-        # re-send the voice message from bot account
-        try:
-            sent = bot.send_voice(user_id, file_id)
-        except Exception:
-            sent = None
-        else:
-            session.voice_messages.pop(message.message_id, None)
-            session.voice_messages[sent.message_id] = va
-            ids = session.question_voice_ids.get(current_question, [])
-            try:
-                idx = ids.index(message.message_id)
-                ids[idx] = sent.message_id
-            except ValueError:
-                ids.append(sent.message_id)
-
+        # refresh the question display with all recorded voices
+        question_msg = context.get_user_info_field(user_id, "survey_message_id")
         prefix = get_translation(user_id, "voice_recieved")
-        wsh._update_controls(bot, session, prefix)
+        wsh._render_question(bot, session, question_msg, prefix)
 
         logger.log_event(
             user_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}"

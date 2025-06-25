@@ -92,31 +92,64 @@ def _render_question(
         if "not modified" not in str(e).lower():
             raise
 
-    # refresh controls below the question
-    _update_controls(bot, session, prefix)
+    voice_ids = session.question_voice_ids.get(index, [])
+    new_ids: list[int] = []
+    for vid in voice_ids:
+        meta = session.voice_messages.get(vid)
+        if not meta:
+            continue
+        sent = bot.send_voice(user_id, meta.file_id)
+        session.voice_messages.pop(vid, None)
+        session.voice_messages[sent.message_id] = meta
+        new_ids.append(sent.message_id)
+    if new_ids:
+        session.question_voice_ids[index] = new_ids
+
+    _update_controls(bot, session, prefix, relocate=bool(new_ids))
 
 
 def _update_controls(
     bot: telebot.TeleBot,
     session: SurveySession,
     prefix: str | None = None,
+    relocate: bool = True,
 ) -> None:
-    """Show the control buttons at the bottom of the chat."""
+    """Show or refresh the control buttons at the bottom of the chat."""
 
     user_id = session.user_id
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    if controls_id:
-        try:
-            bot.delete_message(user_id, controls_id)
-        except Exception:
-            pass
+    text = prefix if prefix is not None else get_controls_placeholder(user_id)
+    markup = survey_menu(
+        user_id, session.current_index, len(session.question_voice_ids.get(session.current_index, []))
+    )
 
-    count = len(session.question_voice_ids.get(session.current_index, []))
+    if relocate:
+        if controls_id:
+            try:
+                bot.delete_message(user_id, controls_id)
+            except Exception:
+                pass
+            controls_id = None
+
+    if controls_id and not relocate:
+        try:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=controls_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=markup,
+            )
+            return
+        except Exception as e:
+            if "not modified" in str(e).lower():
+                return
+
     sent = bot.send_message(
         chat_id=user_id,
-        text=prefix if prefix is not None else get_controls_placeholder(user_id),
+        text=text,
         parse_mode="HTML",
-        reply_markup=survey_menu(user_id, session.current_index, count),
+        reply_markup=markup,
     )
     context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 

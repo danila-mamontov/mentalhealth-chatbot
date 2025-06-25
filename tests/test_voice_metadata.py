@@ -117,7 +117,7 @@ def test_render_question_handles_not_modified(monkeypatch):
     monkeypatch.setattr(wsh, "get_translation", lambda uid, key: "txt")
 
     wsh._render_question(bot, sess, 99, prefix="msg")
-    assert not bot.sent
+    assert bot.sent == ["f1", "f2"]
 
 
 def test_update_controls_resends(monkeypatch):
@@ -153,6 +153,45 @@ def test_update_controls_resends(monkeypatch):
 
     assert bot.deleted[-1] == first_id
     assert bot.sent == ["one", "two"]
+
+
+def test_update_controls_edit(monkeypatch):
+    import importlib
+    import survey_session as ss
+    import handlers.wbmms_survey_handler as wsh
+
+    importlib.reload(ss)
+    importlib.reload(wsh)
+
+    sess = ss.SurveySession(1)
+
+    class Bot:
+        def __init__(self):
+            self.sent = []
+            self.edited = []
+            self.deleted = []
+
+        def delete_message(self, chat_id, message_id):
+            self.deleted.append(message_id)
+
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            self.sent.append(text)
+            return SimpleNamespace(message_id=len(self.sent))
+
+        def edit_message_text(self, chat_id, message_id, text, parse_mode=None, reply_markup=None):
+            self.edited.append((message_id, text))
+
+    bot = Bot()
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi, vc=0: "menu")
+
+    wsh.context.set_user_info_field(1, "survey_controls_id", None)
+
+    wsh._update_controls(bot, sess, prefix="one", relocate=True)
+    cid = wsh.context.get_user_info_field(1, "survey_controls_id")
+    wsh._update_controls(bot, sess, prefix="two", relocate=False)
+
+    assert cid not in bot.deleted
+    assert bot.edited and bot.edited[0][0] == cid
 
 
 def test_save_voice_answers_deletes_messages(monkeypatch):
@@ -369,7 +408,7 @@ def test_handle_voice_message_multiple_resend_all(monkeypatch, tmp_path):
     bot.handler(msg2)
 
     assert bot.deleted[:2] == [5, 6]
-    assert bot.sent_voice == ["fid", "fid2"]
+    assert bot.sent_voice == ["fid", "fid", "fid2"]
 
     ids = session.question_voice_ids.get(0)
     assert ids and len(ids) == 2
