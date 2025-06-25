@@ -242,14 +242,19 @@ def test_handle_voice_message_resends(monkeypatch, tmp_path):
             self.sent_voice.append(fid)
             return SimpleNamespace(message_id=50 + len(self.sent_voice))
 
+        def edit_message_text(self, *a, **k):
+            pass
+
         def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
             return SimpleNamespace(message_id=99)
 
     bot = Bot()
     vh.register_handlers(bot)
 
+    wsh.context.add_new_user(1)
     wsh.context.set_user_info_field(1, "survey_message_id", 20)
     wsh.context.set_user_info_field(1, "survey_controls_id", None)
+    wsh.context.set_user_info_field(1, "language", "en")
 
     session = ss.SurveyManager.get_session(1)
 
@@ -273,6 +278,106 @@ def test_handle_voice_message_resends(monkeypatch, tmp_path):
 
     conn = db.get_connection()
     assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 1
+
+
+def test_handle_voice_message_multiple_resend_all(monkeypatch, tmp_path):
+    db_file = tmp_path / "bot.db"
+    monkeypatch.setenv("DB_PATH", str(db_file))
+
+    import config
+    import utils.db as db
+    import importlib
+    importlib.reload(config)
+    importlib.reload(db)
+    db.init_db()
+
+    import handlers.wbmms_survey_handler as wsh
+    import handlers.voice_handler as vh
+    import survey_session as ss
+    importlib.reload(ss)
+    importlib.reload(wsh)
+    importlib.reload(vh)
+
+    monkeypatch.setattr(wsh, "RESPONSES_DIR", str(tmp_path / "resp"))
+    monkeypatch.setattr(wsh, "survey_menu", lambda uid, qi, vc=0: "menu")
+    monkeypatch.setattr(wsh, "get_translation", lambda uid, key: key)
+
+    class Bot:
+        def __init__(self):
+            self.handler = None
+            self.deleted = []
+            self.downloaded = []
+            self.sent_voice = []
+
+        def message_handler(self, *a, **k):
+            def wrap(func):
+                self.handler = func
+                return func
+            return wrap
+
+        def callback_query_handler(self, *a, **k):
+            def wrap(func):
+                return func
+            return wrap
+
+        def get_file(self, fid):
+            return SimpleNamespace(file_path="remote")
+
+        def download_file(self, path):
+            self.downloaded.append(path)
+            return b"d"
+
+        def delete_message(self, chat_id, mid):
+            self.deleted.append(mid)
+
+        def send_voice(self, chat_id, fid):
+            self.sent_voice.append(fid)
+            return SimpleNamespace(message_id=50 + len(self.sent_voice))
+
+        def edit_message_text(self, *a, **k):
+            pass
+
+        def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
+            return SimpleNamespace(message_id=99)
+
+    bot = Bot()
+    vh.register_handlers(bot)
+
+    wsh.context.add_new_user(1)
+    wsh.context.set_user_info_field(1, "survey_message_id", 20)
+    wsh.context.set_user_info_field(1, "survey_controls_id", None)
+    wsh.context.set_user_info_field(1, "language", "en")
+
+    session = ss.SurveyManager.get_session(1)
+
+    msg1 = SimpleNamespace(
+        chat=SimpleNamespace(id=1),
+        voice=SimpleNamespace(file_id="fid", file_unique_id="uid", duration=3),
+        message_id=5,
+        date=1,
+    )
+
+    bot.handler(msg1)
+
+    msg2 = SimpleNamespace(
+        chat=SimpleNamespace(id=1),
+        voice=SimpleNamespace(file_id="fid2", file_unique_id="uid2", duration=4),
+        message_id=6,
+        date=2,
+    )
+
+    bot.handler(msg2)
+
+    assert bot.deleted[:3] == [5, 51, 6]
+    assert bot.sent_voice == ["fid", "fid", "fid2"]
+
+    ids = session.question_voice_ids.get(0)
+    assert ids and len(ids) == 2
+    metas = [session.voice_messages[i] for i in ids]
+    assert {m.file_unique_id for m in metas} == {"uid", "uid2"}
+
+    conn = db.get_connection()
+    assert conn.execute("SELECT COUNT(*) FROM wbmms_voice").fetchone()[0] == 2
 
 
 

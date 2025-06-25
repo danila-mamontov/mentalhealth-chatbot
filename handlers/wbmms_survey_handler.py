@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import telebot
+from typing import List
 
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
 from utils.menu import survey_menu, main_menu
@@ -99,11 +100,23 @@ def _render_question(
             pass
     session.displayed_voice_ids.clear()
 
-    for msg_id in session.question_voice_ids.get(index, []):
+    new_ids: List[int] = []
+    old_ids = session.question_voice_ids.get(index, [])
+    for msg_id in old_ids:
         meta = session.voice_messages.get(msg_id)
-        if meta:
-            sent = bot.send_voice(user_id, meta.file_id)
-            session.displayed_voice_ids.append(sent.message_id)
+        if not meta:
+            continue
+        sent = bot.send_voice(user_id, meta.file_id)
+        new_ids.append(sent.message_id)
+        session.voice_messages[sent.message_id] = meta
+        if sent.message_id != msg_id:
+            session.voice_messages.pop(msg_id, None)
+
+    if new_ids:
+        session.question_voice_ids[index] = new_ids
+    else:
+        session.question_voice_ids.pop(index, None)
+    session.displayed_voice_ids.extend(new_ids)
 
     # update controls message after voices
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
