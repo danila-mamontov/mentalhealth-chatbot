@@ -6,6 +6,7 @@ class SurveyStates(StatesGroup):
     """Conversation steps handled via TeleBot's state machine."""
 
     language = State()
+    language_confirm = State()
     consent = State()
     gender = State()
     age = State()

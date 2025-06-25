@@ -81,7 +81,7 @@ def test_start_handler_new_user(monkeypatch):
     from_user = SimpleNamespace(language_code="en", first_name="A", last_name="B", username="user")
     msg = SimpleNamespace(chat=SimpleNamespace(id=5), from_user=from_user, location=None)
     bot.handlers["start"](msg)
-    assert bot.states[5] == SurveyStates.consent
+    assert bot.states[5] == SurveyStates.language_confirm
     assert bot.sent_messages[0]["reply_markup"] == "consent"
 
 
@@ -119,7 +119,7 @@ def test_delete_me_and_restart(monkeypatch):
     bot.handlers["delete_user_data"](msg)
     assert uc.get_user_info(7) is None
 
-    # starting again should show consent menu again
+    # starting again should show language confirmation again
     bot.handlers["start"](msg)
     assert bot.sent_messages[-1]["reply_markup"] == "consent"
 
