@@ -28,8 +28,6 @@ class SurveySession:
         self.voice_messages: Dict[int, VoiceAnswer] = {}
         # question index -> list of voice message ids in order
         self.question_voice_ids: Dict[int, List[int]] = {}
-        # ids of voice messages currently displayed in chat
-        self.displayed_voice_ids: List[int] = []
 
     # progress helpers
     def next_question(self) -> int:
@@ -54,21 +52,6 @@ class SurveySession:
         self.voice_messages[message_id] = meta
         self.question_voice_ids.setdefault(meta.question_id, []).append(message_id)
 
-    def delete_voice(self, question_index: int) -> Optional[tuple[int, VoiceAnswer]]:
-        """Remove the most recent stored voice for a question.
-
-        Returns a tuple ``(message_id, VoiceAnswer)`` for the removed voice if
-        any.
-        """
-
-        ids = self.question_voice_ids.get(question_index)
-        if not ids:
-            return None
-        message_id = ids.pop()
-        meta = self.voice_messages.pop(message_id, None)
-        if not ids:
-            self.question_voice_ids.pop(question_index, None)
-        return message_id, meta
 
     def iter_voice_answers(self):
         """Yield stored voice answers."""

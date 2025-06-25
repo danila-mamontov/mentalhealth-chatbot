@@ -5,14 +5,15 @@ from __future__ import annotations
 import os
 import telebot
 
+
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
-from utils.menu import survey_menu, main_menu, delete_voice_menu
+from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
-from utils.db import insert_voice_metadata, delete_voice_metadata
+from utils.db import insert_voice_metadata
 
 
 def get_controls_placeholder(user_id: int) -> str:
@@ -91,76 +92,77 @@ def _render_question(
         if "not modified" not in str(e).lower():
             raise
 
-    # remove previously displayed voices
-    for vid in session.displayed_voice_ids:
-        try:
-            bot.delete_message(user_id, vid)
-        except Exception:
-            pass
-    session.displayed_voice_ids.clear()
+    voice_ids = session.question_voice_ids.get(index, [])
+    new_ids: list[int] = []
 
-    for msg_id in session.question_voice_ids.get(index, []):
-        meta = session.voice_messages.get(msg_id)
-        if meta:
+    if voice_ids:
+        controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+        if controls_id:
+            try:
+                bot.delete_message(user_id, controls_id)
+            except Exception:
+                pass
+            context.set_user_info_field(user_id, "survey_controls_id", None)
+
+        for vid in voice_ids:
+            meta = session.voice_messages.get(vid)
+            if not meta:
+                continue
             sent = bot.send_voice(user_id, meta.file_id)
-            session.displayed_voice_ids.append(sent.message_id)
+            session.voice_messages.pop(vid, None)
+            session.voice_messages[sent.message_id] = meta
+            new_ids.append(sent.message_id)
 
-    # update controls message after voices
-    controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    controls_text = prefix if prefix is not None else get_controls_placeholder(user_id)
-    voice_count = len(session.question_voice_ids.get(index, []))
-    if controls_id:
-        try:
-            bot.edit_message_text(
-                chat_id=user_id,
-                message_id=controls_id,
-                text=controls_text,
-                parse_mode="HTML",
-                reply_markup=survey_menu(user_id, index, voice_count),
-            )
-        except Exception as e:
-            if "not modified" not in str(e).lower():
-                try:
-                    sent = bot.send_message(
-                        chat_id=user_id,
-                        text=controls_text,
-                        parse_mode="HTML",
-                        reply_markup=survey_menu(user_id, index, voice_count),
-                    )
-                    context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
-                except Exception:
-                    pass
+        if new_ids:
+            session.question_voice_ids[index] = new_ids
+
+        _update_controls(bot, session, prefix, relocate=True)
     else:
-        sent = bot.send_message(
-            chat_id=user_id,
-            text=controls_text,
-            parse_mode="HTML",
-            reply_markup=survey_menu(user_id, index, voice_count),
-        )
-        context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
+        _update_controls(bot, session, prefix, relocate=False)
 
 
 def _update_controls(
     bot: telebot.TeleBot,
     session: SurveySession,
     prefix: str | None = None,
+    relocate: bool = True,
 ) -> None:
-    """Show the control buttons at the bottom of the chat."""
+    """Show or refresh the control buttons at the bottom of the chat."""
 
     user_id = session.user_id
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
-    if controls_id:
-        try:
-            bot.delete_message(user_id, controls_id)
-        except Exception:
-            pass
+    text = prefix if prefix is not None else get_controls_placeholder(user_id)
+    markup = survey_menu(
+        user_id, session.current_index, len(session.question_voice_ids.get(session.current_index, []))
+    )
 
-    count = len(session.question_voice_ids.get(session.current_index, []))
+    if relocate:
+        if controls_id:
+            try:
+                bot.delete_message(user_id, controls_id)
+            except Exception:
+                pass
+            controls_id = None
+
+    if controls_id and not relocate:
+        try:
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=controls_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=markup,
+            )
+            return
+        except Exception as e:
+            if "not modified" in str(e).lower():
+                return
+
     sent = bot.send_message(
         chat_id=user_id,
-        text=prefix if prefix is not None else get_controls_placeholder(user_id),
+        text=text,
         parse_mode="HTML",
-        reply_markup=survey_menu(user_id, session.current_index, count),
+        reply_markup=markup,
     )
     context.set_user_info_field(user_id, "survey_controls_id", sent.message_id)
 
@@ -183,42 +185,6 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             _id = session.next_question()
             logger.log_event(user_id, "WBMMS NEXT", _id)
             _render_question(bot, session, question_id)
-        elif action == "survey_delete":
-            count = len(session.question_voice_ids.get(session.current_index, []))
-            if count == 0:
-                bot.answer_callback_query(call.id)
-            else:
-                bot.edit_message_text(
-                    chat_id=user_id,
-                    message_id=call.message.message_id,
-                    text=get_translation(user_id, "select_voice_delete"),
-                    parse_mode="HTML",
-                    reply_markup=delete_voice_menu(user_id, count),
-                )
-        elif action == "survey_del_back":
-            _render_question(bot, session, question_id)
-        elif action.startswith("survey_del_"):
-            index = int(action.rsplit("_", 1)[-1])
-            ids = session.question_voice_ids.get(session.current_index, [])
-            prefix = None
-            if 0 <= index < len(ids):
-                msg_id = ids.pop(index)
-                meta = session.voice_messages.pop(msg_id, None)
-                try:
-                    bot.delete_message(user_id, msg_id)
-                except Exception:
-                    pass
-                if not ids:
-                    session.question_voice_ids.pop(session.current_index, None)
-                if meta and meta.saved:
-                    path = delete_voice_metadata(user_id, meta.file_unique_id)
-                    if path and os.path.exists(path):
-                        try:
-                            os.remove(path)
-                        except OSError:
-                            pass
-                prefix = get_translation(user_id, "voice_deleted")
-            _render_question(bot, session, question_id, prefix)
         elif action == "survey_finish":
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(user_id)
