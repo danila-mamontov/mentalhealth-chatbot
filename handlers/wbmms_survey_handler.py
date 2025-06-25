@@ -94,18 +94,31 @@ def _render_question(
 
     voice_ids = session.question_voice_ids.get(index, [])
     new_ids: list[int] = []
-    for vid in voice_ids:
-        meta = session.voice_messages.get(vid)
-        if not meta:
-            continue
-        sent = bot.send_voice(user_id, meta.file_id)
-        session.voice_messages.pop(vid, None)
-        session.voice_messages[sent.message_id] = meta
-        new_ids.append(sent.message_id)
-    if new_ids:
-        session.question_voice_ids[index] = new_ids
 
-    _update_controls(bot, session, prefix, relocate=bool(new_ids))
+    if voice_ids:
+        controls_id = context.get_user_info_field(user_id, "survey_controls_id")
+        if controls_id:
+            try:
+                bot.delete_message(user_id, controls_id)
+            except Exception:
+                pass
+            context.set_user_info_field(user_id, "survey_controls_id", None)
+
+        for vid in voice_ids:
+            meta = session.voice_messages.get(vid)
+            if not meta:
+                continue
+            sent = bot.send_voice(user_id, meta.file_id)
+            session.voice_messages.pop(vid, None)
+            session.voice_messages[sent.message_id] = meta
+            new_ids.append(sent.message_id)
+
+        if new_ids:
+            session.question_voice_ids[index] = new_ids
+
+        _update_controls(bot, session, prefix, relocate=True)
+    else:
+        _update_controls(bot, session, prefix, relocate=False)
 
 
 def _update_controls(
