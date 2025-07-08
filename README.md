@@ -1,7 +1,7 @@
 Demo Presentation
-https://github.com/user-attachments/assets/9e7341d8-ec4d-4255-acbb-908323571e45
 
 
+[<img width="50%">](https://github.com/user-attachments/assets/9e7341d8-ec4d-4255-acbb-908323571e45 "Demo Video")
 ## 1. Commands
 - `/start` - Start the bot
 - `/help` - Show help information
