@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from telebot.storage import StateStorageBase, StateContext
+from telebot.storage import StateStorageBase
+from telebot.storage.base_storage import StateContext
 from .db import load_session, save_session
 
 
