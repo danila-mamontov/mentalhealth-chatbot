@@ -21,11 +21,6 @@ def test_stats_updates(tmp_path, monkeypatch):
         "language": "en",
         "treatment": None,
         "depressive": None,
-        "first_name": None,
-        "family_name": None,
-        "username": None,
-        "latitude": None,
-        "longitude": None,
     })
 
     db.insert_voice_metadata(1, 0, "uid", "file", 5, 1, 10)

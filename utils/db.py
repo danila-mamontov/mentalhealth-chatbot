@@ -39,12 +39,7 @@ def init_db():
             age INTEGER,
             language TEXT,
             treatment TEXT,
-            depressive TEXT,
-            first_name TEXT,
-            family_name TEXT,
-            username TEXT,
-            latitude REAL,
-            longitude REAL
+            depressive TEXT
         )"""
     )
 
@@ -55,6 +50,30 @@ def init_db():
         rows = c.execute("SELECT user_id FROM user_profile ORDER BY rowid").fetchall()
         for idx, row in enumerate(rows, start=1):
             c.execute("UPDATE user_profile SET id=? WHERE user_id=?", (idx, row[0]))
+        conn.commit()
+
+    # remove deprecated columns if present
+    drop_cols = {"first_name", "family_name", "username", "latitude", "longitude"}
+    if any(col in cols for col in drop_cols):
+        remaining = [c for c in cols if c not in drop_cols]
+        cols_clause = ",".join(remaining)
+        c.execute("ALTER TABLE user_profile RENAME TO user_profile_old")
+        c.execute(
+            """CREATE TABLE user_profile (
+                user_id INTEGER PRIMARY KEY,
+                id INTEGER UNIQUE,
+                consent TEXT,
+                gender TEXT,
+                age INTEGER,
+                language TEXT,
+                treatment TEXT,
+                depressive TEXT
+            )"""
+        )
+        c.execute(
+            f"INSERT INTO user_profile ({cols_clause}) SELECT {cols_clause} FROM user_profile_old"
+        )
+        c.execute("DROP TABLE user_profile_old")
         conn.commit()
 
     c.execute("""CREATE TABLE IF NOT EXISTS phq_answers (
@@ -216,8 +235,7 @@ def upsert_user_profile(user_info: dict):
         user_info = {**user_info, "id": existing[0]}
 
     columns = [
-        'user_id','id','consent','gender','age','language','treatment','depressive',
-        'first_name','family_name','username','latitude','longitude'
+        'user_id','id','consent','gender','age','language','treatment','depressive'
     ]
     values = [user_info.get(col) for col in columns]
     placeholders = ','.join(['?'] * len(columns))
