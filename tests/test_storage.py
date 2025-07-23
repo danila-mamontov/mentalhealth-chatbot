@@ -6,6 +6,11 @@ sys.modules.setdefault("numpy", types.ModuleType("numpy"))
 sys.modules.setdefault("pandas", types.ModuleType("pandas"))
 
 os.environ["DB_PATH"] = ":memory:"
+os.environ["ID_DB_PATH"] = ":memory:"
+import importlib
+import utils.user_map as um
+importlib.reload(um)
+um.init_user_map()
 
 from utils import storage
 from localization import translations

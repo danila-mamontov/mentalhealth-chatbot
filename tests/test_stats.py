@@ -5,6 +5,11 @@ import importlib
 def test_stats_updates(tmp_path, monkeypatch):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
+    monkeypatch.setenv("ID_DB_PATH", ":memory:")
+    import importlib
+    import utils.user_map as um
+    importlib.reload(um)
+    um.init_user_map()
 
     import config
     import utils.db as db
@@ -21,9 +26,6 @@ def test_stats_updates(tmp_path, monkeypatch):
         "language": "en",
         "treatment": None,
         "depressive": None,
-        "first_name": None,
-        "family_name": None,
-        "username": None,
     })
 
     db.insert_voice_metadata(1, 0, "uid", "file", 5, 1, 10)

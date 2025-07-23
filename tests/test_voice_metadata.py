@@ -25,6 +25,11 @@ sys.modules.setdefault("telebot.handler_backends", sys.modules["telebot"].handle
 def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
+    monkeypatch.setenv("ID_DB_PATH", ":memory:")
+    import importlib
+    import utils.user_map as um
+    importlib.reload(um)
+    um.init_user_map()
 
     import config
     import utils.db as db
@@ -230,6 +235,11 @@ def test_save_voice_answers_deletes_messages(monkeypatch):
 def test_handle_voice_message_resends(monkeypatch, tmp_path):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
+    monkeypatch.setenv("ID_DB_PATH", ":memory:")
+    import importlib
+    import utils.user_map as um
+    importlib.reload(um)
+    um.init_user_map()
 
     import config
     import utils.db as db
@@ -326,6 +336,11 @@ def test_handle_voice_message_resends(monkeypatch, tmp_path):
 def test_handle_voice_message_multiple_resend_all(monkeypatch, tmp_path):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
+    monkeypatch.setenv("ID_DB_PATH", ":memory:")
+    import importlib
+    import utils.user_map as um
+    importlib.reload(um)
+    um.init_user_map()
 
     import config
     import utils.db as db
@@ -430,6 +445,11 @@ def test_handle_voice_message_multiple_resend_all(monkeypatch, tmp_path):
 def test_navigation_total_duration_check(monkeypatch, tmp_path):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
+    monkeypatch.setenv("ID_DB_PATH", ":memory:")
+    import importlib
+    import utils.user_map as um
+    importlib.reload(um)
+    um.init_user_map()
 
     import config
     import utils.db as db

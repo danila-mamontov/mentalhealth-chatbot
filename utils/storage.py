@@ -9,8 +9,10 @@ from utils.db import (
     load_session,
     save_session,
 )
+from utils.user_map import init_user_map, get_user_id
 
 init_db()
+init_user_map()
 
 
 def get_translation(user_id, key):
@@ -83,9 +85,6 @@ class UserContext:
             "language": None,
             "treatment": None,
             "depressive": None,
-            "first_name": None,
-            "family_name": None,
-            "username": None,
             "first_launch": datetime.utcnow().isoformat(timespec="seconds"),
         }
 

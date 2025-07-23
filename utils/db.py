@@ -40,9 +40,6 @@ def init_db():
             language TEXT,
             treatment TEXT,
             depressive TEXT,
-            first_name TEXT,
-            family_name TEXT,
-            username TEXT,
             first_launch TEXT
         )"""
     )
@@ -226,9 +223,6 @@ def upsert_user_profile(user_info: dict):
         'language',
         'treatment',
         'depressive',
-        'first_name',
-        'family_name',
-        'username',
         'first_launch',
     ]
     values = [user_info.get(col) for col in columns]

@@ -1,6 +1,7 @@
 import telebot
 from utils.menu import age_range_menu, gender_menu, profile_menu
 from utils.storage import context, get_user_profile, get_translation
+from utils.user_map import get_user_id
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
 def register_handlers(bot: telebot.TeleBot):
@@ -9,7 +10,8 @@ def register_handlers(bot: telebot.TeleBot):
         state="*",
     )
     def handle_gender_selection(call):
-        user_id = call.message.chat.id
+        telegram_id = call.message.chat.id
+        user_id = get_user_id(telegram_id)
         if call.data != "set_gender_change":
             gender = call.data
             context.set_user_info_field(user_id, "gender", gender)
@@ -19,7 +21,7 @@ def register_handlers(bot: telebot.TeleBot):
             if state == str(SurveyStates.gender) and not context.get_user_info_field(user_id, "age"):
                 bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
                 bot.edit_message_text(
-                    chat_id=call.message.chat.id,
+                    chat_id=telegram_id,
                     message_id=call.message.message_id,
                     text=get_translation(user_id, "age_selection"),
                     parse_mode="HTML",
@@ -27,7 +29,7 @@ def register_handlers(bot: telebot.TeleBot):
                 )
             else:
                 bot.edit_message_text(
-                    chat_id=call.message.chat.id,
+                    chat_id=telegram_id,
                     message_id=call.message.message_id,
                     text=get_user_profile(user_id),
                     parse_mode='HTML',
@@ -38,7 +40,7 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             logger.log_event(user_id, "CHANGE GENDER", "")
             bot.edit_message_text(
-                chat_id=call.message.chat.id,
+                chat_id=telegram_id,
                 message_id=call.message.message_id,
                 text=get_translation(user_id, "gender_selection"),
                 parse_mode='HTML',
