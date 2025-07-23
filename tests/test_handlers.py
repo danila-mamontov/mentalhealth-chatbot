@@ -7,11 +7,6 @@ sys.modules.setdefault("numpy", types.ModuleType("numpy"))
 sys.modules.setdefault("pandas", types.ModuleType("pandas"))
 
 os.environ["DB_PATH"] = ":memory:"
-os.environ["ID_DB_PATH"] = ":memory:"
-import importlib
-import utils.user_map as um
-importlib.reload(um)
-um.init_user_map()
 
 telebot_stub = types.ModuleType("telebot")
 telebot_stub.TeleBot = object
@@ -67,8 +62,7 @@ def test_help_handler(monkeypatch):
     help_handler.register_handlers(bot)
     msg = SimpleNamespace(chat=SimpleNamespace(id=10))
     bot.handlers["handle_help"](msg)
-    uid = help_handler.get_user_id(10)
-    assert bot.sent_messages[0]["text"] == f"help_{uid}"
+    assert bot.sent_messages[0]["text"] == "help_10"
 
 
 
@@ -87,8 +81,7 @@ def test_start_handler_new_user(monkeypatch):
     from_user = SimpleNamespace(language_code="en", first_name="A", last_name="B", username="user")
     msg = SimpleNamespace(chat=SimpleNamespace(id=5), from_user=from_user, location=None)
     bot.handlers["start"](msg)
-    uid = start_handler.get_user_id(5)
-    assert bot.states[uid] == SurveyStates.language_confirm
+    assert bot.states[5] == SurveyStates.language_confirm
     assert bot.sent_messages[0]["reply_markup"] == "consent"
 
 
@@ -120,12 +113,11 @@ def test_delete_me_and_restart(monkeypatch):
 
     # initial start should treat as new user
     bot.handlers["start"](msg)
-    uid = start_handler.get_user_id(7)
-    assert uc.get_user_info(uid) is not None
+    assert uc.get_user_info(7) is not None
 
     # delete user data
     bot.handlers["delete_user_data"](msg)
-    assert uc.get_user_info(uid) is None
+    assert uc.get_user_info(7) is None
 
     # starting again should show language confirmation again
     bot.handlers["start"](msg)

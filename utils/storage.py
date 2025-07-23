@@ -1,4 +1,3 @@
-from datetime import datetime
 from localization import translations
 from utils.db import (
     upsert_user_profile,
@@ -6,13 +5,9 @@ from utils.db import (
     get_connection,
     init_db,
     delete_user_records,
-    load_session,
-    save_session,
 )
-from utils.user_map import init_user_map, get_user_id
 
 init_db()
-init_user_map()
 
 
 def get_translation(user_id, key):
@@ -20,6 +15,14 @@ def get_translation(user_id, key):
     return translations[key].get(language)
 
 # Database helpers
+def load_user_info(user_id):
+    conn = get_connection()
+    cur = conn.execute("SELECT * FROM user_profile WHERE user_id=?", (user_id,))
+    row = cur.fetchone()
+    if row:
+        return dict(row)
+    return None
+
 def get_user_profile(user_id):
     text = get_translation(user_id, "profile_template")
 
@@ -63,18 +66,13 @@ class UserContext:
         self._session = {}
 
     def _ensure_session(self, user_id):
-        if user_id not in self._session:
-            data = load_session(user_id) or {}
-            session = {
-                "current_question_index": data.get("current_question_index", 0),
-                "vm_ids": data.get("vm_ids", {}),
-                "message_to_del": data.get("message_to_del"),
-                "survey_message_id": data.get("survey_message_id"),
-                "survey_controls_id": data.get("survey_controls_id"),
-            }
-            for i in range(8):
-                session[f"phq_{i}"] = data.get(f"phq_{i}")
-            self._session[user_id] = session
+        self._session.setdefault(user_id, {
+            "current_question_index": 0,
+            "vm_ids": {},
+            "message_to_del": None,
+            "survey_message_id": None,
+            "survey_controls_id": None,
+        })
 
     def add_new_user(self, user_id):
         params = {
@@ -85,7 +83,11 @@ class UserContext:
             "language": None,
             "treatment": None,
             "depressive": None,
-            "first_launch": datetime.utcnow().isoformat(timespec="seconds"),
+            "first_name": None,
+            "family_name": None,
+            "username": None,
+            "latitude": None,
+            "longitude": None,
         }
 
         upsert_user_profile(params)
@@ -98,7 +100,6 @@ class UserContext:
             "survey_message_id": None,
             "survey_controls_id": None,
         }
-        save_session(user_id, self._session[user_id])
 
     def delete_user(self, user_id):
         self._session.pop(user_id, None)
@@ -142,7 +143,6 @@ class UserContext:
         if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"} or field.startswith("phq_"):
             self._ensure_session(user_id)
             self._session[user_id][field] = value
-            save_session(user_id, self._session[user_id])
             return
 
         conn = get_connection()
@@ -153,10 +153,6 @@ class UserContext:
         profile = self._load_profile(user_id)
         if profile is not None:
             upsert_user_profile(profile)
-
-    def save_session(self, user_id):
-        self._ensure_session(user_id)
-        save_session(user_id, self._session[user_id])
 
     def save_phq_info(self, user_id):
         from survey import phq9_survey
@@ -169,3 +165,52 @@ class UserContext:
 
 context = UserContext()
 context.load_user_context()
+
+#     user_context = ContextVar("user_context", default={})
+#
+#
+#
+#     def load_user_info(user_id):
+#         if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv")):
+#             return None
+#         df = pd.read_csv(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv"))
+#         return df.iloc[0].to_dict()
+#
+#     def load_user_context():
+#         for root, dirs, files in os.walk(RESPONSES_DIR):
+#             for file in files:
+#                 if file == "user_info.csv":
+#                     user_id = int(os.path.basename(root))
+#                     user_info = load_user_info(user_id)
+#                     user_info["current_question_index"] = 0
+#                     user_data = user_context.get()
+#                     user_data[user_id] = user_info
+#                     user_context.set(user_data)
+#
+#     def get_user_info(user_id):
+#         user_data = user_context.get()
+#         return user_data.get(user_id)
+#
+#     def get_user_info_field(user_id, field):
+#         user_info = get_user_info(user_id)
+#         field_value = user_info.get(field)
+#         if field == "user_id" or field == "age":
+#             return int(field_value)
+#         else:
+#             return field_value
+#
+#     def set_user_info_field(user_id, field, value):
+#         user_data = user_context.get()
+#         user_info = user_data.get(user_id)
+#         user_info[field] = value
+#         user_data[user_id] = user_info
+#         user_context.set(user_data)
+#
+#     def add_new_user(user_id):
+#         user_data = user_context.get()
+#         user_data[user_id] = {"user_id": user_id,"gender": None,"age": None,"language": None,"current_question_index": 0}
+#         user_context.set(user_data)
+#
+# load_user_context()
+#
+#

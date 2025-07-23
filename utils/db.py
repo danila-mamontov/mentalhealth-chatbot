@@ -1,5 +1,4 @@
 import sqlite3
-import json
 from threading import Lock
 from config import DB_PATH
 
@@ -34,20 +33,29 @@ def init_db():
     c.execute(
         """CREATE TABLE IF NOT EXISTS user_profile (
             user_id INTEGER PRIMARY KEY,
+            id INTEGER UNIQUE,
             consent TEXT,
             gender TEXT,
             age INTEGER,
             language TEXT,
             treatment TEXT,
             depressive TEXT,
-            first_launch TEXT
+            first_name TEXT,
+            family_name TEXT,
+            username TEXT,
+            latitude REAL,
+            longitude REAL
         )"""
     )
 
-    # Ensure the new column exists when upgrading older databases
-    cols = [row[1] for row in c.execute("PRAGMA table_info(user_profile)")]
-    if "first_launch" not in cols:
-        c.execute("ALTER TABLE user_profile ADD COLUMN first_launch TEXT")
+    # schema upgrade for the new sequential id column
+    cols = [r[1] for r in c.execute("PRAGMA table_info(user_profile)").fetchall()]
+    if "id" not in cols:
+        c.execute("ALTER TABLE user_profile ADD COLUMN id INTEGER UNIQUE")
+        rows = c.execute("SELECT user_id FROM user_profile ORDER BY rowid").fetchall()
+        for idx, row in enumerate(rows, start=1):
+            c.execute("UPDATE user_profile SET id=? WHERE user_id=?", (idx, row[0]))
+        conn.commit()
 
     c.execute("""CREATE TABLE IF NOT EXISTS phq_answers (
         user_id INTEGER PRIMARY KEY,
@@ -81,27 +89,6 @@ def init_db():
         action TEXT,
         details TEXT
     )""")
-
-    c.execute(
-        """CREATE TABLE IF NOT EXISTS user_session (
-            user_id INTEGER PRIMARY KEY,
-            fsm_state TEXT,
-            state_data TEXT,
-            current_question_index INTEGER,
-            survey_message_id INTEGER,
-            survey_controls_id INTEGER,
-            vm_ids TEXT,
-            message_to_del INTEGER,
-            phq_0 INTEGER,
-            phq_1 INTEGER,
-            phq_2 INTEGER,
-            phq_3 INTEGER,
-            phq_4 INTEGER,
-            phq_5 INTEGER,
-            phq_6 INTEGER,
-            phq_7 INTEGER
-        )"""
-    )
 
     c.execute("""CREATE TABLE IF NOT EXISTS stats (
         id INTEGER PRIMARY KEY CHECK (id=1),
@@ -215,21 +202,32 @@ def get_stats() -> dict:
 def upsert_user_profile(user_info: dict):
     conn = get_connection()
     c = conn.cursor()
+
+    existing = c.execute(
+        "SELECT id FROM user_profile WHERE user_id=?", (user_info.get("user_id"),)
+    ).fetchone()
+
+    if existing is None:
+        next_id = c.execute(
+            "SELECT COALESCE(MAX(id),0) + 1 FROM user_profile"
+        ).fetchone()[0]
+        user_info = {**user_info, "id": next_id}
+    else:
+        user_info = {**user_info, "id": existing[0]}
+
     columns = [
-        'user_id',
-        'consent',
-        'gender',
-        'age',
-        'language',
-        'treatment',
-        'depressive',
-        'first_launch',
+        'user_id','id','consent','gender','age','language','treatment','depressive',
+        'first_name','family_name','username','latitude','longitude'
     ]
     values = [user_info.get(col) for col in columns]
     placeholders = ','.join(['?'] * len(columns))
-    update_assignments = ','.join([f"{col}=excluded.{col}" for col in columns[1:]])
-    sql = f"INSERT INTO user_profile ({','.join(columns)}) VALUES ({placeholders}) " \
-          f"ON CONFLICT(user_id) DO UPDATE SET {update_assignments}"
+    update_assignments = ','.join(
+        [f"{col}=excluded.{col}" for col in columns if col not in {'user_id','id'}]
+    )
+    sql = (
+        f"INSERT INTO user_profile ({','.join(columns)}) VALUES ({placeholders}) "
+        f"ON CONFLICT(user_id) DO UPDATE SET {update_assignments}"
+    )
     c.execute(sql, values)
     conn.commit()
     update_stats()
@@ -304,46 +302,6 @@ def get_voice_metadata(user_id: int | None = None):
     return [dict(row) for row in rows]
 
 
-def load_session(user_id: int) -> dict | None:
-    """Load persisted session data for a user."""
-    conn = get_connection()
-    row = conn.execute(
-        "SELECT * FROM user_session WHERE user_id=?",
-        (user_id,),
-    ).fetchone()
-    if row is None:
-        return None
-    data = dict(row)
-    for key in ("vm_ids", "state_data"):
-        if key in data and data[key] is not None:
-            try:
-                data[key] = json.loads(data[key])
-            except Exception:
-                data[key] = {}
-        elif key in data:
-            data[key] = {}
-    return data
-
-
-def save_session(user_id: int, state_dict: dict) -> None:
-    """Persist session data for a user."""
-    conn = get_connection()
-    data = state_dict.copy()
-    for key in ("vm_ids", "state_data"):
-        if key in data:
-            data[key] = json.dumps(data.get(key, {}))
-    columns = ["user_id"] + list(data.keys())
-    values = [user_id] + [data[k] for k in data]
-    placeholders = ",".join(["?"] * len(columns))
-    update_assignments = ",".join([f"{col}=excluded.{col}" for col in columns[1:]])
-    conn.execute(
-        f"INSERT INTO user_session ({','.join(columns)}) VALUES ({placeholders}) "
-        f"ON CONFLICT(user_id) DO UPDATE SET {update_assignments}",
-        values,
-    )
-    conn.commit()
-
-
 def delete_user_records(user_id: int) -> None:
     """Remove all database records related to a user."""
     conn = get_connection()
@@ -352,6 +310,5 @@ def delete_user_records(user_id: int) -> None:
     c.execute("DELETE FROM phq_answers WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
-    c.execute("DELETE FROM user_session WHERE user_id=?", (user_id,))
     conn.commit()
     update_stats()

@@ -43,11 +43,6 @@ def test_question_navigation():
 def test_save_voice_answers_persists(tmp_path, monkeypatch):
     db_file = tmp_path / "bot.db"
     monkeypatch.setenv("DB_PATH", str(db_file))
-    monkeypatch.setenv("ID_DB_PATH", ":memory:")
-    import importlib
-    import utils.user_map as um
-    importlib.reload(um)
-    um.init_user_map()
     import utils.db as db
     import config
     importlib.reload(config)

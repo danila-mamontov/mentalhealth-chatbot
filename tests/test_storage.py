@@ -6,11 +6,6 @@ sys.modules.setdefault("numpy", types.ModuleType("numpy"))
 sys.modules.setdefault("pandas", types.ModuleType("pandas"))
 
 os.environ["DB_PATH"] = ":memory:"
-os.environ["ID_DB_PATH"] = ":memory:"
-import importlib
-import utils.user_map as um
-importlib.reload(um)
-um.init_user_map()
 
 from utils import storage
 from localization import translations
@@ -42,5 +37,16 @@ def test_get_user_profile(monkeypatch):
     profile = storage.get_user_profile(3)
     assert "User ID: 3" in profile
     assert "Age: 30" in profile
+
+
+def test_profile_sequential_ids():
+    uc = storage.UserContext()
+    uc.add_new_user(10)
+    uc.add_new_user(20)
+    conn = storage.get_connection()
+    rows = conn.execute("SELECT id FROM user_profile ORDER BY user_id").fetchall()
+    ids = [r[0] for r in rows][-2:]
+    expected_start = rows[-3][0] + 1 if len(rows) > 2 else 1
+    assert ids == [expected_start, expected_start + 1]
 
 

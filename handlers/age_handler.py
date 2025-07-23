@@ -4,7 +4,6 @@ from survey import get_phq9_question_and_options, keycap_numbers
 from utils.chat_control import message_ids
 from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu, profile_menu
 from utils.storage import context, get_translation, get_user_profile
-from utils.user_map import get_user_id
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
 
@@ -16,8 +15,7 @@ def register_handlers(bot: telebot.TeleBot):
         state="*",
     )
     def handle_age_range_selection(call):
-        telegram_id = call.message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = call.message.chat.id
         if call.data != "range_change":
             selected_range = call.data
             if selected_range.endswith("+"):
@@ -27,7 +25,7 @@ def register_handlers(bot: telebot.TeleBot):
                 start_age, end_age = map(int, selected_range.split("-"))
 
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
                 text=get_translation(user_id, "age_selection"),
                 reply_markup=exact_age_menu(user_id,start_age, end_age)
@@ -35,7 +33,7 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             logger.log_event(user_id, "CHANGE AGE", "")
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
                 text=get_translation(user_id, "age_selection"),
                 reply_markup=age_range_menu(user_id)
@@ -48,8 +46,7 @@ def register_handlers(bot: telebot.TeleBot):
 
     @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state="*")
     def handle_exact_age_selection(call):
-        telegram_id = call.message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = call.message.chat.id
         message_id = call.message.message_id
         selected_age = call.data
 
@@ -76,7 +73,7 @@ def register_handlers(bot: telebot.TeleBot):
         state = bot.get_state(user_id)
         if state == str(SurveyStates.age):
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
                 text=get_translation(user_id, "main_menu_message"),
                 parse_mode='HTML',
@@ -84,7 +81,7 @@ def register_handlers(bot: telebot.TeleBot):
             )
         else:
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
                 text=get_user_profile(user_id),
                 parse_mode='HTML',

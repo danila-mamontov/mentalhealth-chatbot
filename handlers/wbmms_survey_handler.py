@@ -10,7 +10,6 @@ from survey_session import SurveyManager, SurveySession, VoiceAnswer
 from utils.menu import survey_menu, main_menu
 from survey import keycap_numbers, get_wbmms_question
 from utils.storage import context, get_translation
-from utils.user_map import get_telegram_id, get_user_id
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
@@ -34,16 +33,12 @@ def _save_voice_answers(
     """
 
     user_id = session.user_id
-    telegram_id = get_telegram_id(user_id)
-    telegram_id = get_telegram_id(user_id)
-    telegram_id = get_telegram_id(user_id)
-    telegram_id = get_telegram_id(user_id)
     for msg_id, meta in list(session.iter_voice_answers()):
         if question_index is not None and meta.question_id != question_index:
             continue
 
         try:
-            bot.delete_message(telegram_id, msg_id)
+            bot.delete_message(user_id, msg_id)
         except Exception:
             pass
 
@@ -79,7 +74,6 @@ def _render_question(
     """Update survey prompt and show any recorded voices."""
 
     user_id = session.user_id
-    telegram_id = get_telegram_id(user_id)
     index = session.current_index
     if index <= 9:
         keycap = keycap_numbers[index + 1]
@@ -89,7 +83,7 @@ def _render_question(
 
     try:
         bot.edit_message_text(
-            chat_id=telegram_id,
+            chat_id=user_id,
             message_id=message_id,
             text=text,
             parse_mode="HTML",
@@ -105,7 +99,7 @@ def _render_question(
         controls_id = context.get_user_info_field(user_id, "survey_controls_id")
         if controls_id:
             try:
-                bot.delete_message(telegram_id, controls_id)
+                bot.delete_message(user_id, controls_id)
             except Exception:
                 pass
             context.set_user_info_field(user_id, "survey_controls_id", None)
@@ -114,7 +108,7 @@ def _render_question(
             meta = session.voice_messages.get(vid)
             if not meta:
                 continue
-            sent = bot.send_voice(telegram_id, meta.file_id)
+            sent = bot.send_voice(user_id, meta.file_id)
             session.voice_messages.pop(vid, None)
             session.voice_messages[sent.message_id] = meta
             new_ids.append(sent.message_id)
@@ -136,7 +130,6 @@ def _update_controls(
     """Show or refresh the control buttons at the bottom of the chat."""
 
     user_id = session.user_id
-    telegram_id = get_telegram_id(user_id)
     controls_id = context.get_user_info_field(user_id, "survey_controls_id")
     text = prefix if prefix is not None else get_controls_placeholder(user_id)
     markup = survey_menu(
@@ -146,7 +139,7 @@ def _update_controls(
     if relocate:
         if controls_id:
             try:
-                bot.delete_message(telegram_id, controls_id)
+                bot.delete_message(user_id, controls_id)
             except Exception:
                 pass
             controls_id = None
@@ -154,7 +147,7 @@ def _update_controls(
     if controls_id and not relocate:
         try:
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=user_id,
                 message_id=controls_id,
                 text=text,
                 parse_mode="HTML",
@@ -166,7 +159,7 @@ def _update_controls(
                 return
 
     sent = bot.send_message(
-        chat_id=telegram_id,
+        chat_id=user_id,
         text=text,
         parse_mode="HTML",
         reply_markup=markup,
@@ -177,8 +170,7 @@ def _update_controls(
 def register_handlers(bot: telebot.TeleBot) -> None:
     @bot.callback_query_handler(func=lambda c: c.data.startswith("survey_"), state=SurveyStates.wbmms)
     def handle_survey_buttons(call: telebot.types.CallbackQuery) -> None:
-        telegram_id = call.message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = call.message.chat.id
         session = SurveyManager.get_session(user_id)
 
         action = call.data
@@ -225,12 +217,12 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             logger.log_event(user_id, "END WBMMS SURVEY")
             if question_id:
                 try:
-                    bot.delete_message(telegram_id, question_id)
+                    bot.delete_message(user_id, question_id)
                 except Exception:
                     pass
                 context.set_user_info_field(user_id, "survey_message_id", None)
             bot.edit_message_text(
-                chat_id=telegram_id,
+                chat_id=user_id,
                 message_id=call.message.message_id,
                 text=get_translation(user_id, "end_phq9_message")
                 + "\n\n"

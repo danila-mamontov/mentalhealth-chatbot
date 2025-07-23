@@ -4,7 +4,6 @@ from states import SurveyStates
 
 from config import RESPONSES_DIR
 from utils.storage import context, get_translation
-from utils.user_map import get_user_id
 from localization import get_available_languages
 from utils.menu import main_menu, consent_menu, language_menu
 from utils.logger import logger
@@ -13,8 +12,7 @@ from utils.logger import logger
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=["start"], state="*")
     def start(message):
-        telegram_id = message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = message.chat.id
         user_language = message.from_user.language_code
         print(f"User {user_id} started the bot with language {user_language}")
         if user_language not in get_available_languages():
@@ -27,6 +25,11 @@ def register_handlers(bot: telebot.TeleBot):
         if context.get_user_info(user_id) is None:
             context.add_new_user(user_id)
             context.set_user_info_field(user_id, "language", user_language)
+            context.set_user_info_field(user_id, "first_name", message.from_user.first_name)
+            context.set_user_info_field(user_id, "family_name", message.from_user.last_name)
+            context.set_user_info_field(user_id, "username", message.from_user.username if message.from_user.username is not None else None)
+            context.set_user_info_field(user_id, "latitude", message.location.latitude if message.location is not None else None)
+            context.set_user_info_field(user_id, "longitude", message.location.longitude if message.location is not None else None)
             context.save_user_info(user_id)
 
             logger.log_event(user_id, "START BOT", f"New user {user_id}")
@@ -54,7 +57,7 @@ def register_handlers(bot: telebot.TeleBot):
 
             bot.set_state(user_id, SurveyStates.language_confirm, message.chat.id)
             bot.send_message(
-                telegram_id,
+                user_id,
                 get_translation(user_id, "language_confirm").format(language=lang_name, flag=flag),
                 parse_mode='HTML',
                 reply_markup=consent_menu(user_id),
@@ -63,27 +66,25 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             logger.log_event(user_id, "START BOT", f"Existing user {user_id}")
             bot.set_state(user_id, SurveyStates.main_menu, message.chat.id)
-            bot.send_message(
-                telegram_id,
-                 get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "main_menu_message"),
-                 parse_mode='HTML',
-                 reply_markup=main_menu(user_id))
+            bot.send_message(user_id,
+                             get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "main_menu_message"),
+                             parse_mode='HTML',
+                             reply_markup=main_menu(user_id))
 
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.language_confirm)
     def confirm_language(call):
-        telegram_id = call.message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = call.message.chat.id
         message_id = call.message.message_id
         if call.data == "yes":
             bot.set_state(user_id, SurveyStates.consent, call.message.chat.id)
-            bot.edit_message_text(chat_id=telegram_id,
+            bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "consent_message"),
                                   parse_mode='HTML',
                                   reply_markup=consent_menu(user_id))
         else:
             bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
-            bot.edit_message_text(chat_id=telegram_id,
+            bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, "language_selection"),
                                   parse_mode='HTML',

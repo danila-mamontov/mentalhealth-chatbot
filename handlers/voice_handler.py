@@ -1,7 +1,6 @@
 import telebot
 
 from utils.storage import context, get_translation
-from utils.user_map import get_user_id
 from utils.logger import logger
 from survey_session import SurveyManager, VoiceAnswer
 from handlers import wbmms_survey_handler as wsh
@@ -13,8 +12,7 @@ import os
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(content_types=['voice'], state=SurveyStates.wbmms)
     def handle_voice_message(message):
-        telegram_id = message.chat.id
-        user_id = get_user_id(telegram_id)
+        user_id = message.chat.id
         session = SurveyManager.get_session(user_id)
         current_question = session.current_index
 
@@ -56,13 +54,13 @@ def register_handlers(bot: telebot.TeleBot):
         va.file_path = local_path
 
         try:
-            bot.delete_message(telegram_id, message.message_id)
+            bot.delete_message(user_id, message.message_id)
         except Exception:
             pass
 
         # resend only the newly saved voice from the bot account
         try:
-            sent = bot.send_voice(telegram_id, file_id)
+            sent = bot.send_voice(user_id, file_id)
         except Exception:
             sent = None
         else:
