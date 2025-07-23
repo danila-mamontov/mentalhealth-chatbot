@@ -86,8 +86,6 @@ class UserContext:
             "first_name": None,
             "family_name": None,
             "username": None,
-            "latitude": None,
-            "longitude": None,
             "first_launch": datetime.utcnow().isoformat(timespec="seconds"),
         }
 
