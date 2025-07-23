@@ -1,3 +1,4 @@
+from datetime import datetime
 from localization import translations
 from utils.db import (
     upsert_user_profile,
@@ -87,6 +88,7 @@ class UserContext:
             "username": None,
             "latitude": None,
             "longitude": None,
+            "first_launch": datetime.utcnow().isoformat(timespec="seconds"),
         }
 
         upsert_user_profile(params)

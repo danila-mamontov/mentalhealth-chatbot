@@ -31,20 +31,28 @@ def get_connection():
 def init_db():
     conn = get_connection()
     c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS user_profile (
-        user_id INTEGER PRIMARY KEY,
-        consent TEXT,
-        gender TEXT,
-        age INTEGER,
-        language TEXT,
-        treatment TEXT,
-        depressive TEXT,
-        first_name TEXT,
-        family_name TEXT,
-        username TEXT,
-        latitude REAL,
-        longitude REAL
-    )""")
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS user_profile (
+            user_id INTEGER PRIMARY KEY,
+            consent TEXT,
+            gender TEXT,
+            age INTEGER,
+            language TEXT,
+            treatment TEXT,
+            depressive TEXT,
+            first_name TEXT,
+            family_name TEXT,
+            username TEXT,
+            latitude REAL,
+            longitude REAL,
+            first_launch TEXT
+        )"""
+    )
+
+    # Ensure the new column exists when upgrading older databases
+    cols = [row[1] for row in c.execute("PRAGMA table_info(user_profile)")]
+    if "first_launch" not in cols:
+        c.execute("ALTER TABLE user_profile ADD COLUMN first_launch TEXT")
 
     c.execute("""CREATE TABLE IF NOT EXISTS phq_answers (
         user_id INTEGER PRIMARY KEY,
@@ -214,7 +222,7 @@ def upsert_user_profile(user_info: dict):
     c = conn.cursor()
     columns = [
         'user_id','consent','gender','age','language','treatment','depressive',
-        'first_name','family_name','username','latitude','longitude'
+        'first_name','family_name','username','latitude','longitude','first_launch'
     ]
     values = [user_info.get(col) for col in columns]
     placeholders = ','.join(['?'] * len(columns))
