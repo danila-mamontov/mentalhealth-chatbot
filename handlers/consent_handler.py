@@ -3,6 +3,7 @@ from states import SurveyStates
 from utils.menu import gender_menu, profile_menu
 from utils.logger import logger
 from utils.storage import context, get_user_profile, get_translation
+from utils.db import save_session
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.consent)
@@ -16,6 +17,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(user_id, "SET CONSENT", "YES")
             if not context.get_user_info_field(user_id, "gender"):
                 bot.set_state(user_id, SurveyStates.gender, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.gender)})
                 bot.edit_message_text(chat_id=user_id,
                                       message_id=message_id,
                                       text=get_translation(user_id, "gender_selection"),
@@ -30,6 +32,7 @@ def register_handlers(bot: telebot.TeleBot):
                     reply_markup=profile_menu(user_id),
                 )
                 bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+                save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
 
             # ask_phq9_question(bot, user_id)
         elif call.data == "no":

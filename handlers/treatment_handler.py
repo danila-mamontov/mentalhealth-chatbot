@@ -1,6 +1,7 @@
 import telebot
 from utils.menu import yes_no_menu
 from utils.storage import context, get_translation
+from utils.db import save_session
 from utils.logger import logger
 from states import SurveyStates
 
@@ -24,4 +25,5 @@ def register_handlers(bot: telebot.TeleBot):
             reply_markup=yes_no_menu(user_id),
         )
         bot.set_state(user_id, SurveyStates.depressive, call.message.chat.id)
+        save_session(user_id, {"fsm_state": str(SurveyStates.depressive)})
 

@@ -3,6 +3,7 @@ from survey import keycap_numbers, get_phq9_question_and_options, get_wbmms_ques
 from utils.menu import phq9_menu, survey_menu
 from handlers.wbmms_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
+from utils.db import save_session
 from utils.logger import logger
 from states import SurveyStates
 
@@ -64,5 +65,6 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(user_id, "survey_controls_id", sent_controls.message_id)
             context.set_user_info_field(user_id, "message_to_del", message_id)
             bot.set_state(user_id, SurveyStates.wbmms, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.wbmms)})
 
 

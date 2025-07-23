@@ -1,7 +1,7 @@
 import os
 import telebot
 from telebot import custom_filters
-from telebot.storage import StateMemoryStorage
+from utils.db_state_storage import SqliteStateStorage
 
 from config import BOT_TOKEN, RESPONSES_DIR
 from handlers import (
@@ -21,7 +21,7 @@ from handlers import (
     treatment_handler,
     depressive_handler,
 )
-bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
+bot = telebot.TeleBot(BOT_TOKEN, state_storage=SqliteStateStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 
 # Регистрация обработчиков

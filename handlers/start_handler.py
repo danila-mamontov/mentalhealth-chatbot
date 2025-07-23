@@ -4,6 +4,7 @@ from states import SurveyStates
 
 from config import RESPONSES_DIR
 from utils.storage import context, get_translation
+from utils.db import save_session
 from localization import get_available_languages
 from utils.menu import main_menu, consent_menu, language_menu
 from utils.logger import logger
@@ -56,6 +57,7 @@ def register_handlers(bot: telebot.TeleBot):
             flag = flags.get(user_language, "🏳️")
 
             bot.set_state(user_id, SurveyStates.language_confirm, message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.language_confirm)})
             bot.send_message(
                 user_id,
                 get_translation(user_id, "language_confirm").format(language=lang_name, flag=flag),
@@ -66,6 +68,7 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             logger.log_event(user_id, "START BOT", f"Existing user {user_id}")
             bot.set_state(user_id, SurveyStates.main_menu, message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.main_menu)})
             bot.send_message(user_id,
                              get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "main_menu_message"),
                              parse_mode='HTML',
@@ -77,6 +80,7 @@ def register_handlers(bot: telebot.TeleBot):
         message_id = call.message.message_id
         if call.data == "yes":
             bot.set_state(user_id, SurveyStates.consent, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.consent)})
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "consent_message"),
@@ -84,6 +88,7 @@ def register_handlers(bot: telebot.TeleBot):
                                   reply_markup=consent_menu(user_id))
         else:
             bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
+            save_session(user_id, {"fsm_state": str(SurveyStates.language)})
             bot.edit_message_text(chat_id=user_id,
                                   message_id=message_id,
                                   text=get_translation(user_id, "language_selection"),

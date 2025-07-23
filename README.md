@@ -10,9 +10,9 @@ Demo Presentation
 - `/cancel` - Cancel current action
 
 ## TeleBot State Management
-The bot now uses TeleBot's built-in finite state machine to track the
+The bot uses TeleBot's built-in finite state machine to track the
 conversation flow. States are defined in `states.py` and registered via
-`StateMemoryStorage` in `bot.py`. Handlers check the current state to decide
+a persistent SQLite-based storage in `bot.py`. Handlers check the current state to decide
 what step to execute next.
 For each survey, a single state (`SurveyStates.phq9` or `SurveyStates.wbmms`) is
 used. Handlers keep the current question index with `bot.retrieve_data` so the

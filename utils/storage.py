@@ -5,6 +5,8 @@ from utils.db import (
     get_connection,
     init_db,
     delete_user_records,
+    load_session,
+    save_session,
 )
 
 init_db()
@@ -66,13 +68,16 @@ class UserContext:
         self._session = {}
 
     def _ensure_session(self, user_id):
-        self._session.setdefault(user_id, {
-            "current_question_index": 0,
-            "vm_ids": {},
-            "message_to_del": None,
-            "survey_message_id": None,
-            "survey_controls_id": None,
-        })
+        if user_id not in self._session:
+            data = load_session(user_id) or {}
+            self._session[user_id] = {
+                "current_question_index": data.get("current_question_index", 0),
+                "vm_ids": {},
+                "message_to_del": None,
+                "survey_message_id": data.get("survey_message_id"),
+                "survey_controls_id": data.get("survey_controls_id"),
+                "fsm_state": data.get("fsm_state"),
+            }
 
     def add_new_user(self, user_id):
         params = {
@@ -99,7 +104,9 @@ class UserContext:
             "message_to_del": None,
             "survey_message_id": None,
             "survey_controls_id": None,
+            "fsm_state": None,
         }
+        save_session(user_id, self._session[user_id])
 
     def delete_user(self, user_id):
         self._session.pop(user_id, None)
@@ -124,7 +131,7 @@ class UserContext:
         return profile
 
     def get_user_info_field(self, user_id, field):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"}:
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "fsm_state"}:
             self._ensure_session(user_id)
             return self._session[user_id].get(field)
 
@@ -140,9 +147,11 @@ class UserContext:
         return value
 
     def set_user_info_field(self, user_id, field, value):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"} or field.startswith("phq_"):
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "fsm_state"} or field.startswith("phq_"):
             self._ensure_session(user_id)
             self._session[user_id][field] = value
+            if field in {"current_question_index", "survey_message_id", "survey_controls_id", "fsm_state"}:
+                save_session(user_id, self._session[user_id])
             return
 
         conn = get_connection()
