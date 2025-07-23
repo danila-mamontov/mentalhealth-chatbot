@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from telebot.storage import StateStorageBase
-from telebot.storage.base_storage import StateContext
+try:
+    # Newer versions expose ``StateContext`` via ``telebot.storage.base_storage``
+    from telebot.storage.base_storage import StateContext
+except Exception:  # pragma: no cover - fallback for older TeleBot
+    from telebot.storage import StateContext
 from .db import load_session, save_session
 
 
