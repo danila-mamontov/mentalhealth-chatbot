@@ -49,7 +49,7 @@ def register_handlers(bot: telebot.TeleBot):
 
             sent_q = bot.send_message(
                 chat_id=t_id,
-                text=f"{keycap_numbers[1]}\t" + get_wbmms_question(question_id=0, t_id=t_id),
+                text=f"{keycap_numbers[1]}\t" + get_wbmms_question(question_id=0, user_id=t_id),
                 parse_mode='HTML',
             )
             sent_controls = bot.send_message(

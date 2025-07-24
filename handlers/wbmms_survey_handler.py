@@ -83,7 +83,7 @@ def _render_question(
         keycap = keycap_numbers[index + 1]
     else:
         keycap = keycap_numbers[index // 10] + keycap_numbers[index % 10 + 1]
-    text = f"{keycap}\t" + get_wbmms_question(index, t_id=t_id)
+    text = f"{keycap}\t" + get_wbmms_question(index, user_id=t_id)
 
     try:
         bot.edit_message_text(
