@@ -14,21 +14,16 @@ def test_stats_updates(tmp_path, monkeypatch):
 
     # add user and voice record
     db.upsert_user_profile({
-        "user_id": 1,
+        "t_id": 1,
         "consent": None,
         "gender": "male",
         "age": 25,
         "language": "en",
         "treatment": None,
         "depressive": None,
-        "first_name": None,
-        "family_name": None,
-        "username": None,
-        "latitude": None,
-        "longitude": None,
     })
-
-    db.insert_voice_metadata(1, 0, "uid", "file", 5, 1, 10)
+    uid = db.get_connection().execute("SELECT id FROM user_profile WHERE t_id=1").fetchone()[0]
+    db.insert_voice_metadata(uid, 0, "uid", "file", 5, 1, 10)
 
     stats = db.get_stats()
     assert stats["total_audio_files"] == 1

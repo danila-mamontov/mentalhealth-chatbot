@@ -12,28 +12,30 @@ from utils.logger import logger
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=["start"], state="*")
     def start(message):
-        user_id = message.chat.id
+        t_id = message.chat.id
         user_language = message.from_user.language_code
-        print(f"User {user_id} started the bot with language {user_language}")
+        print(f"User {t_id} started the bot with language {user_language}")
         if user_language not in get_available_languages():
             user_language = "en"
 
-        if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}")):
-            os.makedirs(os.path.join(RESPONSES_DIR, str(user_id), "audio"))
+        user_info = context.get_user_info(t_id)
+        new_user = False
+        if user_info is None:
+            context.add_new_user(t_id)
+            user_info = context.get_user_info(t_id)
+            context.set_user_info_field(t_id, "language", user_language)
+            context.save_user_info(t_id)
+            logger.log_event(t_id, "START BOT", f"New user {t_id}")
+            new_user = True
+        else:
+            logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
 
+        uid = user_info.get("id")
+        user_dir = os.path.join(RESPONSES_DIR, str(uid))
+        if not os.path.exists(user_dir):
+            os.makedirs(os.path.join(user_dir, "audio"))
 
-        if context.get_user_info(user_id) is None:
-            context.add_new_user(user_id)
-            context.set_user_info_field(user_id, "language", user_language)
-            context.set_user_info_field(user_id, "first_name", message.from_user.first_name)
-            context.set_user_info_field(user_id, "family_name", message.from_user.last_name)
-            context.set_user_info_field(user_id, "username", message.from_user.username if message.from_user.username is not None else None)
-            context.set_user_info_field(user_id, "latitude", message.location.latitude if message.location is not None else None)
-            context.set_user_info_field(user_id, "longitude", message.location.longitude if message.location is not None else None)
-            context.save_user_info(user_id)
-
-            logger.log_event(user_id, "START BOT", f"New user {user_id}")
-
+        if new_user:
             names = {
                 "en": "English",
                 "de": "Deutsch",
@@ -55,38 +57,38 @@ def register_handlers(bot: telebot.TeleBot):
             lang_name = names.get(user_language, user_language)
             flag = flags.get(user_language, "🏳️")
 
-            bot.set_state(user_id, SurveyStates.language_confirm, message.chat.id)
+            bot.set_state(t_id, SurveyStates.language_confirm, message.chat.id)
             bot.send_message(
-                user_id,
-                get_translation(user_id, "language_confirm").format(language=lang_name, flag=flag),
+                t_id,
+                get_translation(t_id, "language_confirm").format(language=lang_name, flag=flag),
                 parse_mode='HTML',
-                reply_markup=consent_menu(user_id),
+                reply_markup=consent_menu(t_id),
             )
-
         else:
-            logger.log_event(user_id, "START BOT", f"Existing user {user_id}")
-            bot.set_state(user_id, SurveyStates.main_menu, message.chat.id)
-            bot.send_message(user_id,
-                             get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "main_menu_message"),
-                             parse_mode='HTML',
-                             reply_markup=main_menu(user_id))
+            bot.set_state(t_id, SurveyStates.main_menu, message.chat.id)
+            bot.send_message(
+                t_id,
+                get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "main_menu_message"),
+                parse_mode='HTML',
+                reply_markup=main_menu(t_id),
+            )
 
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.language_confirm)
     def confirm_language(call):
-        user_id = call.message.chat.id
+        t_id = call.message.chat.id
         message_id = call.message.message_id
         if call.data == "yes":
-            bot.set_state(user_id, SurveyStates.consent, call.message.chat.id)
-            bot.edit_message_text(chat_id=user_id,
+            bot.set_state(t_id, SurveyStates.consent, call.message.chat.id)
+            bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(user_id, "welcome_message") + "\n\n" + get_translation(user_id, "consent_message"),
+                                  text=get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "consent_message"),
                                   parse_mode='HTML',
-                                  reply_markup=consent_menu(user_id))
+                                  reply_markup=consent_menu(t_id))
         else:
-            bot.set_state(user_id, SurveyStates.language, call.message.chat.id)
-            bot.edit_message_text(chat_id=user_id,
+            bot.set_state(t_id, SurveyStates.language, call.message.chat.id)
+            bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(user_id, "language_selection"),
+                                  text=get_translation(t_id, "language_selection"),
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
 

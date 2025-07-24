@@ -39,12 +39,14 @@ def test_save_wbmms_answer_saves_metadata(tmp_path, monkeypatch):
     os.makedirs(responses_dir / "1" / "audio", exist_ok=True)
     monkeypatch.setattr(wsh, "RESPONSES_DIR", str(responses_dir))
 
+    wsh.context.add_new_user(1)
+
     import survey_session as ss
     importlib.reload(ss)
 
     sess = ss.SurveyManager.get_session(1)
     va = ss.VoiceAnswer(
-        user_id=1,
+        t_id=1,
         question_id=3,
         file_unique_id="uid123",
         file_id="id123",
@@ -89,6 +91,8 @@ def test_render_question_handles_not_modified(monkeypatch):
     importlib.reload(wsh)
 
     sess = ss.SurveySession(1)
+    wsh.context.add_new_user(1)
+    wsh.context.add_new_user(1)
     va1 = ss.VoiceAnswer(1, 0, "u1", "f1", "path", 1, 1, 0)
     va2 = ss.VoiceAnswer(1, 0, "u2", "f2", "path", 1, 2, 0)
     sess.record_voice(10, va1)

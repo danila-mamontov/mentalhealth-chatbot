@@ -9,42 +9,42 @@ def register_handlers(bot: telebot.TeleBot):
         state="*",
     )
     def handle_gender_selection(call):
-        user_id = call.message.chat.id
+        t_id = call.message.chat.id
         if call.data != "set_gender_change":
             gender = call.data
-            context.set_user_info_field(user_id, "gender", gender)
-            context.save_user_info(user_id)
-            logger.log_event(user_id, "SET GENDER", gender)
-            state = bot.get_state(user_id)
-            if state == str(SurveyStates.gender) and not context.get_user_info_field(user_id, "age"):
-                bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+            context.set_user_info_field(t_id, "gender", gender)
+            context.save_user_info(t_id)
+            logger.log_event(t_id, "SET GENDER", gender)
+            state = bot.get_state(t_id)
+            if state == str(SurveyStates.gender) and not context.get_user_info_field(t_id, "age"):
+                bot.set_state(t_id, SurveyStates.age, call.message.chat.id)
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
-                    text=get_translation(user_id, "age_selection"),
+                    text=get_translation(t_id, "age_selection"),
                     parse_mode="HTML",
-                    reply_markup=age_range_menu(user_id),
+                    reply_markup=age_range_menu(t_id),
                 )
             else:
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
                     message_id=call.message.message_id,
-                    text=get_user_profile(user_id),
+                    text=get_user_profile(t_id),
                     parse_mode='HTML',
-                    reply_markup=profile_menu(user_id),
+                    reply_markup=profile_menu(t_id),
                 )
-                bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+                bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
 
         else:
-            logger.log_event(user_id, "CHANGE GENDER", "")
+            logger.log_event(t_id, "CHANGE GENDER", "")
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(user_id, "gender_selection"),
+                text=get_translation(t_id, "gender_selection"),
                 parse_mode='HTML',
-                reply_markup=gender_menu(user_id),
+                reply_markup=gender_menu(t_id),
             )
-            bot.set_state(user_id, EditProfileStates.gender, call.message.chat.id)
+            bot.set_state(t_id, EditProfileStates.gender, call.message.chat.id)
 
 
 

@@ -39,3 +39,14 @@ def test_get_user_profile(monkeypatch):
     assert "Age: 30" in profile
 
 
+def test_profile_sequential_ids():
+    uc = storage.UserContext()
+    uc.add_new_user(10)
+    uc.add_new_user(20)
+    conn = storage.get_connection()
+    rows = conn.execute("SELECT id FROM user_profile ORDER BY id").fetchall()
+    ids = [r[0] for r in rows][-2:]
+    expected_start = rows[-3][0] + 1 if len(rows) > 2 else 1
+    assert ids == [expected_start, expected_start + 1]
+
+
