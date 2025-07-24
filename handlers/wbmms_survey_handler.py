@@ -225,6 +225,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 except Exception:
                     pass
                 context.set_user_info_field(t_id, "survey_message_id", None)
+            try:
+                bot.delete_message(t_id, context.get_user_info_field(t_id, "message_to_del"))
+            except Exception:
+                pass
+            context.set_user_info_field(t_id, "message_to_del", None)
             bot.edit_message_text(
                 chat_id=t_id,
                 message_id=call.message.message_id,
