@@ -34,7 +34,7 @@ def register_handlers(bot: telebot.TeleBot):
         session.record_voice(message.message_id, va)
 
         # persist the new voice and remove the original message
-        filename = f"{t_id}_{message.date}_{current_question}.ogg"
+        filename = f"{message.date}_{current_question}.ogg"
         uid = context.get_user_info_field(t_id, "id")
         if uid is None:
             context.add_new_user(t_id)

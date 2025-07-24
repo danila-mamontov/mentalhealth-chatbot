@@ -43,7 +43,7 @@ def _save_voice_answers(
             pass
 
         if not meta.saved:
-            filename = f"{t_id}_{meta.timestamp}_{meta.question_id}.ogg"
+            filename = f"{meta.timestamp}_{meta.question_id}.ogg"
             uid = context.get_user_info_field(t_id, "id")
             if uid is None:
                 context.add_new_user(t_id)
