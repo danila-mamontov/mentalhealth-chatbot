@@ -55,10 +55,11 @@ def test_save_voice_answers_persists(tmp_path, monkeypatch):
     monkeypatch.setattr(wsh, "RESPONSES_DIR", str(tmp_path / "resp"))
 
     importlib.reload(ss)
+    wsh.context.add_new_user(1)
 
     sess = ss.SurveyManager.get_session(1)
     va = ss.VoiceAnswer(
-        user_id=1,
+        t_id=1,
         question_id=2,
         file_unique_id="uid",
         file_id="id",

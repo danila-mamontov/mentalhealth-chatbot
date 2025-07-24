@@ -32,8 +32,8 @@ def init_db():
     c = conn.cursor()
     c.execute(
         """CREATE TABLE IF NOT EXISTS user_profile (
-            user_id INTEGER PRIMARY KEY,
-            id INTEGER UNIQUE,
+            id INTEGER PRIMARY KEY,
+            t_id INTEGER UNIQUE,
             consent TEXT,
             gender TEXT,
             age INTEGER,
@@ -43,25 +43,51 @@ def init_db():
         )"""
     )
 
-    # schema upgrade for the new sequential id column
     cols = [r[1] for r in c.execute("PRAGMA table_info(user_profile)").fetchall()]
-    if "id" not in cols:
-        c.execute("ALTER TABLE user_profile ADD COLUMN id INTEGER UNIQUE")
-        rows = c.execute("SELECT user_id FROM user_profile ORDER BY rowid").fetchall()
-        for idx, row in enumerate(rows, start=1):
-            c.execute("UPDATE user_profile SET id=? WHERE user_id=?", (idx, row[0]))
+
+    needs_migrate = ("t_id" not in cols) or ("id" not in cols)
+    if "user_id" in cols:
+        needs_migrate = True
+
+    if needs_migrate:
+        c.execute("ALTER TABLE user_profile RENAME TO user_profile_old")
+        c.execute(
+            """CREATE TABLE user_profile (
+                id INTEGER PRIMARY KEY,
+                t_id INTEGER UNIQUE,
+                consent TEXT,
+                gender TEXT,
+                age INTEGER,
+                language TEXT,
+                treatment TEXT,
+                depressive TEXT
+            )"""
+        )
+        if "user_id" in cols:
+            id_col = "id" if "id" in cols else "NULL"
+            c.execute(
+                f"INSERT INTO user_profile (id, t_id, consent, gender, age, language, treatment, depressive) "
+                f"SELECT {id_col}, user_id, consent, gender, age, language, treatment, depressive FROM user_profile_old"
+            )
+        else:
+            c.execute(
+                "INSERT INTO user_profile (id, t_id, consent, gender, age, language, treatment, depressive) "
+                "SELECT id, t_id, consent, gender, age, language, treatment, depressive FROM user_profile_old"
+            )
+        c.execute("DROP TABLE user_profile_old")
         conn.commit()
 
     # remove deprecated columns if present
+    cols = [r[1] for r in c.execute("PRAGMA table_info(user_profile)").fetchall()]
     drop_cols = {"first_name", "family_name", "username", "latitude", "longitude"}
     if any(col in cols for col in drop_cols):
-        remaining = [c for c in cols if c not in drop_cols]
+        remaining = [cname for cname in cols if cname not in drop_cols]
         cols_clause = ",".join(remaining)
         c.execute("ALTER TABLE user_profile RENAME TO user_profile_old")
         c.execute(
             """CREATE TABLE user_profile (
-                user_id INTEGER PRIMARY KEY,
-                id INTEGER UNIQUE,
+                id INTEGER PRIMARY KEY,
+                t_id INTEGER UNIQUE,
                 consent TEXT,
                 gender TEXT,
                 age INTEGER,
@@ -223,7 +249,7 @@ def upsert_user_profile(user_info: dict):
     c = conn.cursor()
 
     existing = c.execute(
-        "SELECT id FROM user_profile WHERE user_id=?", (user_info.get("user_id"),)
+        "SELECT id FROM user_profile WHERE t_id=?", (user_info.get("t_id"),)
     ).fetchone()
 
     if existing is None:
@@ -235,16 +261,16 @@ def upsert_user_profile(user_info: dict):
         user_info = {**user_info, "id": existing[0]}
 
     columns = [
-        'user_id','id','consent','gender','age','language','treatment','depressive'
+        'id','t_id','consent','gender','age','language','treatment','depressive'
     ]
     values = [user_info.get(col) for col in columns]
     placeholders = ','.join(['?'] * len(columns))
     update_assignments = ','.join(
-        [f"{col}=excluded.{col}" for col in columns if col not in {'user_id','id'}]
+        [f"{col}=excluded.{col}" for col in columns if col not in {'id','t_id'}]
     )
     sql = (
         f"INSERT INTO user_profile ({','.join(columns)}) VALUES ({placeholders}) "
-        f"ON CONFLICT(user_id) DO UPDATE SET {update_assignments}"
+        f"ON CONFLICT(t_id) DO UPDATE SET {update_assignments}"
     )
     c.execute(sql, values)
     conn.commit()
@@ -324,7 +350,7 @@ def delete_user_records(user_id: int) -> None:
     """Remove all database records related to a user."""
     conn = get_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM user_profile WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM user_profile WHERE id=?", (user_id,))
     c.execute("DELETE FROM phq_answers WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
     c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))

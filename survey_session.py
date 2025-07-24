@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 class VoiceAnswer:
     """Metadata for a single voice response."""
 
-    user_id: int
+    t_id: int
     question_id: int
     file_unique_id: str
     file_id: str
@@ -19,8 +19,8 @@ class VoiceAnswer:
 class SurveySession:
     """Track progress and answers for a survey run."""
 
-    def __init__(self, user_id: int):
-        self.user_id = user_id
+    def __init__(self, t_id: int):
+        self.t_id = t_id
         self.current_index: int = 0
         # question index -> answer value
         self.answers: Dict[int, object] = {}
@@ -71,13 +71,13 @@ class SurveyManager:
     _sessions: Dict[int, SurveySession] = {}
 
     @classmethod
-    def get_session(cls, user_id: int) -> SurveySession:
-        session = cls._sessions.get(user_id)
+    def get_session(cls, t_id: int) -> SurveySession:
+        session = cls._sessions.get(t_id)
         if session is None:
-            session = SurveySession(user_id)
-            cls._sessions[user_id] = session
+            session = SurveySession(t_id)
+            cls._sessions[t_id] = session
         return session
 
     @classmethod
-    def remove_session(cls, user_id: int) -> None:
-        cls._sessions.pop(user_id, None)
+    def remove_session(cls, t_id: int) -> None:
+        cls._sessions.pop(t_id, None)

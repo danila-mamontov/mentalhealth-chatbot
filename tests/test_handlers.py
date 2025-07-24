@@ -41,10 +41,10 @@ class FakeBot:
             self.handlers[func.__name__] = func
             return func
         return decorator
-    def set_state(self, user_id, state, chat_id):
-        self.states[user_id] = state
-    def get_state(self, user_id):
-        return self.states.get(user_id)
+    def set_state(self, t_id, state, chat_id):
+        self.states[t_id] = state
+    def get_state(self, t_id):
+        return self.states.get(t_id)
     def send_message(self, chat_id, text, parse_mode=None, reply_markup=None):
         self.sent_messages.append({
             "chat_id": chat_id,
@@ -52,8 +52,8 @@ class FakeBot:
             "parse_mode": parse_mode,
             "reply_markup": reply_markup,
         })
-    def delete_state(self, user_id):
-        self.states.pop(user_id, None)
+    def delete_state(self, t_id):
+        self.states.pop(t_id, None)
 
 
 def test_help_handler(monkeypatch):
@@ -69,7 +69,7 @@ def test_help_handler(monkeypatch):
 def test_start_handler_new_user(monkeypatch):
     bot = FakeBot()
     uc = storage.UserContext()
-    monkeypatch.setattr(uc, "save_user_info", lambda user_id: None)
+    monkeypatch.setattr(uc, "save_user_info", lambda t_id: None)
     monkeypatch.setattr(start_handler, "context", uc)
     monkeypatch.setattr(start_handler, "logger", SimpleNamespace(log_event=lambda *a, **k: None))
     monkeypatch.setattr(start_handler, "consent_menu", lambda uid: "consent")

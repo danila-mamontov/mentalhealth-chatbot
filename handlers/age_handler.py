@@ -15,7 +15,7 @@ def register_handlers(bot: telebot.TeleBot):
         state="*",
     )
     def handle_age_range_selection(call):
-        user_id = call.message.chat.id
+        t_id = call.message.chat.id
         if call.data != "range_change":
             selected_range = call.data
             if selected_range.endswith("+"):
@@ -27,66 +27,66 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(user_id, "age_selection"),
-                reply_markup=exact_age_menu(user_id,start_age, end_age)
+                text=get_translation(t_id, "age_selection"),
+                reply_markup=exact_age_menu(t_id,start_age, end_age)
             )
         else:
-            logger.log_event(user_id, "CHANGE AGE", "")
+            logger.log_event(t_id, "CHANGE AGE", "")
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(user_id, "age_selection"),
-                reply_markup=age_range_menu(user_id)
+                text=get_translation(t_id, "age_selection"),
+                reply_markup=age_range_menu(t_id)
             )
-            current = bot.get_state(user_id)
+            current = bot.get_state(t_id)
             if current == str(SurveyStates.age):
-                bot.set_state(user_id, SurveyStates.age, call.message.chat.id)
+                bot.set_state(t_id, SurveyStates.age, call.message.chat.id)
             else:
-                bot.set_state(user_id, EditProfileStates.age, call.message.chat.id)
+                bot.set_state(t_id, EditProfileStates.age, call.message.chat.id)
 
     @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state="*")
     def handle_exact_age_selection(call):
-        user_id = call.message.chat.id
+        t_id = call.message.chat.id
         message_id = call.message.message_id
         selected_age = call.data
 
-        context.set_user_info_field(user_id, "age", int(selected_age))
-        context.save_user_info(user_id)
-        logger.log_event(user_id, "SET AGE", selected_age)
+        context.set_user_info_field(t_id, "age", int(selected_age))
+        context.save_user_info(t_id)
+        logger.log_event(t_id, "SET AGE", selected_age)
 
-        question, options = get_phq9_question_and_options(0, user_id)
+        question, options = get_phq9_question_and_options(0, t_id)
 
-        context.set_user_info_field(user_id, "message_to_del", message_id)
+        context.set_user_info_field(t_id, "message_to_del", message_id)
 
-        # logger.log_event(user_id, "START PHQ9 SURVEY")
-        # bot.edit_message_text(chat_id=user_id,
+        # logger.log_event(t_id, "START PHQ9 SURVEY")
+        # bot.edit_message_text(chat_id=t_id,
         #                       message_id=message_id,
-        #                       text=get_translation(user_id, 'intro_phq9_message'),
+        #                       text=get_translation(t_id, 'intro_phq9_message'),
         #                       parse_mode='HTML')
         #
-        # bot.send_message(chat_id=user_id,
-        #                  text=get_translation(user_id,
+        # bot.send_message(chat_id=t_id,
+        #                  text=get_translation(t_id,
         #                                       'starting_phq9') + f"\n{keycap_numbers[1]}\t" + f"<i><b>{question}</b></i>",
         #                  parse_mode='HTML',
         #                  reply_markup=phq9_menu(0, options))
 
-        state = bot.get_state(user_id)
+        state = bot.get_state(t_id)
         if state == str(SurveyStates.age):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(user_id, "main_menu_message"),
+                text=get_translation(t_id, "main_menu_message"),
                 parse_mode='HTML',
-                reply_markup=main_menu(user_id)
+                reply_markup=main_menu(t_id)
             )
         else:
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_user_profile(user_id),
+                text=get_user_profile(t_id),
                 parse_mode='HTML',
-                reply_markup=profile_menu(user_id)
+                reply_markup=profile_menu(t_id)
             )
-        bot.set_state(user_id, SurveyStates.main_menu, call.message.chat.id)
+        bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
 
 
