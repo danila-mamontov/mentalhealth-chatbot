@@ -18,17 +18,24 @@ def register_handlers(bot: telebot.TeleBot):
         if user_language not in get_available_languages():
             user_language = "en"
 
-        if not os.path.exists(os.path.join(RESPONSES_DIR, f"{t_id}")):
-            os.makedirs(os.path.join(RESPONSES_DIR, str(t_id), "audio"))
-
-
-        if context.get_user_info(t_id) is None:
+        user_info = context.get_user_info(t_id)
+        new_user = False
+        if user_info is None:
             context.add_new_user(t_id)
+            user_info = context.get_user_info(t_id)
             context.set_user_info_field(t_id, "language", user_language)
             context.save_user_info(t_id)
-
             logger.log_event(t_id, "START BOT", f"New user {t_id}")
+            new_user = True
+        else:
+            logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
 
+        uid = user_info.get("id")
+        user_dir = os.path.join(RESPONSES_DIR, str(uid))
+        if not os.path.exists(user_dir):
+            os.makedirs(os.path.join(user_dir, "audio"))
+
+        if new_user:
             names = {
                 "en": "English",
                 "de": "Deutsch",
@@ -57,14 +64,14 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=consent_menu(t_id),
             )
-
         else:
-            logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
             bot.set_state(t_id, SurveyStates.main_menu, message.chat.id)
-            bot.send_message(t_id,
-                             get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "main_menu_message"),
-                             parse_mode='HTML',
-                             reply_markup=main_menu(t_id))
+            bot.send_message(
+                t_id,
+                get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "main_menu_message"),
+                parse_mode='HTML',
+                reply_markup=main_menu(t_id),
+            )
 
     @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.language_confirm)
     def confirm_language(call):

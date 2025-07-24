@@ -44,15 +44,15 @@ def _save_voice_answers(
 
         if not meta.saved:
             filename = f"{t_id}_{meta.timestamp}_{meta.question_id}.ogg"
-            file_path = os.path.join(RESPONSES_DIR, str(t_id), "audio", filename)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            data = bot.download_file(meta.file_path)
-            with open(file_path, "wb") as f:
-                f.write(data)
             uid = context.get_user_info_field(t_id, "id")
             if uid is None:
                 context.add_new_user(t_id)
                 uid = context.get_user_info_field(t_id, "id")
+            file_path = os.path.join(RESPONSES_DIR, str(uid), "audio", filename)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            data = bot.download_file(meta.file_path)
+            with open(file_path, "wb") as f:
+                f.write(data)
             insert_voice_metadata(
                 user_id=uid,
                 question_id=meta.question_id,

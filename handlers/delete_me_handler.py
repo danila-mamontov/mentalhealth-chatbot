@@ -8,7 +8,10 @@ def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=['delete_me'])
     def delete_user_data(message):
         t_id = message.chat.id
-        user_dir = os.path.join("responses", str(t_id))
+        uid = context.get_user_info_field(t_id, "id")
+        if uid is None:
+            uid = t_id
+        user_dir = os.path.join("responses", str(uid))
 
         # remove user from in-memory context and database
         context.delete_user(t_id)

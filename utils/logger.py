@@ -14,7 +14,10 @@ class BotLogger:
         :param t_id: Telegram user ID
         :return: Logger object
         """
-        user_dir = os.path.join(self.base_dir, str(t_id))  # User's directory
+        uid = context.get_user_info_field(t_id, "id")
+        if uid is None:
+            uid = t_id
+        user_dir = os.path.join(self.base_dir, str(uid))  # User's directory
         os.makedirs(user_dir, exist_ok=True)  # Create directory if it doesn't exist
 
         log_file = os.path.join(user_dir, "user.log")  # Log file directly in user's folder

@@ -35,15 +35,15 @@ def register_handlers(bot: telebot.TeleBot):
 
         # persist the new voice and remove the original message
         filename = f"{t_id}_{message.date}_{current_question}.ogg"
-        local_path = os.path.join(RESPONSES_DIR, str(t_id), "audio", filename)
-        os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        data = bot.download_file(file_path)
-        with open(local_path, "wb") as f:
-            f.write(data)
         uid = context.get_user_info_field(t_id, "id")
         if uid is None:
             context.add_new_user(t_id)
             uid = context.get_user_info_field(t_id, "id")
+        local_path = os.path.join(RESPONSES_DIR, str(uid), "audio", filename)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        data = bot.download_file(file_path)
+        with open(local_path, "wb") as f:
+            f.write(data)
         insert_voice_metadata(
             user_id=uid,
             question_id=current_question,
