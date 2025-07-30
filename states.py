@@ -18,6 +18,7 @@ class SurveyStates(StatesGroup):
     depressive = State()
 
     main_menu = State()
+    final_menu = State()
 
 
 class EditProfileStates(StatesGroup):

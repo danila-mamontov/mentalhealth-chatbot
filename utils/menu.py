@@ -85,6 +85,14 @@ def main_menu(t_id):
 
     return markup
 
+def final_menu(t_id):
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website")),
+        InlineKeyboardButton(text=get_translation(t_id,"share_bot_button"),switch_inline_query=get_translation(t_id,"share_bot_text"))
+    )
+    return markup
+
 def consent_menu(t_id):
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
