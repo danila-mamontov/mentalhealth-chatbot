@@ -81,7 +81,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.set_state(t_id, SurveyStates.consent, call.message.chat.id)
             bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "consent_message"),
+                                  text=get_translation(t_id, "consent_message"),
                                   parse_mode='HTML',
                                   reply_markup=consent_menu(t_id))
         else:
