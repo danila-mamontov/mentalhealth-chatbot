@@ -35,7 +35,7 @@ def register_handlers(bot: telebot.TeleBot):
         if not os.path.exists(user_dir):
             os.makedirs(os.path.join(user_dir, "audio"))
 
-        if new_user:
+        if new_user or not user_info.get("consent") or not user_info.get("language") or user_info.get("gender") is None or user_info.get("age") is None:
             names = {
                 "en": "English",
                 "de": "Deutsch",
