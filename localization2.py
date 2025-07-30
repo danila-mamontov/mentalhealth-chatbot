@@ -20,7 +20,7 @@ translations = {
         'next': 'Next',
         'finish_button': 'Finish the survey',
 
-        'consent_message': 'All data collected will be anonymized and used for research purposes only. Do you consent to participate in the study?',
+        'consent_message': 'Information and declaration of consent on data protection\nIn scientific studies, personal data and medical findings are collected about you. The storage, evaluation and disclosure of this study-related data is carried out in accordance with legal requirements and requires the following voluntary consent prior to participation in the study:\n1. I agree that data and medical information collected in the course of this study may be recorded on questionnaires and electronic storage devices and processed without naming names.\n2. Furthermore, I agree that an authorized person bound to secrecy (e.g., the sponsor or the university) may inspect my collected personal data insofar as this is necessary for the review of the project. For this measure, I release the study staff from professional confidentiality.\n3. I understand that I have the right to obtain information, including a free copy, about the personal data concerning me, as well as to request its correction or deletion.',
         'consent_yes': 'Thank you for your consent!',
         'consent_no': 'If you do not consent, you cannot participate in the study. If you change your mind, you can /start the survey again.',
 
@@ -95,7 +95,7 @@ translations = {
         'next': 'Weiter',
         'finish_button': 'Umfrage beenden',
 
-        'consent_message': 'Alle gesammelten Daten werden anonymisiert und ausschließlich zu Forschungszwecken verwendet. Stimmen Sie der Teilnahme an der Studie zu?',
+        'consent_message': 'Information und Zustimmung zum Datenschutz. In wissenschaftlichen Studien werden personenbezogene und medizinische Daten über Sie erhoben. Speicherung und Weitergabe erfolgen gesetzeskonform und erfordern vor Teilnahme Ihr Einverständnis:\n1. Ich erkläre mich einverstanden, dass die erhobenen Daten anonym verarbeitet werden.\n2. Ich erlaube befugten, zur Verschwiegenheit verpflichteten Personen (z.B. Auftraggeber oder Universität) Einsicht in meine Daten, soweit dies für die Projektprüfung notwendig ist. Dafür entbinde ich das Studienpersonal von der Schweigepflicht.\n3. Mir ist bekannt, dass ich Anspruch auf Auskunft über meine Daten sowie auf deren Berichtigung oder Löschung habe.',
         'consent_yes': 'Vielen Dank für Ihre Zustimmung!',
         'consent_no': 'Wenn Sie nicht zustimmen, können Sie nicht an der Studie teilnehmen. Wenn Sie Ihre Meinung ändern, können Sie den Fragebogen erneut starten (/start).',
 
@@ -174,7 +174,7 @@ translations = {
         'next': 'Далее',
         'finish_button': 'Завершить опрос',
 
-        'consent_message': 'Все собранные данные будут анонимизированы и использованы исключительно в научных целях. Вы согласны участвовать в исследовании?',
+        'consent_message': 'Информация и согласие на обработку данных. В исследовании собираются персональные данные и медицинская информация. Их хранение и передача соответствуют законодательству и требуют моего согласия:\n1. Я разрешаю записывать собранные данные без указания имени.\n2. Я позволяю уполномоченным лицам, связанным обязательством конфиденциальности, проверять мои данные.\n3. Я знаю о праве получать информацию о своих данных и требовать их исправления или удаления.',
         'consent_yes': 'Спасибо за ваше согласие!',
         'consent_no': 'Если вы не согласны, вы не можете участвовать в исследовании. Если вы передумаете, вы можете начать опрос заново /start.',
 

@@ -13,7 +13,10 @@ next: "Suivant"
 finish_button: "Terminer le sondage"
 language_selection: "Veuillez choisir votre langue:"
 language_confirm: "Nous avons détecté votre langue : {language}. Est-ce correct ?\n🗣️{flag}❓"
-consent_message: "Toutes les données collectées seront anonymisées et utilisées uniquement à des fins de recherche. Consentez-vous à participer à l'étude?"
+consent_message: "Information et consentement sur la protection des données. Dans les études scientifiques, des données personnelles et médicales sont recueillies. Leur stockage et transmission respectent la loi et nécessitent votre accord préalable :
+1. J'accepte que les données collectées soient enregistrées et traitées anonymement.
+2. J'autorise une personne habilitée et soumise au secret professionnel (par ex. le promoteur ou l'université) à consulter mes données si c'est nécessaire pour vérifier le projet. Pour cela, je délie le personnel de l'étude du secret professionnel.
+3. Je comprends pouvoir obtenir des informations sur mes données (copie gratuite incluse) et demander leur correction ou suppression."
 consent_yes: "Merci pour votre consentement!"
 consent_no: "Si vous ne consentez pas, vous ne pourrez pas participer à l'étude. Si vous changez d'avis, vous pouvez relancer le sondage avec /start."
 gender_selection: "Veuillez choisir votre sexe:"
