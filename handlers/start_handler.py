@@ -19,15 +19,16 @@ def register_handlers(bot: telebot.TeleBot):
             user_language = "en"
 
         user_info = context.get_user_info(t_id)
-        new_user = False
+        new_user = None
         if user_info is None:
             context.add_new_user(t_id)
             user_info = context.get_user_info(t_id)
             context.set_user_info_field(t_id, "language", user_language)
             context.save_user_info(t_id)
-            logger.log_event(t_id, "START BOT", f"New user {t_id}")
             new_user = True
+            logger.log_event(t_id, "START BOT", f"New user {t_id}")
         else:
+            new_user = False
             logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
 
         uid = user_info.get("id")
@@ -35,7 +36,7 @@ def register_handlers(bot: telebot.TeleBot):
         if not os.path.exists(user_dir):
             os.makedirs(os.path.join(user_dir, "audio"))
 
-        if new_user or not user_info.get("consent") or not user_info.get("language") or user_info.get("gender") is None or user_info.get("age") is None:
+        if new_user or not user_info.get("consent") or not user_info.get("language") or not user_info.get("gender") or not user_info.get("age"):
             names = {
                 "en": "English",
                 "de": "Deutsch",
