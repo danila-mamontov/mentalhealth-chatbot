@@ -11,7 +11,7 @@ from utils.logger import logger
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(
         func=lambda call: call.data in tuple(get_available_languages()) + ("set_language_change",),
-        state="*",
+        state=(SurveyStates.language, EditProfileStates.language, SurveyStates.main_menu),
     )
     def handle_language_selection(call):
         t_id = call.message.chat.id
