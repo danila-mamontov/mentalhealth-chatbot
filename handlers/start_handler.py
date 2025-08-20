@@ -19,15 +19,16 @@ def register_handlers(bot: telebot.TeleBot):
             user_language = "en"
 
         user_info = context.get_user_info(t_id)
-        new_user = False
+        new_user = None
         if user_info is None:
             context.add_new_user(t_id)
             user_info = context.get_user_info(t_id)
             context.set_user_info_field(t_id, "language", user_language)
             context.save_user_info(t_id)
-            logger.log_event(t_id, "START BOT", f"New user {t_id}")
             new_user = True
+            logger.log_event(t_id, "START BOT", f"New user {t_id}")
         else:
+            new_user = False
             logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
 
         uid = user_info.get("id")
@@ -35,7 +36,7 @@ def register_handlers(bot: telebot.TeleBot):
         if not os.path.exists(user_dir):
             os.makedirs(os.path.join(user_dir, "audio"))
 
-        if new_user:
+        if new_user or not user_info.get("consent") or not user_info.get("language") or not user_info.get("gender") or not user_info.get("age"):
             names = {
                 "en": "English",
                 "de": "Deutsch",
@@ -81,7 +82,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.set_state(t_id, SurveyStates.consent, call.message.chat.id)
             bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(t_id, "welcome_message") + "\n\n" + get_translation(t_id, "consent_message"),
+                                  text=get_translation(t_id, "consent_message"),
                                   parse_mode='HTML',
                                   reply_markup=consent_menu(t_id))
         else:

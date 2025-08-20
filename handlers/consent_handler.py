@@ -14,22 +14,13 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(t_id, "consent", "yes")
             context.save_user_info(t_id)
             logger.log_event(t_id, "SET CONSENT", "YES")
-            if not context.get_user_info_field(t_id, "gender"):
-                bot.set_state(t_id, SurveyStates.gender, call.message.chat.id)
-                bot.edit_message_text(chat_id=t_id,
-                                      message_id=message_id,
-                                      text=get_translation(t_id, "gender_selection"),
-                                      parse_mode='HTML',
-                                      reply_markup=gender_menu(t_id))
-            else:
-                bot.edit_message_text(
-                    chat_id=call.message.chat.id,
-                    message_id=call.message.message_id,
-                    text=get_user_profile(t_id),
-                    parse_mode='HTML',
-                    reply_markup=profile_menu(t_id),
-                )
-                bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
+            bot.set_state(t_id, SurveyStates.gender, call.message.chat.id)
+            bot.edit_message_text(chat_id=t_id,
+                                  message_id=message_id,
+                                  text=get_translation(t_id, "gender_selection"),
+                                  parse_mode='HTML',
+                                  reply_markup=gender_menu(t_id))
+
 
             # ask_phq9_question(bot, t_id)
         elif call.data == "no":
