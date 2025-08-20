@@ -5,9 +5,10 @@ from utils.logger import logger
 from survey_session import SurveyManager, VoiceAnswer
 from handlers import wbmms_survey_handler as wsh
 from states import SurveyStates
-from config import RESPONSES_DIR
+from config import RESPONSES_DIR, LOCAL_SERVER_MODE
 from utils.db import insert_voice_metadata
 import os
+import shutil
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(content_types=['voice'], state=SurveyStates.wbmms)
@@ -41,9 +42,16 @@ def register_handlers(bot: telebot.TeleBot):
             uid = context.get_user_info_field(t_id, "id")
         local_path = os.path.join(RESPONSES_DIR, str(uid), "audio", filename)
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
-        data = bot.download_file(file_path)
-        with open(local_path, "wb") as f:
-            f.write(data)
+
+        if LOCAL_SERVER_MODE:
+            # In local server mode, we can directly save the file from the bot's file system
+            shutil.copy(file_path, local_path,)
+            data = open(local_path, "rb").read()
+        else:
+            # In remote server mode, we need to use the file_path to download from the telegram server
+            data = bot.download_file(file_path)
+            with open(local_path, "wb") as f:
+                f.write(data)
         insert_voice_metadata(
             user_id=uid,
             question_id=current_question,

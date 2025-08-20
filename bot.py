@@ -3,7 +3,7 @@ import telebot
 from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 
-from config import BOT_TOKEN, RESPONSES_DIR
+from config import BOT_TOKEN, RESPONSES_DIR, API_URL, LOCAL_SERVER_MODE
 from handlers import (
     goto_handler,
     start_handler,
@@ -21,6 +21,17 @@ from handlers import (
     treatment_handler,
     depressive_handler,
 )
+
+if LOCAL_SERVER_MODE:
+    print("Running in local server mode")
+    try:
+        bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
+        bot.log_out()
+        print("Bot logged out successfully")
+    except Exception as e:
+        print(f"{e}")
+    telebot.apihelper.API_URL = API_URL
+
 bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 
