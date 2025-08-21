@@ -26,6 +26,7 @@ treatment_selection: "Nehmen Sie derzeit oder in letzter Zeit Antidepressiva ein
 welcome_message: "👋 Willkommen!\n\nDieser Bot ist Teil einer <b>wissenschaftlichen Studie</b>, die darauf abzielt, Daten über den psychophysiologischen Zustand von Menschen zu sammeln."
 info_message: "❗ Falls Sie sich während der Nutzung unwohl fühlen oder Unterstützung benötigen, empfehlen wir Ihnen, sich an professionelle Stellen zu wenden:\n📞 <b>Krisentelefone:</b> (relevante Kontakte angeben)\n🏥 <b>Professionelle Hilfe:</b> Wenn Sie sich Sorgen um Ihr emotionales Wohlbefinden machen, ziehen Sie eine Beratung durch einen Psychologen oder Therapeuten in Betracht.\n👨‍👩‍👧‍👦 <b>Sprechen Sie mit Vertrauenspersonen:</b> Der Austausch mit Freunden oder Familie kann hilfreich sein.\n\n"
 main_menu_message: "<b>Мenü</b>\nBitte wählen Sie eine Option:"
+final_menu_message: "<b>Menü</b>\nBitte teilen Sie den Bot mit Ihren Freunden und helfen Sie uns, mehr Daten für die Studie zu sammeln."
 phq9_survey_button: "Die Umfrage Starten"
 main_survey_button: "Hauptumfrage starten"
 intro_phq9_message: "📝 In dieser Umfrage werden Sie nach Ihrer Stimmung, Ihren Gedanken und Gefühlen gefragt."
