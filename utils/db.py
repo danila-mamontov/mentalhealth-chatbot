@@ -3,7 +3,7 @@ from threading import Lock
 from config import DB_PATH
 
 # Supported language codes for statistics
-LANGS = ["en", "de", "ru", "fr", "zh", "hi", "ar"]
+LANGS = ["en", "de", "ru", "fr", "zh", "hi", "ar", "uk", "es", "it"]
 
 # Age ranges used for aggregation (label, start, end)
 AGE_RANGES = [
@@ -151,6 +151,9 @@ def init_db():
         lang_zh INTEGER DEFAULT 0,
         lang_hi INTEGER DEFAULT 0,
         lang_ar INTEGER DEFAULT 0,
+        lang_uk INTEGER DEFAULT 0,
+        lang_es INTEGER DEFAULT 0,
+        lang_it INTEGER DEFAULT 0,
         age_18_29 INTEGER DEFAULT 0,
         age_30_39 INTEGER DEFAULT 0,
         age_40_49 INTEGER DEFAULT 0,
@@ -161,6 +164,11 @@ def init_db():
         age_90_plus INTEGER DEFAULT 0
     )""")
     c.execute("INSERT OR IGNORE INTO stats(id) VALUES (1)")
+    # migration: ensure new language columns exist
+    existing_cols = {r[1] for r in c.execute("PRAGMA table_info(stats)").fetchall()}
+    for col in ["lang_uk", "lang_es", "lang_it"]:
+        if col not in existing_cols:
+            c.execute(f"ALTER TABLE stats ADD COLUMN {col} INTEGER DEFAULT 0")
     conn.commit()
 
 
@@ -204,7 +212,7 @@ def update_stats() -> None:
             male_count=?,
             female_count=?,
             noanswer_count=?,
-            lang_en=?, lang_de=?, lang_ru=?, lang_fr=?, lang_zh=?, lang_hi=?, lang_ar=?,
+            lang_en=?, lang_de=?, lang_ru=?, lang_fr=?, lang_zh=?, lang_hi=?, lang_ar=?, lang_uk=?, lang_es=?, lang_it=?,
             age_18_29=?, age_30_39=?, age_40_49=?, age_50_59=?, age_60_69=?,
             age_70_79=?, age_80_89=?, age_90_plus=?
         WHERE id=1
@@ -224,6 +232,9 @@ def update_stats() -> None:
             lang_counts.get("zh", 0),
             lang_counts.get("hi", 0),
             lang_counts.get("ar", 0),
+            lang_counts.get("uk", 0),
+            lang_counts.get("es", 0),
+            lang_counts.get("it", 0),
             age_counts.get("18_29", 0),
             age_counts.get("30_39", 0),
             age_counts.get("40_49", 0),

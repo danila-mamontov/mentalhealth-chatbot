@@ -11,6 +11,9 @@ LANGUAGE_META: dict[str, dict[str, str]] = {
     "zh": {"name": "中文", "flag": "🇨🇳"},
     "hi": {"name": "हिन्दी", "flag": "🇮🇳"},
     "ar": {"name": "العربية", "flag": "🇦🇪"},
+    "uk": {"name": "Українська", "flag": "🇺🇦"},
+    "es": {"name": "Español", "flag": "🇪🇸"},
+    "it": {"name": "Italiano", "flag": "🇮🇹"},
 }
 
 
