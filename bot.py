@@ -21,6 +21,8 @@ from handlers import (
     treatment_handler,
     depressive_handler,
 )
+# Validate flow config early (fail fast on misconfiguration)
+from flow import renderer as _flow_renderer
 
 if LOCAL_SERVER_MODE:
     print("Running in local server mode")

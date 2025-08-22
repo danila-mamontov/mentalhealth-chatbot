@@ -1,8 +1,10 @@
 import telebot
-from utils.menu import age_range_menu, gender_menu, profile_menu
+from utils.menu import gender_menu, profile_menu
 from utils.storage import context, get_user_profile, get_translation
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
+from flow.renderer import render_node, engine
+
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(
         func=lambda call: call.data in ("male", "female", "noanswer", "set_gender_change"),
@@ -17,13 +19,12 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "SET GENDER", gender)
             state = bot.get_state(t_id)
             if state == str(SurveyStates.gender) and not context.get_user_info_field(t_id, "age"):
-                bot.set_state(t_id, SurveyStates.age, call.message.chat.id)
-                bot.edit_message_text(
-                    chat_id=call.message.chat.id,
+                # move to age via flow
+                render_node(
+                    bot,
+                    t_id,
+                    engine.next("gender") or "age",
                     message_id=call.message.message_id,
-                    text=get_translation(t_id, "age_selection"),
-                    parse_mode="HTML",
-                    reply_markup=age_range_menu(t_id),
                 )
             else:
                 bot.edit_message_text(
@@ -45,8 +46,3 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=gender_menu(t_id),
             )
             bot.set_state(t_id, EditProfileStates.gender, call.message.chat.id)
-
-
-
-
-

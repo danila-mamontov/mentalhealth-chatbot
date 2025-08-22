@@ -5,6 +5,7 @@ from utils.storage import context, get_user_profile, get_translation
 from utils.menu import consent_menu, language_menu, profile_menu
 from localization import get_available_languages
 from utils.logger import logger
+from flow.renderer import render_node, engine
 
 
 # Handler for language selection buttons
@@ -24,12 +25,12 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "SET LANGUAGE", language)
             state = bot.get_state(t_id)
             if state == str(SurveyStates.language):
-                bot.set_state(t_id, SurveyStates.consent, call.message.chat.id)
-                bot.edit_message_text(chat_id=t_id,
-                                      message_id=message_id,
-                                      text=get_translation(t_id, "consent_message"),
-                                      parse_mode='HTML',
-                                      reply_markup=consent_menu(t_id))
+                # 1) Update the initial welcome message in-place
+                welcome_mid = context.get_user_info_field(t_id, "welcome_message_id")
+                if welcome_mid:
+                    render_node(bot, t_id, "welcome", message_id=welcome_mid)
+                # 2) Turn the current language selection message into consent
+                render_node(bot, t_id, "consent", menu=consent_menu, message_id=message_id)
             else:
                 bot.edit_message_text(
                     chat_id=call.message.chat.id,
@@ -47,5 +48,3 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
             bot.set_state(t_id, EditProfileStates.language, call.message.chat.id)
-
-

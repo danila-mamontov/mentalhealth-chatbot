@@ -6,6 +6,7 @@ from utils.menu import main_menu, exact_age_menu, age_range_menu, phq9_menu, pro
 from utils.storage import context, get_translation, get_user_profile
 from utils.logger import logger
 from states import SurveyStates, EditProfileStates
+from flow.renderer import render_node, engine
 
 def register_handlers(bot: telebot.TeleBot):
     _AGE_RANGES = {"18-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90+"}
@@ -58,26 +59,15 @@ def register_handlers(bot: telebot.TeleBot):
 
         context.set_user_info_field(t_id, "message_to_del", message_id)
 
-        # logger.log_event(t_id, "START PHQ9 SURVEY")
-        # bot.edit_message_text(chat_id=t_id,
-        #                       message_id=message_id,
-        #                       text=get_translation(t_id, 'intro_phq9_message'),
-        #                       parse_mode='HTML')
-        #
-        # bot.send_message(chat_id=t_id,
-        #                  text=get_translation(t_id,
-        #                                       'starting_phq9') + f"\n{keycap_numbers[1]}\t" + f"<i><b>{question}</b></i>",
-        #                  parse_mode='HTML',
-        #                  reply_markup=phq9_menu(0, options))
-
         state = bot.get_state(t_id)
         if state == str(SurveyStates.age):
-            bot.edit_message_text(
-                chat_id=call.message.chat.id,
+            # linear transition to main menu via flow
+            render_node(
+                bot,
+                t_id,
+                engine.next("age") or "main_menu",
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "main_menu_message"),
-                parse_mode='HTML',
-                reply_markup=main_menu(t_id)
+                menu=main_menu,
             )
         else:
             bot.edit_message_text(
@@ -87,6 +77,4 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=profile_menu(t_id)
             )
-        bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
-
-
+            bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)

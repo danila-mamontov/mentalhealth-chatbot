@@ -1,0 +1,77 @@
+{
+  "start": "welcome",
+  "nodes": {
+    "welcome": {
+      "text_key": "welcome_message",
+      "state": "SurveyStates.welcome",
+      "next": { "default": "language_confirm" }
+    },
+
+    "language_confirm": {
+      "text_key": "language_confirm",
+      "state": "SurveyStates.language_confirm",
+      "next": { "yes": "consent", "no": "language" }
+    },
+    "language": {
+      "text_key": "language_selection",
+      "state": "SurveyStates.language",
+      "next": { "default": "consent" }
+    },
+
+    "consent": {
+      "text_key": "consent_message",
+      "state": "SurveyStates.consent",
+      "next": { "yes": "gender", "no": "consent_declined" }
+    },
+    "consent_declined": {
+      "text_key": "consent_no",
+      "state": null,
+      "next": { "default": "main_menu" }
+    },
+    "gender": {
+      "text_key": "gender_selection",
+      "state": "SurveyStates.gender",
+      "next": { "default": "age" }
+    },
+    "age": {
+      "text_key": "age_selection",
+      "state": "SurveyStates.age",
+      "next": { "default": "main_menu" }
+    },
+    "main_menu": {
+      "text_key": "main_menu_message",
+      "state": "SurveyStates.main_menu",
+      "next": { "phq9": "phq9_survey", "wbmms": "wbmms_survey", "help": "help" }
+    },
+    "phq9_survey": {
+      "text_key": "intro_phq9_message",
+      "state": "SurveyStates.phq9",
+      "next": { "default": "main_menu" }
+    },
+    "wbmms_survey": {
+      "text_key": "intro_main_message",
+      "state": "SurveyStates.wbmms",
+      "next": { "default": "main_menu" }
+    },
+    "treatment": {
+      "text_key": "treatment_selection",
+      "state": "SurveyStates.treatment",
+      "next": { "default": "main_menu" }
+    },
+    "depressive": {
+      "text_key": "depressive_feelings",
+      "state": "SurveyStates.depressive",
+      "next": { "default": "main_menu" }
+    },
+    "voice": {
+      "text_key": "voice_answer_expected",
+      "state": null,
+      "next": { "default": "main_menu" }
+    },
+    "help": {
+      "text_key": "help",
+      "state": null,
+      "next": { "default": "main_menu" }
+    }
+  }
+}

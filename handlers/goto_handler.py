@@ -22,9 +22,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "welcome_message")
-                + "\n\n"
-                + get_translation(t_id, "main_menu_message"),
+                text=get_translation(t_id, "main_menu_message"),
                 parse_mode="HTML",
                 reply_markup=main_menu(t_id),
             )

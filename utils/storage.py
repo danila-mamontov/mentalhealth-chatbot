@@ -73,6 +73,7 @@ class UserContext:
             "message_to_del": None,
             "survey_message_id": None,
             "survey_controls_id": None,
+            "welcome_message_id": None,
         })
 
     def add_new_user(self, t_id):
@@ -103,6 +104,7 @@ class UserContext:
                 "message_to_del": None,
                 "survey_message_id": None,
                 "survey_controls_id": None,
+                "welcome_message_id": None,
             }
 
     def delete_user(self, t_id):
@@ -148,7 +150,7 @@ class UserContext:
         return profile
 
     def get_user_info_field(self, t_id, field):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"}:
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"}:
             uid = self._get_id(t_id)
             if uid is None:
                 return None
@@ -167,7 +169,7 @@ class UserContext:
         return value
 
     def set_user_info_field(self, t_id, field, value):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id"} or field.startswith("phq_"):
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"} or field.startswith("phq_"):
             uid = self._get_id(t_id)
             if uid is None:
                 return
@@ -245,5 +247,4 @@ context.load_user_context()
 #         user_context.set(user_data)
 #
 # load_user_context()
-#
 #

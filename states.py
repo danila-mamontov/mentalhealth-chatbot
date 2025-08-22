@@ -7,6 +7,7 @@ class SurveyStates(StatesGroup):
 
     language = State()
     language_confirm = State()
+    welcome = State()
     consent = State()
     gender = State()
     age = State()
