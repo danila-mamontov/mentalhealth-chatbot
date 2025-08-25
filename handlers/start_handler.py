@@ -1,7 +1,7 @@
+from __future__ import annotations
 import os
 from pathlib import Path
 import telebot
-from telebot.types import Message, CallbackQuery
 
 from states import SurveyStates
 from config import RESPONSES_DIR

@@ -2,74 +2,74 @@
   "start": "welcome",
   "nodes": {
     "welcome": {
-      "text_key": "welcome_message",
+      "text_key": "welcome_msg",
       "state": "SurveyStates.welcome",
       "next": { "default": "language_confirm" }
     },
 
     "language_confirm": {
-      "text_key": "language_confirm",
+      "text_key": "language_confirm_msg",
       "state": "SurveyStates.language_confirm",
       "next": { "yes": "consent", "no": "language" }
     },
     "language": {
-      "text_key": "language_selection",
+      "text_key": "language_selection_msg",
       "state": "SurveyStates.language",
       "next": { "default": "consent" }
     },
 
     "consent": {
-      "text_key": "consent_message",
+      "text_key": "consent_msg",
       "state": "SurveyStates.consent",
       "next": { "yes": "gender", "no": "consent_declined" }
     },
     "consent_declined": {
-      "text_key": "consent_no",
+      "text_key": "consent_no_msg",
       "state": null,
       "next": { "default": "main_menu" }
     },
     "gender": {
-      "text_key": "gender_selection",
+      "text_key": "gender_selection_msg",
       "state": "SurveyStates.gender",
       "next": { "default": "age" }
     },
     "age": {
-      "text_key": "age_selection",
+      "text_key": "age_selection_msg",
       "state": "SurveyStates.age",
       "next": { "default": "main_menu" }
     },
     "main_menu": {
-      "text_key": "main_menu_message",
+      "text_key": "main_menu_msg",
       "state": "SurveyStates.main_menu",
       "next": { "phq9": "phq9_survey", "wbmms": "wbmms_survey", "help": "help" }
     },
     "phq9_survey": {
-      "text_key": "intro_phq9_message",
+      "text_key": "intro_phq9_msg",
       "state": "SurveyStates.phq9",
       "next": { "default": "main_menu" }
     },
     "wbmms_survey": {
-      "text_key": "intro_main_message",
+      "text_key": "intro_main_msg",
       "state": "SurveyStates.wbmms",
       "next": { "default": "main_menu" }
     },
     "treatment": {
-      "text_key": "treatment_selection",
+      "text_key": "treatment_selection_msg",
       "state": "SurveyStates.treatment",
       "next": { "default": "main_menu" }
     },
     "depressive": {
-      "text_key": "depressive_feelings",
+      "text_key": "depressive_feelings_msg",
       "state": "SurveyStates.depressive",
       "next": { "default": "main_menu" }
     },
     "voice": {
-      "text_key": "voice_answer_expected",
+      "text_key": "voice_answer_expected_msg",
       "state": null,
       "next": { "default": "main_menu" }
     },
     "help": {
-      "text_key": "help",
+      "text_key": "help_msg",
       "state": null,
       "next": { "default": "main_menu" }
     }

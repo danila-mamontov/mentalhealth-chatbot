@@ -19,7 +19,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "START PHQ9 SURVEY")
             bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(t_id, 'intro_phq9_message'),
+                                  text=get_translation(t_id, 'intro_phq9_msg'),
                                   parse_mode='HTML')
 
             bot.set_state(t_id, SurveyStates.phq9, call.message.chat.id)
@@ -28,7 +28,7 @@ def register_handlers(bot: telebot.TeleBot):
 
             bot.send_message(
                 chat_id=t_id,
-                text=get_translation(t_id, 'starting_phq9') +
+                text=get_translation(t_id, 'starting_phq9_msg') +
                 f"\n\n{keycap_numbers[1]}\t<b>{question}</b>",
                 parse_mode='HTML',
                 reply_markup=phq9_menu(0, options),
@@ -41,7 +41,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "START WBMMS SURVEY")
             bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(t_id, 'intro_main_message'),
+                                  text=get_translation(t_id, 'intro_main_msg'),
                                   parse_mode='HTML')
             bot.set_state(t_id, SurveyStates.wbmms, call.message.chat.id)
             with bot.retrieve_data(t_id, call.message.chat.id) as data:
@@ -64,6 +64,3 @@ def register_handlers(bot: telebot.TeleBot):
 
         else:
             pass
-
-
-

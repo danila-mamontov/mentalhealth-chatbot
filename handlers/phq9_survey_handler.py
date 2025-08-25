@@ -30,7 +30,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=t_id,
                 message_id=message_id,
-                text=get_translation(t_id, "starting_phq9") +
+                text=get_translation(t_id, "starting_phq9_msg") +
                 f"\n\n{keycap_numbers[next_question_index+1]}\t<b>{question}</b>",
                 parse_mode="HTML",
                 reply_markup=phq9_menu(next_question_index, options),
@@ -44,7 +44,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=t_id,
                 message_id=message_id,
-                text=get_translation(t_id, "intro_main_message"),
+                text=get_translation(t_id, "intro_main_msg"),
                 parse_mode="HTML",
             )
 
@@ -64,5 +64,3 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(t_id, "survey_controls_id", sent_controls.message_id)
             context.set_user_info_field(t_id, "message_to_del", message_id)
             bot.set_state(t_id, SurveyStates.wbmms, call.message.chat.id)
-
-

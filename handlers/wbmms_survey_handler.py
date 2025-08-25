@@ -18,7 +18,7 @@ from utils.db import insert_voice_metadata
 
 def get_controls_placeholder(t_id: int) -> str:
     """Return default controls message prompting for a voice reply."""
-    return get_translation(t_id, "voice_answer_expected")
+    return get_translation(t_id, "voice_answer_expected_msg")
 
 
 def _save_voice_answers(
@@ -187,11 +187,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         elif action == "survey_next":
             answers = session.get_question_voice_answers(session.current_index)
             total = sum(a.duration for a in answers)
-            if total < 30:
+            if total < 2:
                 try:
                     bot.answer_callback_query(
                         call.id,
-                        text=get_translation(t_id, "voice_too_short"),
+                        text=get_translation(t_id, "voice_too_short_msg"),
                         show_alert=True,
                     )
                 except Exception:
@@ -205,11 +205,11 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         elif action == "survey_finish":
             answers = session.get_question_voice_answers(session.current_index)
             total = sum(a.duration for a in answers)
-            if total < 30:
+            if total < 2:
                 try:
                     bot.answer_callback_query(
                         call.id,
-                        text=get_translation(t_id, "voice_too_short"),
+                        text=get_translation(t_id, "voice_too_short_msg"),
                         show_alert=True,
                     )
                 except Exception:
@@ -233,9 +233,8 @@ def register_handlers(bot: telebot.TeleBot) -> None:
             bot.edit_message_text(
                 chat_id=t_id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "depressive_feelings"),
+                text=get_translation(t_id, "depressive_feelings_msg"),
                 parse_mode="HTML",
                 reply_markup=yes_no_menu(t_id),
             )
             bot.set_state(t_id, SurveyStates.depressive, call.message.chat.id)
-

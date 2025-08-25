@@ -1,3 +1,4 @@
+from __future__ import annotations
 import telebot
 from states import SurveyStates
 from utils.logger import logger

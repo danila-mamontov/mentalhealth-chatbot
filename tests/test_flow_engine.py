@@ -20,7 +20,7 @@ def test_engine_load_and_props():
     engine = FlowEngine(root / "message_flow.yaml")
 
     assert engine.start == "welcome"
-    assert engine.text_key("welcome") == "welcome_message"
+    assert engine.text_key("welcome") == "welcome_msg"
 
     import states
     assert engine.state("language") == getattr(states.SurveyStates, "language")

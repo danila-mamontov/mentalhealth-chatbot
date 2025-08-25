@@ -41,7 +41,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "gender_selection"),
+                text=get_translation(t_id, "gender_selection_msg"),
                 parse_mode='HTML',
                 reply_markup=gender_menu(t_id),
             )

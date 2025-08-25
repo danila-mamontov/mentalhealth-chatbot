@@ -1,4 +1,5 @@
 import telebot
+
 from utils.menu import main_menu
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -14,8 +15,6 @@ def register_handlers(bot: telebot.TeleBot):
 
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
-                              text=get_translation(t_id, "depression_selection"),
+                              text=get_translation(t_id, "depression_selection_msg"),
                               parse_mode="HTML",
                               reply_markup=main_menu(t_id))
-
-

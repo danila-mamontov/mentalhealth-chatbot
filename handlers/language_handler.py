@@ -1,3 +1,4 @@
+from __future__ import annotations
 import telebot
 from states import SurveyStates, EditProfileStates
 
@@ -44,7 +45,7 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "CHANGE LANGUAGE", "")
             bot.edit_message_text(chat_id=t_id,
                                   message_id=message_id,
-                                  text=get_translation(t_id, "language_selection"),
+                                  text=get_translation(t_id, "language_selection_msg"),
                                   parse_mode='HTML',
                                   reply_markup=language_menu())
             bot.set_state(t_id, EditProfileStates.language, call.message.chat.id)

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import telebot
 
 from survey import get_phq9_question_and_options, keycap_numbers
@@ -28,7 +29,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "age_selection"),
+                text=get_translation(t_id, "age_selection_msg"),
                 reply_markup=exact_age_menu(t_id,start_age, end_age)
             )
         else:
@@ -36,7 +37,7 @@ def register_handlers(bot: telebot.TeleBot):
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "age_selection"),
+                text=get_translation(t_id, "age_selection_msg"),
                 reply_markup=age_range_menu(t_id)
             )
             current = bot.get_state(t_id)

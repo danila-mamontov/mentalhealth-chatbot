@@ -19,11 +19,10 @@ def register_handlers(bot: telebot.TeleBot):
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=get_translation(t_id, "end_main_survey_message")
+            text=get_translation(t_id, "end_main_survey_msg")
             + "\n\n"
-            + get_translation(t_id, "final_menu_message"),
+            + get_translation(t_id, "final_menu_msg"),
             parse_mode="HTML",
             reply_markup=final_menu(t_id),
         )
         bot.set_state(t_id, SurveyStates.final_menu, call.message.chat.id)
-

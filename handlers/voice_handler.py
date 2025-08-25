@@ -85,7 +85,7 @@ def register_handlers(bot: telebot.TeleBot):
             except ValueError:
                 ids.append(sent.message_id)
 
-        prefix = get_translation(t_id, "voice_recieved")
+        prefix = get_translation(t_id, "voice_recieved_msg")
         wsh._update_controls(bot, session, prefix, relocate=True)
 
         logger.log_event(
@@ -109,4 +109,3 @@ def register_handlers(bot: telebot.TeleBot):
         #     context.set_user_info_field(t_id, "current_question_index", current_question + 1)
         #     logger.log_event(t_id, f"VOICE WBMMS QUESTION {current_question}", f"answer {filename}")
         #     ask_next_main_question(bot, t_id)
-

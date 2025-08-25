@@ -12,7 +12,32 @@ init_db()
 
 def get_translation(t_id, key):
     language = context.get_user_info_field(t_id, "language")
-    return translations[key].get(language)
+    # Try exact key first
+    entry = translations.get(key)
+    val = entry.get(language) if entry else None
+    if val:
+        return val
+    # Fallbacks: swap _msg <-> base and base_message
+    candidates = []
+    if key.endswith("_msg"):
+        base = key[:-4]
+        candidates = [base, f"{base}_message"]
+    else:
+        candidates = [f"{key}_msg", f"{key}_message"]
+    for cand in candidates:
+        e = translations.get(cand)
+        if e:
+            v = e.get(language)
+            if v:
+                return v
+    # As last resort, return any available language value for the key
+    for cand in [key] + candidates:
+        e = translations.get(cand)
+        if e:
+            any_val = next(iter(e.values()), None)
+            if any_val:
+                return any_val
+    return None
 
 # Database helpers
 def load_user_info(t_id):
@@ -24,7 +49,7 @@ def load_user_info(t_id):
     return None
 
 def get_user_profile(t_id):
-    text = get_translation(t_id, "profile_template")
+    text = get_translation(t_id, "profile_template_msg")
 
     fields = {
         "user_id": context.get_user_info_field(t_id, "id"),
@@ -39,7 +64,7 @@ def get_user_profile(t_id):
     for key in ["gender", "consent", "treatment", "depressive"]:
         val = fields.get(key)
         if val:
-            translated = get_translation(t_id, val)
+            translated = get_translation(t_id, f"{val}_msg")
             if translated:
                 fields[key] = translated
 

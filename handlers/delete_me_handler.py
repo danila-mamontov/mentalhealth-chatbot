@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import shutil
 import telebot
@@ -28,5 +29,3 @@ def register_handlers(bot: telebot.TeleBot):
                 bot.send_message(t_id, f"⚠️ Failed to delete data: {str(e)}")
         else:
             bot.send_message(t_id, "ℹ️ No data found to delete.")
-
-

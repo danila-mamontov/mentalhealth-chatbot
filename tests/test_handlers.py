@@ -62,7 +62,7 @@ def test_help_handler(monkeypatch):
     help_handler.register_handlers(bot)
     msg = SimpleNamespace(chat=SimpleNamespace(id=10))
     bot.handlers["handle_help"](msg)
-    assert bot.sent_messages[0]["text"] == "help_10"
+    assert bot.sent_messages[0]["text"] == "help_msg_10"
 
 
 

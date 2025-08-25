@@ -15,17 +15,16 @@ def register_handlers(bot: telebot.TeleBot):
         if page == "goto_age_range":
             bot.edit_message_text(chat_id=call.message.chat.id,
                                   message_id=call.message.message_id,
-                                  text=get_translation(t_id, "age_selection"),
+                                  text=get_translation(t_id, "age_selection_msg"),
                                   parse_mode="HTML",
                                   reply_markup=age_range_menu(t_id))
         elif page == "goto_main_menu":
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "main_menu_message"),
+                text=get_translation(t_id, "main_menu_msg"),
                 parse_mode="HTML",
                 reply_markup=main_menu(t_id),
             )
         else:
             bot.answer_callback_query(call.id)
-
