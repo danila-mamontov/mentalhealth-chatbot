@@ -41,7 +41,7 @@ def render_node(
     # set state if any
     state = engine.state(node_id)
     if state is not None:
-        bot.set_state(chat_id, state, chat_id)
+        bot.set_state(chat_id, state)
 
     key = engine.text_key(node_id)
     text = get_translation(chat_id, key)

@@ -13,39 +13,60 @@ from flow.renderer import render_node, engine
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(
         func=lambda call: call.data in get_available_languages() or call.data == "set_language_change",
-        state="*",
+        state=[SurveyStates.language,SurveyStates.language_confirm, EditProfileStates.editing_profile, EditProfileStates.language],
     )
     def handle_language_selection(call):
         t_id = call.message.chat.id
         message_id = call.message.message_id
         language = call.data
-
-        if language != "set_language_change":
+        state = bot.get_state(t_id)
+        if state == SurveyStates.language.name:
             context.set_user_info_field(t_id, "language", language)
             context.save_user_info(t_id)
             logger.log_event(t_id, "SET LANGUAGE", language)
-            state = bot.get_state(t_id)
-            if state == str(SurveyStates.language):
-                # 1) Update the initial welcome message in-place
-                welcome_mid = context.get_user_info_field(t_id, "welcome_message_id")
-                if welcome_mid:
-                    render_node(bot, t_id, "welcome", message_id=welcome_mid)
-                # 2) Turn the current language selection message into consent
-                render_node(bot, t_id, "consent", menu=consent_menu, message_id=message_id)
-            else:
-                bot.edit_message_text(
-                    chat_id=call.message.chat.id,
-                    message_id=call.message.message_id,
-                    text=get_user_profile(t_id),
-                    parse_mode='HTML',
-                    reply_markup=profile_menu(t_id),
-                )
-                bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
-        else:
+            # 1) Update the initial welcome message in-place
+            welcome_mid = context.get_user_info_field(t_id, "welcome_message_id")
+            if welcome_mid:
+                render_node(bot, t_id, "welcome", message_id=welcome_mid)
+            # 2) Turn the current language selection message into consent
+            render_node(
+                bot,
+                t_id,
+                engine.next("language") or "consent",
+                message_id=message_id,
+            )
+
+        if state == SurveyStates.language_confirm:
+            context.set_user_info_field(t_id, "language", language)
+            context.save_user_info(t_id)
+            logger.log_event(t_id, "SET LANGUAGE", language)
+
+            render_node(bot, t_id, "consent", message_id=message_id)
+
+        if state == EditProfileStates.editing_profile.name:
             logger.log_event(t_id, "CHANGE LANGUAGE", "")
-            bot.edit_message_text(chat_id=t_id,
-                                  message_id=message_id,
-                                  text=get_translation(t_id, "language_selection_msg"),
-                                  parse_mode='HTML',
-                                  reply_markup=language_menu())
             bot.set_state(t_id, EditProfileStates.language, call.message.chat.id)
+            render_node(
+                bot,
+                t_id,
+                "language_reselect",
+                message_id=message_id,
+                menu=lambda _tid: language_menu(),
+            )
+
+
+        elif state == EditProfileStates.language.name:
+            context.set_user_info_field(t_id, "language", language)
+            context.save_user_info(t_id)
+            logger.log_event(t_id, "SET LANGUAGE", language)
+
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_user_profile(t_id),
+                parse_mode='HTML',
+                reply_markup=profile_menu(t_id),
+            )
+
+

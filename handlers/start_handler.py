@@ -2,6 +2,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import telebot
+from telebot.types import CallbackQuery, Message
 
 from states import SurveyStates
 from config import RESPONSES_DIR
@@ -47,7 +48,7 @@ def _safe_translation(user_id: int, key: str) -> str:
 
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.message_handler(commands=["start"], state="*")
+    @bot.message_handler(commands=["start"])
     def start(message: Message):
         t_id = message.chat.id
         t_language_code = normalize_language(getattr(message.from_user, "language_code", None), _AVAILABLE_LANGS)
@@ -71,15 +72,13 @@ def register_handlers(bot: telebot.TeleBot):
         if user_info is None or _needs_initial_setup(user_info):
             lang_name = get_language_name(t_language_code)
             flag = get_language_flag(t_language_code)
-            # Step 1: welcome (no menu), store its message id for later updates
             welcome_mid = render_node(
                 bot,
                 t_id,
-                engine.start,  # 'welcome'
+                engine.start,
             )
             if welcome_mid is not None:
                 context.set_user_info_field(t_id, "welcome_message_id", welcome_mid)
-            # Step 2: language confirmation with yes/no
             render_node(
                 bot,
                 t_id,
@@ -90,31 +89,5 @@ def register_handlers(bot: telebot.TeleBot):
             logger.log_event(t_id, "LANGUAGE_CONFIRM", t_language_code)
             return
 
-        # Main menu path
         render_node(bot, t_id, "main_menu", menu=main_menu)
         logger.log_event(t_id, "MAIN_MENU", t_language_code)
-
-    @bot.callback_query_handler(func=lambda call: call.data in ("yes", "no"), state=SurveyStates.language_confirm)
-    def confirm_language(call: CallbackQuery):
-        t_id = call.message.chat.id
-        message_id = call.message.message_id
-        if call.data == "yes":
-            # proceed to consent directly
-            render_node(
-                bot,
-                t_id,
-                engine.next("language_confirm", event="yes") or "consent",
-                message_id=message_id,
-                menu=consent_menu,
-            )
-            logger.log_event(t_id, "LANGUAGE_CONFIRMED", call.data)
-        else:
-            # show language selection
-            render_node(
-                bot,
-                t_id,
-                engine.next("language_confirm", event="no") or "language",
-                message_id=message_id,
-                menu=lambda _tid: language_menu(),
-            )
-            logger.log_event(t_id, "LANGUAGE_RESELECT", call.data)

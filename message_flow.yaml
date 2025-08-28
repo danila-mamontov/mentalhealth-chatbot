@@ -10,9 +10,15 @@
     "language_confirm": {
       "text_key": "language_confirm_msg",
       "state": "SurveyStates.language_confirm",
-      "next": { "yes": "consent", "no": "language" }
+      "next": { "yes": "consent", "no": "language_select" }
     },
-    "language": {
+    "language_reselect": {
+      "text_key": "language_selection_msg",
+      "state": "EditProfileStates.language",
+      "next": { "default": "consent" }
+    },
+
+    "language_select": {
       "text_key": "language_selection_msg",
       "state": "SurveyStates.language",
       "next": { "default": "consent" }

@@ -8,35 +8,25 @@ from flow.renderer import render_node, engine
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(
         func=lambda call: call.data in ("male", "female", "noanswer", "set_gender_change"),
-        state="*",
+        state=[SurveyStates.gender,EditProfileStates.editing_profile,EditProfileStates.gender],
     )
     def handle_gender_selection(call):
         t_id = call.message.chat.id
-        if call.data != "set_gender_change":
-            gender = call.data
+        state = bot.get_state(t_id)
+        gender = call.data
+        if state == SurveyStates.gender.name:
             context.set_user_info_field(t_id, "gender", gender)
             context.save_user_info(t_id)
             logger.log_event(t_id, "SET GENDER", gender)
-            state = bot.get_state(t_id)
-            if state == str(SurveyStates.gender) and not context.get_user_info_field(t_id, "age"):
-                # move to age via flow
-                render_node(
-                    bot,
-                    t_id,
-                    engine.next("gender") or "age",
-                    message_id=call.message.message_id,
-                )
-            else:
-                bot.edit_message_text(
-                    chat_id=call.message.chat.id,
-                    message_id=call.message.message_id,
-                    text=get_user_profile(t_id),
-                    parse_mode='HTML',
-                    reply_markup=profile_menu(t_id),
-                )
-                bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
-
-        else:
+            bot.set_state(t_id, SurveyStates.age, call.message.chat.id)
+            # move to age via flow
+            render_node(
+                bot,
+                t_id,
+                engine.next("gender") or "age",
+                message_id=call.message.message_id,
+            )
+        elif state == EditProfileStates.editing_profile.name:
             logger.log_event(t_id, "CHANGE GENDER", "")
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
@@ -46,3 +36,14 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=gender_menu(t_id),
             )
             bot.set_state(t_id, EditProfileStates.gender, call.message.chat.id)
+        else:
+            logger.log_event(t_id, "SET GENDER", gender)
+            context.set_user_info_field(t_id, "gender", gender)
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_user_profile(t_id),
+                parse_mode='HTML',
+                reply_markup=profile_menu(t_id),
+            )

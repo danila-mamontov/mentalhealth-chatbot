@@ -24,7 +24,7 @@ class SurveyStates(StatesGroup):
 
 class EditProfileStates(StatesGroup):
     """States used when editing existing profile information."""
-
+    editing_profile = State()
     language = State()
     gender = State()
     age = State()

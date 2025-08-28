@@ -41,12 +41,12 @@ def register_handlers(bot: telebot.TeleBot):
                 reply_markup=age_range_menu(t_id)
             )
             current = bot.get_state(t_id)
-            if current == str(SurveyStates.age):
+            if current == SurveyStates.age.name:
                 bot.set_state(t_id, SurveyStates.age, call.message.chat.id)
             else:
                 bot.set_state(t_id, EditProfileStates.age, call.message.chat.id)
 
-    @bot.callback_query_handler(func=lambda call: call.data.isdigit(), state="*")
+    @bot.callback_query_handler(func=lambda call: call.data.isdigit())
     def handle_exact_age_selection(call):
         t_id = call.message.chat.id
         message_id = call.message.message_id
@@ -61,7 +61,7 @@ def register_handlers(bot: telebot.TeleBot):
         context.set_user_info_field(t_id, "message_to_del", message_id)
 
         state = bot.get_state(t_id)
-        if state == str(SurveyStates.age):
+        if state == SurveyStates.age.name:
             # linear transition to main menu via flow
             render_node(
                 bot,
@@ -78,4 +78,4 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=profile_menu(t_id)
             )
-            bot.set_state(t_id, SurveyStates.main_menu, call.message.chat.id)
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)

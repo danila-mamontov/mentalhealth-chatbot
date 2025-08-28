@@ -18,23 +18,33 @@ from handlers import (
     wbmms_survey_handler,
     voice_handler,
     language_handler,
+    language_confirm_handler,
     treatment_handler,
     depressive_handler,
 )
 # Validate flow config early (fail fast on misconfiguration)
 from flow import renderer as _flow_renderer
 
+class telebot_custom(telebot.TeleBot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def set_state(self, user_id, state, chat_id=None):
+        print(f"Setting state: {state} (user_id={user_id}, chat_id={chat_id})")
+        return super().set_state(user_id, state, chat_id)
+
+
 if LOCAL_SERVER_MODE:
     print("Running in local server mode")
     try:
-        bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
+        bot = telebot_custom(BOT_TOKEN, state_storage=StateMemoryStorage())
         bot.log_out()
         print("Bot logged out successfully")
     except Exception as e:
         print(f"{e}")
     telebot.apihelper.API_URL = API_URL
 
-bot = telebot.TeleBot(BOT_TOKEN, state_storage=StateMemoryStorage())
+bot = telebot_custom(BOT_TOKEN, state_storage=StateMemoryStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 
 # Регистрация обработчиков
@@ -42,6 +52,7 @@ bot.add_custom_filter(custom_filters.StateFilter(bot))
 start_handler.register_handlers(bot)
 delete_me_handler.register_handlers(bot)
 language_handler.register_handlers(bot)
+language_confirm_handler.register_handlers(bot)
 consent_handler.register_handlers(bot)
 age_handler.register_handlers(bot)
 gender_handler.register_handlers(bot)

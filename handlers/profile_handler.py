@@ -1,6 +1,7 @@
 import telebot
 from utils.storage import get_user_profile
 from utils.menu import profile_menu
+from states import EditProfileStates
 
 
 def register_handlers(bot: telebot.TeleBot):
@@ -10,6 +11,7 @@ def register_handlers(bot: telebot.TeleBot):
     def handle_profile_response(call):
         t_id = call.message.chat.id
         command = call.data.split("_")[1]
+        bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
         if command == "open":
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
