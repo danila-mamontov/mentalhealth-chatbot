@@ -1,4 +1,4 @@
-"""Handlers for the WBMMS voice survey using :mod:`survey_session`."""
+"""Handlers for the voice survey using :mod:`survey_session`."""
 
 from __future__ import annotations
 

@@ -3,7 +3,7 @@ import telebot
 from utils.storage import context, get_translation
 from utils.logger import logger
 from survey_session import SurveyManager, VoiceAnswer
-from handlers import wbmms_survey_handler as wsh
+from handlers import main_survey_handler as wsh
 from states import SurveyStates
 from config import RESPONSES_DIR, LOCAL_SERVER_MODE
 from utils.db import insert_voice_metadata

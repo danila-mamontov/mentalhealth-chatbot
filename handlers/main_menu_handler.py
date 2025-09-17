@@ -1,7 +1,7 @@
 import telebot
 from survey import get_wbmms_question,get_phq9_question_and_options, keycap_numbers
 from utils.menu import survey_menu, phq9_menu
-from handlers.wbmms_survey_handler import get_controls_placeholder
+from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates

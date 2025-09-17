@@ -15,7 +15,7 @@ from handlers import (
     main_menu_handler,
     profile_handler,
     phq9_survey_handler,
-    wbmms_survey_handler,
+    main_survey_handler,
     voice_handler,
     language_handler,
     language_confirm_handler,
@@ -61,7 +61,7 @@ goto_handler.register_handlers(bot)
 
 main_menu_handler.register_handlers(bot)
 phq9_survey_handler.register_handlers(bot)
-wbmms_survey_handler.register_handlers(bot)
+main_survey_handler.register_handlers(bot)
 treatment_handler.register_handlers(bot)
 depressive_handler.register_handlers(bot)
 voice_handler.register_handlers(bot)
