@@ -13,7 +13,7 @@ class SurveyStates(StatesGroup):
     age = State()
 
     phq9 = State()
-    wbmms = State()
+    main = State()
 
     treatment = State()
     depressive = State()

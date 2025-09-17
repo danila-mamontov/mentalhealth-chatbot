@@ -3,7 +3,7 @@ import telebot
 from utils.storage import context, get_translation
 from utils.logger import logger
 from survey_session import SurveyManager, VoiceAnswer
-from handlers import main_survey_handler as wsh
+import handlers.main_survey_handler as msh
 from states import SurveyStates
 from config import RESPONSES_DIR, LOCAL_SERVER_MODE
 from utils.db import insert_voice_metadata
@@ -11,7 +11,7 @@ import os
 import shutil
 
 def register_handlers(bot: telebot.TeleBot):
-    @bot.message_handler(content_types=['voice'], state=SurveyStates.wbmms)
+    @bot.message_handler(content_types=['voice'], state=SurveyStates.main)
     def handle_voice_message(message):
         t_id = message.chat.id
         session = SurveyManager.get_session(t_id)
@@ -86,10 +86,10 @@ def register_handlers(bot: telebot.TeleBot):
                 ids.append(sent.message_id)
 
         prefix = get_translation(t_id, "voice_recieved_msg")
-        wsh._update_controls(bot, session, prefix, relocate=True)
+        msh._update_controls(bot, session, prefix, relocate=True)
 
         logger.log_event(
-            t_id, f"VOICE WBMMS QUESTION {current_question}", f"answer id {file_unique_id}"
+            t_id, f"VOICE MAIN QUESTION {current_question}", f"answer id {file_unique_id}"
         )
 
         # if audio_duration < 5:

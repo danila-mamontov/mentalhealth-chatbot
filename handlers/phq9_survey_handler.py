@@ -1,5 +1,5 @@
 import telebot
-from survey import keycap_numbers, get_phq9_question_and_options, get_wbmms_question
+from survey import keycap_numbers, get_phq9_question_and_options, get_main_question
 from utils.menu import phq9_menu, survey_menu
 from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
@@ -50,7 +50,7 @@ def register_handlers(bot: telebot.TeleBot):
 
             sent_q = bot.send_message(
                 chat_id=t_id,
-                text=f"{keycap_numbers[1]}\t" + get_wbmms_question(question_id=0, user_id=t_id),
+                text=f"{keycap_numbers[1]}\t" + get_main_question(question_id=0, user_id=t_id),
                 parse_mode="HTML",
             )
             sent_controls = bot.send_message(
@@ -63,4 +63,4 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(t_id, "survey_message_id", sent_q.message_id)
             context.set_user_info_field(t_id, "survey_controls_id", sent_controls.message_id)
             context.set_user_info_field(t_id, "message_to_del", message_id)
-            bot.set_state(t_id, SurveyStates.wbmms, call.message.chat.id)
+            bot.set_state(t_id, SurveyStates.main, call.message.chat.id)

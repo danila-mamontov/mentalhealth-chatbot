@@ -8,7 +8,7 @@ import telebot
 
 from survey_session import SurveyManager, SurveySession, VoiceAnswer
 from utils.menu import survey_menu, main_menu, yes_no_menu
-from survey import keycap_numbers, get_wbmms_question
+from survey import keycap_numbers, get_main_question
 from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
@@ -83,7 +83,7 @@ def _render_question(
         keycap = keycap_numbers[index + 1]
     else:
         keycap = keycap_numbers[index // 10] + keycap_numbers[index % 10 + 1]
-    text = f"{keycap}\t" + get_wbmms_question(index, user_id=t_id)
+    text = f"{keycap}\t" + get_main_question(index, user_id=t_id)
 
     try:
         bot.edit_message_text(
@@ -172,7 +172,7 @@ def _update_controls(
 
 
 def register_handlers(bot: telebot.TeleBot) -> None:
-    @bot.callback_query_handler(func=lambda c: c.data.startswith("survey_"), state=SurveyStates.wbmms)
+    @bot.callback_query_handler(func=lambda c: c.data.startswith("survey_"), state=SurveyStates.main)
     def handle_survey_buttons(call: telebot.types.CallbackQuery) -> None:
         t_id = call.message.chat.id
         session = SurveyManager.get_session(t_id)
@@ -182,7 +182,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         if action == "survey_prev":
             _save_voice_answers(bot, session, session.current_index)
             _id = session.prev_question()
-            logger.log_event(t_id, "WBMMS PREV", _id)
+            logger.log_event(t_id, "MAIN PREV", _id)
             _render_question(bot, session, question_id)
         elif action == "survey_next":
             answers = session.get_question_voice_answers(session.current_index)
@@ -200,7 +200,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             _save_voice_answers(bot, session, session.current_index)
             _id = session.next_question()
-            logger.log_event(t_id, "WBMMS NEXT", _id)
+            logger.log_event(t_id, "MAIN NEXT", _id)
             _render_question(bot, session, question_id)
         elif action == "survey_finish":
             answers = session.get_question_voice_answers(session.current_index)
@@ -218,7 +218,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
 
             _save_voice_answers(bot, session)
             SurveyManager.remove_session(t_id)
-            logger.log_event(t_id, "END WBMMS SURVEY")
+            logger.log_event(t_id, "END MAIN SURVEY")
             if question_id:
                 try:
                     bot.delete_message(t_id, question_id)

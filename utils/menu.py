@@ -1,7 +1,7 @@
 from __future__ import annotations
 # Avoid importing telebot.types at module import time to keep tests' stubs working.
 # We'll resolve InlineKeyboardMarkup/Button lazily inside functions.
-from survey import marks, WBMMS_survey, emoji_mapping
+from survey import marks, main_survey, emoji_mapping
 from utils.storage import get_translation
 from localization import get_available_languages, get_language_name, get_language_flag
 
@@ -129,7 +129,7 @@ def survey_menu(t_id, question_index: int, voice_count: int = 0):
                 marks[2] + "\t" + get_translation(t_id, "next_msg"), callback_data="survey_next"
             )
         )
-    elif question_index < len(WBMMS_survey["en"]) - 1:
+    elif question_index < len(main_survey["en"]) - 1:
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
             InlineKeyboardButton(

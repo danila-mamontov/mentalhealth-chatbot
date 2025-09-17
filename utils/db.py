@@ -116,7 +116,7 @@ def init_db():
         depression INTEGER
     )""")
 
-    c.execute("""CREATE TABLE IF NOT EXISTS wbmms_voice (
+    c.execute("""CREATE TABLE IF NOT EXISTS main_voice (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         question_id INTEGER,
@@ -178,7 +178,7 @@ def update_stats() -> None:
     c = conn.cursor()
 
     total_audio_files, total_audio_duration, total_audio_size = c.execute(
-        "SELECT COUNT(*), COALESCE(SUM(duration),0), COALESCE(SUM(file_size),0) FROM wbmms_voice"
+        "SELECT COUNT(*), COALESCE(SUM(duration),0), COALESCE(SUM(file_size),0) FROM main_voice"
     ).fetchone()
 
     users_total = c.execute("SELECT COUNT(*) FROM user_profile").fetchone()[0]
@@ -187,7 +187,7 @@ def update_stats() -> None:
     noanswer_count = users_total - male_count - female_count
 
     lang_counts = {l: c.execute(
-        "SELECT COUNT(*) FROM user_profile WHERE language=?", (l,)
+        "SELECT COUNT(*) FROM user_profile WHERE language= ?", (l,)
     ).fetchone()[0] for l in LANGS}
 
     age_counts = {}
@@ -260,7 +260,7 @@ def upsert_user_profile(user_info: dict):
     c = conn.cursor()
 
     existing = c.execute(
-        "SELECT id FROM user_profile WHERE t_id=?", (user_info.get("t_id"),)
+        "SELECT id FROM user_profile WHERE t_id= ?", (user_info.get("t_id"),)
     ).fetchone()
 
     if existing is None:
@@ -317,7 +317,7 @@ def insert_voice_metadata(
     conn = get_connection()
     c = conn.cursor()
     c.execute(
-        "INSERT INTO wbmms_voice (user_id, question_id, file_unique_id, file_path, duration, timestamp, file_size) "
+        "INSERT INTO main_voice (user_id, question_id, file_unique_id, file_path, duration, timestamp, file_size) "
         "VALUES (?,?,?,?,?,?,?)",
         (
             user_id,
@@ -348,10 +348,10 @@ def get_voice_metadata(user_id: int | None = None):
     conn = get_connection()
     c = conn.cursor()
     if user_id is None:
-        rows = c.execute("SELECT * FROM wbmms_voice").fetchall()
+        rows = c.execute("SELECT * FROM main_voice").fetchall()
     else:
         rows = c.execute(
-            "SELECT * FROM wbmms_voice WHERE user_id=?",
+            "SELECT * FROM main_voice WHERE user_id= ?",
             (user_id,),
         ).fetchall()
     return [dict(row) for row in rows]
@@ -361,9 +361,9 @@ def delete_user_records(user_id: int) -> None:
     """Remove all database records related to a user."""
     conn = get_connection()
     c = conn.cursor()
-    c.execute("DELETE FROM user_profile WHERE id=?", (user_id,))
-    c.execute("DELETE FROM phq_answers WHERE user_id=?", (user_id,))
-    c.execute("DELETE FROM wbmms_voice WHERE user_id=?", (user_id,))
-    c.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
+    c.execute("DELETE FROM user_profile WHERE id= ?", (user_id,))
+    c.execute("DELETE FROM phq_answers WHERE user_id= ?", (user_id,))
+    c.execute("DELETE FROM main_voice WHERE user_id= ?", (user_id,))
+    c.execute("DELETE FROM logs WHERE user_id= ?", (user_id,))
     conn.commit()
     update_stats()

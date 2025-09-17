@@ -13,7 +13,7 @@ def _load_survey(name: str):
     return surveys
 
 phq9_survey = _load_survey('phq9')
-WBMMS_survey = _load_survey('wbmms')
+main_survey = _load_survey('main')
 
 emoji_mapping = {
     1: "\u25C6",  # 🟢 Green - Not at all
@@ -26,10 +26,10 @@ keycap_numbers = ["0️⃣","1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣
 marks = "✔️","⬅️","➡️"
 
 
-def get_wbmms_question(question_id, user_id=None, language=None):
+def get_main_question(question_id, user_id=None, language=None):
     if language is None:
         language = context.get_user_info_field(user_id, "language")
-    return next(islice(WBMMS_survey[language].keys(), question_id, None))
+    return next(islice(main_survey[language].keys(), question_id, None))
 
 
 def get_phq9_question_and_options(question_id, user_id=None, language=None):
