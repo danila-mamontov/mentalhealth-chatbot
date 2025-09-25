@@ -18,9 +18,9 @@ def register_handlers(bot: telebot.TeleBot):
             # initialize one attention-check per survey run
             lang = context.get_user_info_field(t_id, "language") or "en"
             base_count = len(phq9_survey[lang])
-            attn_idx = randint(0, base_count)  # inclusive range -> insert at random position
+            attn_idx = 5 #randint(0, base_count)   inclusive range -> insert at random position
             context.set_user_info_field(t_id, "phq_attention_index", attn_idx)
-            context.set_user_info_field(t_id, "phq_attention_expected", 1)  # expect option '2' (0-based index 1)
+            context.set_user_info_field(t_id, "phq_attention_expected", 3)  # expect option '2' (0-based index 1)
             context.set_user_info_field(t_id, "phq_attention_failed", 0)
 
             question, options = get_phq9_question_and_options(0, t_id)

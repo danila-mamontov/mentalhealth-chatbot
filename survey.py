@@ -59,8 +59,10 @@ def get_phq9_question_and_options(question_id, user_id=None, language=None):
         # Expected option index (0-based); default to 1 -> "2"
         expected = context.get_user_info_field(user_id, "phq_attention_expected") or 1
         template = get_translation(user_id, "attention_check_instruction_msg") or "Attention check: Please select option {n} for this question."
-        instruction = template.replace("{n}", str(expected + 1))
-        return instruction, _phq9_standard_options(language)
+
+        options = _phq9_standard_options(language)
+        instruction = template.replace("{n}", f'"{options[expected]}"')
+        return instruction, options
 
     # Map display index to real PHQ-9 item index when attention-check is present before it.
     real_index = question_id
