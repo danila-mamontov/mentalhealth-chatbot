@@ -5,6 +5,7 @@ from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
+from survey import get_phq9_total_questions
 
 
 def register_handlers(bot: telebot.TeleBot):
@@ -21,10 +22,24 @@ def register_handlers(bot: telebot.TeleBot):
             next_question_index = question_index + 1
             data["phq_index"] = next_question_index
 
-        context.set_user_info_field(t_id, f"phq_{question_index}", answer_number)
+        # Handle attention-check mapping
+        attn_idx = context.get_user_info_field(t_id, "phq_attention_index")
+        expected = context.get_user_info_field(t_id, "phq_attention_expected") or 1
+        if attn_idx is not None and question_index == attn_idx:
+            # this screen is attention check
+            failed = 0 if answer_number == expected else 1
+            context.set_user_info_field(t_id, "phq_attention_failed", failed)
+        else:
+            # map to real PHQ item index
+            real_index = question_index
+            if attn_idx is not None and question_index > attn_idx:
+                real_index = question_index - 1
+            context.set_user_info_field(t_id, f"phq_{real_index}", answer_number)
 
         logger.log_event(t_id, f"PHQ9 QUESTION {question_index}", f"answer {answer_number}")
-        if next_question_index < 8:
+
+        total = get_phq9_total_questions(t_id)
+        if next_question_index < total:
             question, options = get_phq9_question_and_options(next_question_index, t_id)
 
             bot.edit_message_text(

@@ -113,8 +113,13 @@ def init_db():
         phq_6 INTEGER,
         phq_7 INTEGER,
         sum INTEGER,
-        depression INTEGER
+        depression INTEGER,
+        attention_failed INTEGER DEFAULT 0
     )""")
+    # migration: ensure attention_failed exists
+    phq_cols = {r[1] for r in c.execute("PRAGMA table_info(phq_answers)").fetchall()}
+    if "attention_failed" not in phq_cols:
+        c.execute("ALTER TABLE phq_answers ADD COLUMN attention_failed INTEGER DEFAULT 0")
 
     c.execute("""CREATE TABLE IF NOT EXISTS main_voice (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -295,8 +300,9 @@ def upsert_phq_answers(user_id: int, answers: dict):
     phq_vals = [answers.get(col) for col in cols]
     total = sum(v for v in phq_vals if isinstance(v, int))
     depression = 1 if total >= 10 else 0
-    columns = ['user_id'] + cols + ['sum','depression']
-    values = [user_id] + phq_vals + [total, depression]
+    attention_failed = 1 if answers.get('attention_failed') else 0
+    columns = ['user_id'] + cols + ['sum','depression','attention_failed']
+    values = [user_id] + phq_vals + [total, depression, attention_failed]
     placeholders = ','.join(['?'] * len(columns))
     update_assignments = ','.join([f"{col}=excluded.{col}" for col in columns[1:]])
     sql = f"INSERT INTO phq_answers ({','.join(columns)}) VALUES ({placeholders}) " \

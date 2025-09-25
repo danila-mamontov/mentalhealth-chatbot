@@ -5,6 +5,9 @@ from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
+# added imports
+from random import randint
+from survey import phq9_survey
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data.startswith("menu_"))
@@ -12,6 +15,14 @@ def register_handlers(bot: telebot.TeleBot):
         t_id = call.message.chat.id
         message_id = call.message.message_id
         if call.data == "menu_start_phq9_survey":
+            # initialize one attention-check per survey run
+            lang = context.get_user_info_field(t_id, "language") or "en"
+            base_count = len(phq9_survey[lang])
+            attn_idx = randint(0, base_count)  # inclusive range -> insert at random position
+            context.set_user_info_field(t_id, "phq_attention_index", attn_idx)
+            context.set_user_info_field(t_id, "phq_attention_expected", 1)  # expect option '2' (0-based index 1)
+            context.set_user_info_field(t_id, "phq_attention_failed", 0)
+
             question, options = get_phq9_question_and_options(0, t_id)
 
             context.set_user_info_field(t_id, "message_to_del", message_id)

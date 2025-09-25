@@ -175,7 +175,7 @@ class UserContext:
         return profile
 
     def get_user_info_field(self, t_id, field):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"}:
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"} or field.startswith("phq_"):
             uid = self._get_id(t_id)
             if uid is None:
                 return None
@@ -221,6 +221,8 @@ class UserContext:
         answers = {}
         for i in range(len(phq9_survey['en'])):
             answers[f"phq_{i}"] = self._session[uid].get(f"phq_{i}")
+        # add attention check result
+        answers["attention_failed"] = self._session[uid].get("phq_attention_failed", 0)
         upsert_phq_answers(uid, answers)
 
 context = UserContext()
