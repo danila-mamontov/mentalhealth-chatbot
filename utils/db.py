@@ -33,7 +33,7 @@ def init_db():
     c.execute(
         """CREATE TABLE IF NOT EXISTS user_profile (
             id INTEGER PRIMARY KEY,
-            t_id INTEGER UNIQUE,
+            t_id INTEGER,
             consent TEXT,
             gender TEXT,
             age INTEGER,
@@ -45,7 +45,14 @@ def init_db():
 
     cols = [r[1] for r in c.execute("PRAGMA table_info(user_profile)").fetchall()]
 
-    needs_migrate = ("t_id" not in cols) or ("id" not in cols)
+    # if legacy schema or unique t_id existed, rebuild table
+    row = c.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='user_profile'"
+    ).fetchone()
+    sql_text = (row["sql"] if row and "sql" in row.keys() else "") if row else ""
+    has_unique_tid = "t_id INTEGER UNIQUE" in (sql_text or "")
+
+    needs_migrate = ("t_id" not in cols) or ("id" not in cols) or has_unique_tid
     if "user_id" in cols:
         needs_migrate = True
 
@@ -54,7 +61,7 @@ def init_db():
         c.execute(
             """CREATE TABLE user_profile (
                 id INTEGER PRIMARY KEY,
-                t_id INTEGER UNIQUE,
+                t_id INTEGER,
                 consent TEXT,
                 gender TEXT,
                 age INTEGER,
@@ -63,8 +70,9 @@ def init_db():
                 depressive TEXT
             )"""
         )
-        if "user_id" in cols:
-            id_col = "id" if "id" in cols else "NULL"
+        old_cols = [r[1] for r in c.execute("PRAGMA table_info(user_profile_old)").fetchall()]
+        if "user_id" in old_cols:
+            id_col = "id" if "id" in old_cols else "NULL"
             c.execute(
                 f"INSERT INTO user_profile (id, t_id, consent, gender, age, language, treatment, depressive) "
                 f"SELECT {id_col}, user_id, consent, gender, age, language, treatment, depressive FROM user_profile_old"
@@ -87,7 +95,7 @@ def init_db():
         c.execute(
             """CREATE TABLE user_profile (
                 id INTEGER PRIMARY KEY,
-                t_id INTEGER UNIQUE,
+                t_id INTEGER,
                 consent TEXT,
                 gender TEXT,
                 age INTEGER,
@@ -264,31 +272,59 @@ def upsert_user_profile(user_info: dict):
     conn = get_connection()
     c = conn.cursor()
 
-    existing = c.execute(
-        "SELECT id FROM user_profile WHERE t_id= ?", (user_info.get("t_id"),)
-    ).fetchone()
+    columns = ["id", "t_id", "consent", "gender", "age", "language", "treatment", "depressive"]
 
-    if existing is None:
-        next_id = c.execute(
-            "SELECT COALESCE(MAX(id),0) + 1 FROM user_profile"
-        ).fetchone()[0]
-        user_info = {**user_info, "id": next_id}
+    if user_info.get("id") is not None:
+        # Update existing participant profile by id
+        c.execute(
+            """UPDATE user_profile
+               SET t_id=?, consent=?, gender=?, age=?, language=?, treatment=?, depressive=?
+               WHERE id=?""",
+            (
+                user_info.get("t_id"),
+                user_info.get("consent"),
+                user_info.get("gender"),
+                user_info.get("age"),
+                user_info.get("language"),
+                user_info.get("treatment"),
+                user_info.get("depressive"),
+                user_info.get("id"),
+            ),
+        )
+        if c.rowcount == 0:
+            # id not found, fallback to insert with provided/new id
+            next_id = c.execute("SELECT COALESCE(MAX(id),0) + 1 FROM user_profile").fetchone()[0]
+            ins_id = int(user_info.get("id") or next_id)
+            c.execute(
+                f"INSERT INTO user_profile ({','.join(columns)}) VALUES (?,?,?,?,?,?,?,?)",
+                (
+                    ins_id,
+                    user_info.get("t_id"),
+                    user_info.get("consent"),
+                    user_info.get("gender"),
+                    user_info.get("age"),
+                    user_info.get("language"),
+                    user_info.get("treatment"),
+                    user_info.get("depressive"),
+                ),
+            )
     else:
-        user_info = {**user_info, "id": existing[0]}
+        # Insert new participant profile
+        next_id = c.execute("SELECT COALESCE(MAX(id),0) + 1 FROM user_profile").fetchone()[0]
+        c.execute(
+            f"INSERT INTO user_profile ({','.join(columns)}) VALUES (?,?,?,?,?,?,?,?)",
+            (
+                next_id,
+                user_info.get("t_id"),
+                user_info.get("consent"),
+                user_info.get("gender"),
+                user_info.get("age"),
+                user_info.get("language"),
+                user_info.get("treatment"),
+                user_info.get("depressive"),
+            ),
+        )
 
-    columns = [
-        'id','t_id','consent','gender','age','language','treatment','depressive'
-    ]
-    values = [user_info.get(col) for col in columns]
-    placeholders = ','.join(['?'] * len(columns))
-    update_assignments = ','.join(
-        [f"{col}=excluded.{col}" for col in columns if col not in {'id','t_id'}]
-    )
-    sql = (
-        f"INSERT INTO user_profile ({','.join(columns)}) VALUES ({placeholders}) "
-        f"ON CONFLICT(t_id) DO UPDATE SET {update_assignments}"
-    )
-    c.execute(sql, values)
     conn.commit()
     update_stats()
 

@@ -4,6 +4,7 @@ from telebot import custom_filters
 from telebot.storage import StateMemoryStorage
 
 from config import BOT_TOKEN, RESPONSES_DIR, API_URL, LOCAL_SERVER_MODE
+
 from handlers import (
     goto_handler,
     start_handler,
@@ -21,6 +22,7 @@ from handlers import (
     language_confirm_handler,
     treatment_handler,
     depressive_handler,
+    new_participant_handler,
 )
 # Validate flow config early (fail fast on misconfiguration)
 from flow import renderer as _flow_renderer
@@ -33,23 +35,18 @@ class telebot_custom(telebot.TeleBot):
         print(f"Setting state: {state} (user_id={user_id}, chat_id={chat_id})")
         return super().set_state(user_id, state, chat_id)
 
-
 if LOCAL_SERVER_MODE:
     print("Running in local server mode")
-    try:
-        bot = telebot_custom(BOT_TOKEN, state_storage=StateMemoryStorage())
-        bot.log_out()
-        print("Bot logged out successfully")
-    except Exception as e:
-        print(f"{e}")
     telebot.apihelper.API_URL = API_URL
-
+else:
+    pass
 bot = telebot_custom(BOT_TOKEN, state_storage=StateMemoryStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 
 # Регистрация обработчиков
 
 start_handler.register_handlers(bot)
+new_participant_handler.register_handlers(bot)
 delete_me_handler.register_handlers(bot)
 language_handler.register_handlers(bot)
 language_confirm_handler.register_handlers(bot)
@@ -69,4 +66,6 @@ help_handler.register_handlers(bot)
 
 if __name__ == "__main__":
     print("Bot is running...")
-    bot.infinity_polling()
+    # Clear all pending updates before starting
+    bot.delete_webhook(drop_pending_updates=True)
+    bot.infinity_polling(skip_pending=True)

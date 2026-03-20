@@ -88,6 +88,6 @@ def register_handlers(bot: telebot.TeleBot):
             )
             logger.log_event(t_id, "LANGUAGE_CONFIRM", t_language_code)
             return
-
+        print("START from", message.chat.id, "text=", repr(message.text), "date=", message.date)
         render_node(bot, t_id, "main_menu", menu=main_menu)
         logger.log_event(t_id, "MAIN_MENU", t_language_code)

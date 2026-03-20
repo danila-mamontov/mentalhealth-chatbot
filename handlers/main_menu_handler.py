@@ -5,8 +5,6 @@ from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
-# added imports
-from random import randint
 from survey import phq9_survey
 
 def register_handlers(bot: telebot.TeleBot):
@@ -63,6 +61,8 @@ def register_handlers(bot: telebot.TeleBot):
                 text=f"{keycap_numbers[1]}\t" + get_main_question(question_id=0, user_id=t_id),
                 parse_mode='HTML',
             )
+
+
             sent_controls = bot.send_message(
                 chat_id=t_id,
                 text=get_controls_placeholder(t_id),

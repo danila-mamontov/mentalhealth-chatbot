@@ -42,11 +42,10 @@ def get_translation(t_id, key):
 # Database helpers
 def load_user_info(t_id):
     conn = get_connection()
-    cur = conn.execute("SELECT * FROM user_profile WHERE t_id=?", (t_id,))
-    row = cur.fetchone()
-    if row:
-        return dict(row)
-    return None
+    row = conn.execute(
+        "SELECT * FROM user_profile WHERE t_id=? ORDER BY id DESC LIMIT 1", (t_id,)
+    ).fetchone()
+    return dict(row) if row else None
 
 def get_user_profile(t_id):
     text = get_translation(t_id, "profile_template_msg")
@@ -90,6 +89,7 @@ class UserContext:
         # store ephemeral session data only, keyed by internal id
         self._session = {}
         self._tid_to_id = {}
+        self._active_uid = {}
 
     def _ensure_session(self, uid):
         self._session.setdefault(uid, {
@@ -101,8 +101,19 @@ class UserContext:
             "welcome_message_id": None,
         })
 
+    def _set_active_uid(self, t_id, uid):
+        self._active_uid[t_id] = uid
+        self._tid_to_id[t_id] = uid
+
+    def _resolve_latest_uid(self, t_id):
+        row = get_connection().execute(
+            "SELECT id FROM user_profile WHERE t_id=? ORDER BY id DESC LIMIT 1", (t_id,)
+        ).fetchone()
+        return row["id"] if row else None
+
     def add_new_user(self, t_id):
         params = {
+            "id": None,
             "t_id": t_id,
             "consent": None,
             "gender": None,
@@ -113,13 +124,11 @@ class UserContext:
         }
 
         upsert_user_profile(params)
-        conn = get_connection()
-        row = conn.execute("SELECT id FROM user_profile WHERE t_id=?", (t_id,)).fetchone()
-        if row:
-            uid = row["id"]
-            self._tid_to_id[t_id] = uid
-        else:
-            uid = None
+        uid = self._resolve_latest_uid(t_id)
+        if uid is None:
+            return
+
+        self._set_active_uid(t_id, uid)
 
         # prepare ephemeral fields
         if uid is not None:
@@ -133,11 +142,7 @@ class UserContext:
             }
 
     def delete_user(self, t_id):
-        uid = self._tid_to_id.get(t_id)
-        if uid is None:
-            row = get_connection().execute("SELECT id FROM user_profile WHERE t_id=?", (t_id,)).fetchone()
-            if row:
-                uid = row["id"]
+        uid = self._get_id(t_id)
         if uid is not None:
             self._session.pop(uid, None)
             delete_user_records(uid)
@@ -147,23 +152,23 @@ class UserContext:
         pass
 
     def _get_id(self, t_id):
-        uid = self._tid_to_id.get(t_id)
+        uid = self._active_uid.get(t_id) or self._tid_to_id.get(t_id)
         if uid is not None:
             return uid
-        row = get_connection().execute("SELECT id FROM user_profile WHERE t_id=?", (t_id,)).fetchone()
-        if row:
-            uid = row["id"]
-            self._tid_to_id[t_id] = uid
-            return uid
-        return None
+        uid = self._resolve_latest_uid(t_id)
+        if uid is not None:
+            self._set_active_uid(t_id, uid)
+        return uid
+
+    def _load_profile_by_uid(self, uid):
+        row = get_connection().execute("SELECT * FROM user_profile WHERE id=?", (uid,)).fetchone()
+        return dict(row) if row else None
 
     def _load_profile(self, t_id):
-        conn = get_connection()
-        cur = conn.execute("SELECT * FROM user_profile WHERE t_id=?", (t_id,))
-        row = cur.fetchone()
-        if row:
-            self._tid_to_id[t_id] = row["id"]
-        return dict(row) if row else None
+        uid = self._get_id(t_id)
+        if uid is None:
+            return None
+        return self._load_profile_by_uid(uid)
 
     def get_user_info(self, t_id):
         profile = self._load_profile(t_id)
@@ -202,8 +207,11 @@ class UserContext:
             self._session[uid][field] = value
             return
 
+        uid = self._get_id(t_id)
+        if uid is None:
+            return
         conn = get_connection()
-        conn.execute(f"UPDATE user_profile SET {field}=? WHERE t_id=?", (value, t_id))
+        conn.execute(f"UPDATE user_profile SET {field}=? WHERE id=?", (value, uid))
         conn.commit()
 
     def save_user_info(self, t_id):
@@ -224,6 +232,41 @@ class UserContext:
         # add attention check result
         answers["attention_failed"] = self._session[uid].get("phq_attention_failed", 0)
         upsert_phq_answers(uid, answers)
+
+    def reenroll_user(self, t_id):
+        """Create a fresh participant profile for the same Telegram id and make it active."""
+        conn = get_connection()
+        prev_uid = self._get_id(t_id)
+        prev_lang = None
+        if prev_uid is not None:
+            prev = conn.execute("SELECT language FROM user_profile WHERE id=?", (prev_uid,)).fetchone()
+            prev_lang = prev["language"] if prev else None
+
+        params = {
+            "id": None,
+            "t_id": t_id,
+            "consent": None,
+            "gender": None,
+            "age": None,
+            "language": prev_lang,
+            "treatment": None,
+            "depressive": None,
+        }
+        upsert_user_profile(params)
+
+        uid = self._resolve_latest_uid(t_id)
+        if uid is None:
+            return None
+        self._set_active_uid(t_id, uid)
+        self._session[uid] = {
+            "current_question_index": 0,
+            "vm_ids": {},
+            "message_to_del": None,
+            "survey_message_id": None,
+            "survey_controls_id": None,
+            "welcome_message_id": None,
+        }
+        return uid
 
 context = UserContext()
 context.load_user_context()

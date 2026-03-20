@@ -6,8 +6,8 @@ import os
 import telebot
 
 
-from survey_session import SurveyManager, SurveySession, VoiceAnswer
-from utils.menu import survey_menu, main_menu, yes_no_menu
+from survey_session import SurveyManager, SurveySession
+from utils.menu import survey_menu, yes_no_menu
 from survey import keycap_numbers, get_main_question
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -96,18 +96,19 @@ def _render_question(
         if "not modified" not in str(e).lower():
             raise
 
+    # Delete controls so we can re-send them after audio
+    controls_id = context.get_user_info_field(t_id, "survey_controls_id")
+    if controls_id:
+        try:
+            bot.delete_message(t_id, controls_id)
+        except Exception:
+            pass
+        context.set_user_info_field(t_id, "survey_controls_id", None)
+
     voice_ids = session.question_voice_ids.get(index, [])
     new_ids: list[int] = []
 
     if voice_ids:
-        controls_id = context.get_user_info_field(t_id, "survey_controls_id")
-        if controls_id:
-            try:
-                bot.delete_message(t_id, controls_id)
-            except Exception:
-                pass
-            context.set_user_info_field(t_id, "survey_controls_id", None)
-
         for vid in voice_ids:
             meta = session.voice_messages.get(vid)
             if not meta:
@@ -120,16 +121,14 @@ def _render_question(
         if new_ids:
             session.question_voice_ids[index] = new_ids
 
-        _update_controls(bot, session, prefix, relocate=True)
-    else:
-        _update_controls(bot, session, prefix, relocate=False)
+    # Always send controls last to keep them at the bottom
+    _update_controls(bot, session, prefix)
 
 
 def _update_controls(
     bot: telebot.TeleBot,
     session: SurveySession,
     prefix: str | None = None,
-    relocate: bool = True,
 ) -> None:
     """Show or refresh the control buttons at the bottom of the chat."""
 
@@ -140,15 +139,7 @@ def _update_controls(
         t_id, session.current_index, len(session.question_voice_ids.get(session.current_index, []))
     )
 
-    if relocate:
-        if controls_id:
-            try:
-                bot.delete_message(t_id, controls_id)
-            except Exception:
-                pass
-            controls_id = None
-
-    if controls_id and not relocate:
+    if controls_id:
         try:
             bot.edit_message_text(
                 chat_id=t_id,

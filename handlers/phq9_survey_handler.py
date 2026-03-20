@@ -68,6 +68,8 @@ def register_handlers(bot: telebot.TeleBot):
                 text=f"{keycap_numbers[1]}\t" + get_main_question(question_id=0, user_id=t_id),
                 parse_mode="HTML",
             )
+
+
             sent_controls = bot.send_message(
                 chat_id=t_id,
                 text=get_controls_placeholder(t_id),

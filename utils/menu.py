@@ -92,7 +92,7 @@ def main_menu(t_id):
                 InlineKeyboardButton(get_translation(t_id, 'phq9_survey_button_msg'), callback_data="menu_start_phq9_survey"),
                 InlineKeyboardButton(get_translation(t_id, "open_profile_button_msg"), callback_data="profile_open"),
                 # InlineKeyboardButton(get_translation(t_id,'main_survey_button_msg'), callback_data="menu_start_main_survey"),
-                InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
+                # InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
                InlineKeyboardButton(text=get_translation(t_id,"share_bot_button_msg"),switch_inline_query=get_translation(t_id,"share_bot_text_msg"))
                )
 
@@ -102,7 +102,7 @@ def final_menu(t_id):
     InlineKeyboardMarkup, InlineKeyboardButton = _types()
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(
-        InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
+        # InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
         InlineKeyboardButton(text=get_translation(t_id,"share_bot_button_msg"),switch_inline_query=get_translation(t_id,"share_bot_text_msg"))
     )
     return markup
