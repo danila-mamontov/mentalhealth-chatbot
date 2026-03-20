@@ -3,7 +3,7 @@ import os
 import shutil
 import telebot
 from utils.logger import logger
-from utils.storage import context
+from utils.storage import context, get_state_chat_id
 
 def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=['delete_me'])
@@ -18,7 +18,8 @@ def register_handlers(bot: telebot.TeleBot):
         context.delete_user(t_id)
 
         # reset bot state and close any open log handlers
-        bot.delete_state(t_id)
+        state_chat_id = get_state_chat_id(t_id, uid)
+        bot.delete_state(user_id=t_id, chat_id=state_chat_id)
         logger.close(t_id)
 
         if os.path.exists(user_dir):

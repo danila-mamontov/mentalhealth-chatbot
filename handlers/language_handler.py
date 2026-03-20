@@ -60,7 +60,8 @@ def register_handlers(bot: telebot.TeleBot):
             context.save_user_info(t_id)
             logger.log_event(t_id, "SET LANGUAGE", language)
 
-            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
+            state_chat_id = get_state_chat_id(t_id)
+            bot.set_state(t_id, EditProfileStates.editing_profile, state_chat_id)
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,

@@ -47,6 +47,14 @@ def load_user_info(t_id):
     ).fetchone()
     return dict(row) if row else None
 
+def get_state_chat_id(t_id, uid=None):
+    """Generate a unique FSM chat_id for a participant to isolate states between participants on same t_id."""
+    if uid is None:
+        uid = context._get_id(t_id)
+    if uid is None:
+        return str(t_id)
+    return f"{t_id}_{uid}"
+
 def get_user_profile(t_id):
     text = get_translation(t_id, "profile_template_msg")
 

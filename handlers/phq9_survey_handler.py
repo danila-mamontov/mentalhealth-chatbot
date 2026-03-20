@@ -80,4 +80,5 @@ def register_handlers(bot: telebot.TeleBot):
             context.set_user_info_field(t_id, "survey_message_id", sent_q.message_id)
             context.set_user_info_field(t_id, "survey_controls_id", sent_controls.message_id)
             context.set_user_info_field(t_id, "message_to_del", message_id)
-            bot.set_state(t_id, SurveyStates.main, call.message.chat.id)
+            state_chat_id = get_state_chat_id(t_id)
+            bot.set_state(t_id, SurveyStates.main, state_chat_id)

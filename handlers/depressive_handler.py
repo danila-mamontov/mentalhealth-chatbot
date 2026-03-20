@@ -1,6 +1,6 @@
 import telebot
 from utils.menu import main_menu, yes_no_menu
-from utils.storage import context, get_translation
+from utils.storage import context, get_translation, get_state_chat_id
 from utils.logger import logger
 from states import SurveyStates
 
@@ -23,4 +23,5 @@ def register_handlers(bot: telebot.TeleBot):
             parse_mode="HTML",
             reply_markup=yes_no_menu(t_id),
         )
-        bot.set_state(t_id, SurveyStates.treatment, call.message.chat.id)
+        state_chat_id = get_state_chat_id(t_id)
+        bot.set_state(t_id, SurveyStates.treatment, state_chat_id)

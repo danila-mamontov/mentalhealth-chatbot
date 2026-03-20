@@ -8,6 +8,7 @@ import telebot
 
 from survey_session import SurveyManager, SurveySession
 from utils.menu import survey_menu, yes_no_menu
+from utils.storage import context, get_translation, get_state_chat_id
 from survey import keycap_numbers, get_main_question
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -228,4 +229,5 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 parse_mode="HTML",
                 reply_markup=yes_no_menu(t_id),
             )
-            bot.set_state(t_id, SurveyStates.depressive, call.message.chat.id)
+            state_chat_id = get_state_chat_id(t_id)
+            bot.set_state(t_id, SurveyStates.depressive, state_chat_id)

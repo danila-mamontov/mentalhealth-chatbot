@@ -32,7 +32,9 @@ class telebot_custom(telebot.TeleBot):
         super().__init__(*args, **kwargs)
 
     def set_state(self, user_id, state, chat_id=None):
-        print(f"Setting state: {state} (user_id={user_id}, chat_id={chat_id})")
+        from utils.storage import context
+        participant_id = context.get_user_info_field(user_id, "id")
+        print(f"Setting state: {state} (user_id={user_id}, chat_id={chat_id}, participant_id={participant_id})")
         return super().set_state(user_id, state, chat_id)
 
 if LOCAL_SERVER_MODE:

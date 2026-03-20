@@ -28,6 +28,7 @@ def register_handlers(bot: telebot.TeleBot):
             )
         elif state == EditProfileStates.editing_profile.name:
             logger.log_event(t_id, "CHANGE GENDER", "")
+            state_chat_id = get_state_chat_id(t_id)
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
@@ -35,11 +36,12 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=gender_menu(t_id),
             )
-            bot.set_state(t_id, EditProfileStates.gender, call.message.chat.id)
+            bot.set_state(t_id, EditProfileStates.gender, state_chat_id)
         else:
             logger.log_event(t_id, "SET GENDER", gender)
             context.set_user_info_field(t_id, "gender", gender)
-            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
+            state_chat_id = get_state_chat_id(t_id)
+            bot.set_state(t_id, EditProfileStates.editing_profile, state_chat_id)
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
