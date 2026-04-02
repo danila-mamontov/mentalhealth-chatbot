@@ -52,9 +52,9 @@ def register_handlers(bot: telebot.TeleBot):
                                   message_id=message_id,
                                   text=get_translation(t_id, 'intro_main_msg'),
                                   parse_mode='HTML')
-            state_chat_id = get_state_chat_id(t_id)
-            bot.set_state(t_id, SurveyStates.main, state_chat_id)
-            with bot.retrieve_data(t_id, state_chat_id) as data:
+
+            bot.set_state(t_id, SurveyStates.main, call.message.chat.id)
+            with bot.retrieve_data(t_id, call.message.chat.id) as data:
                 data["main_index"] = 0
 
             sent_q = bot.send_message(

@@ -78,5 +78,4 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=profile_menu(t_id)
             )
-            state_chat_id = get_state_chat_id(t_id)
-            bot.set_state(t_id, EditProfileStates.editing_profile, state_chat_id)
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)

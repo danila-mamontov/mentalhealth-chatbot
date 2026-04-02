@@ -8,7 +8,7 @@ import telebot
 
 from survey_session import SurveyManager, SurveySession
 from utils.menu import survey_menu, yes_no_menu
-from utils.storage import context, get_translation, get_state_chat_id
+from utils.storage import context, get_translation
 from survey import keycap_numbers, get_main_question
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -197,7 +197,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         elif action == "survey_finish":
             answers = session.get_question_voice_answers(session.current_index)
             total = sum(a.duration for a in answers)
-            if total < 2:
+            if total < 5:
                 try:
                     bot.answer_callback_query(
                         call.id,
@@ -229,5 +229,4 @@ def register_handlers(bot: telebot.TeleBot) -> None:
                 parse_mode="HTML",
                 reply_markup=yes_no_menu(t_id),
             )
-            state_chat_id = get_state_chat_id(t_id)
-            bot.set_state(t_id, SurveyStates.depressive, state_chat_id)
+            bot.set_state(t_id, SurveyStates.depressive, call.message.chat.id)

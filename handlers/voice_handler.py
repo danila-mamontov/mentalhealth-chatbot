@@ -86,7 +86,7 @@ def register_handlers(bot: telebot.TeleBot):
                 ids.append(sent.message_id)
 
         prefix = get_translation(t_id, "voice_recieved_msg")
-        msh._update_controls(bot, session, prefix, relocate=True)
+        msh._update_controls(bot, session, prefix)
 
         logger.log_event(
             t_id, f"VOICE MAIN QUESTION {current_question}", f"answer id {file_unique_id}"

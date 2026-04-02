@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .engine import FlowEngine
-from utils.storage import get_translation
+from utils.storage import get_translation, context
 
 # Lazy imports for menu callables to avoid circulars at import time
 from utils import menu as menus
@@ -45,6 +45,15 @@ def render_node(
 
     key = engine.text_key(node_id)
     text = get_translation(chat_id, key)
+
+    # Add user_id to fmt dict for main_menu node (use database ID, not chat_id)
+    if node_id == "main_menu":
+        if fmt is None:
+            fmt = {}
+        db_user_id = context._get_id(chat_id)
+        if db_user_id is not None:
+            fmt["user_id"] = db_user_id
+
     if fmt:
         try:
             text = text.format(**fmt)

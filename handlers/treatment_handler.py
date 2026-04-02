@@ -1,6 +1,6 @@
 import telebot
 from utils.menu import yes_no_menu, main_menu, final_menu
-from utils.storage import context, get_translation, get_state_chat_id
+from utils.storage import context, get_translation
 from utils.logger import logger
 from states import SurveyStates
 
@@ -16,14 +16,19 @@ def register_handlers(bot: telebot.TeleBot):
         context.save_user_info(t_id)
         logger.log_event(t_id, "SET TREATMENT",treatment)
 
+        # Format end_main_survey_msg with user_id from database
+        end_survey_text = get_translation(t_id, "end_main_survey_msg")
+        db_user_id = context._get_id(t_id)
+        if db_user_id is not None:
+            end_survey_text = end_survey_text.format(user_id=db_user_id)
+
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=get_translation(t_id, "end_main_survey_msg")
+            text=end_survey_text
             + "\n\n"
             + get_translation(t_id, "final_menu_msg"),
             parse_mode="HTML",
             reply_markup=final_menu(t_id),
         )
-        state_chat_id = get_state_chat_id(t_id)
-        bot.set_state(t_id, SurveyStates.final_menu, state_chat_id)
+        bot.set_state(t_id, SurveyStates.final_menu, call.message.chat.id)

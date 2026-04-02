@@ -4,7 +4,7 @@ from telebot.types import Message
 from config import ADMIN_REENROLL_TOKEN
 from flow.renderer import render_node, engine
 from utils.menu import consent_menu
-from utils.storage import context, get_state_chat_id
+from utils.storage import context
 from localization import (
     get_available_languages,
     get_language_name,

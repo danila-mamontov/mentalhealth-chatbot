@@ -2,7 +2,7 @@ from __future__ import annotations
 import telebot
 from states import SurveyStates
 from utils.logger import logger
-from utils.storage import context, get_state_chat_id
+from utils.storage import context
 from flow.renderer import render_node, engine
 
 def register_handlers(bot: telebot.TeleBot):
@@ -21,8 +21,7 @@ def register_handlers(bot: telebot.TeleBot):
             context.save_user_info(t_id)
             logger.log_event(t_id, "SET CONSENT", "NO")
             try:
-                state_chat_id = get_state_chat_id(t_id)
-                bot.delete_state(user_id=t_id, chat_id=state_chat_id)
+                bot.delete_state(user_id=t_id, chat_id=t_id)
             except Exception:
                 pass
             next_node = engine.next("consent", event="no") or "help"

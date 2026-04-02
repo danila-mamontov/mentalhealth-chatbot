@@ -1,6 +1,6 @@
 import telebot
 
-from utils.storage import get_translation
+from utils.storage import get_translation, context
 from utils.logger import logger
 
 
@@ -19,10 +19,15 @@ def register_handlers(bot: telebot.TeleBot):
                                   parse_mode="HTML",
                                   reply_markup=age_range_menu(t_id))
         elif page == "goto_main_menu":
+            menu_text = get_translation(t_id, "main_menu_msg")
+            # Use database user_id instead of chat_id
+            db_user_id = context._get_id(t_id)
+            if db_user_id is not None:
+                menu_text = menu_text.format(user_id=db_user_id)
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
-                text=get_translation(t_id, "main_menu_msg"),
+                text=menu_text,
                 parse_mode="HTML",
                 reply_markup=main_menu(t_id),
             )
