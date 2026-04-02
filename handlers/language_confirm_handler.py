@@ -14,23 +14,12 @@ def register_handlers(bot: telebot.TeleBot):
         t_id = call.message.chat.id
         message_id = call.message.message_id
 
-        if call.data == "yes":
-
-            render_node(
-                bot,
-                t_id,
-                engine.next("language_confirm", event="yes") or "consent",
-                message_id=message_id,
-                menu=consent_menu,
-            )
-            logger.log_event(t_id, "LANGUAGE_CONFIRMED", call.data)
-        else:
-
-            render_node(
-                bot,
-                t_id,
-                engine.next("language_confirm", event="no") or "language_select",
-                message_id=message_id,
-                menu=lambda _tid: language_menu(),
-            )
-            logger.log_event(t_id, "LANGUAGE_RESELECT", call.data)
+        # Always go to consent (language is already set to Russian in start_handler)
+        render_node(
+            bot,
+            t_id,
+            "consent",
+            message_id=message_id,
+            menu=consent_menu,
+        )
+        logger.log_event(t_id, "LANGUAGE_CONFIRMED_AUTO_RU", call.data)

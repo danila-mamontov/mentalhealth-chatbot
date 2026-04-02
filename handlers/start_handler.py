@@ -51,7 +51,8 @@ def register_handlers(bot: telebot.TeleBot):
     @bot.message_handler(commands=["start"])
     def start(message: Message):
         t_id = message.chat.id
-        t_language_code = normalize_language(getattr(message.from_user, "language_code", None), _AVAILABLE_LANGS)
+        # Always use Russian (ru) language for all users
+        t_language_code = "ru"
         user_info = context.get_user_info(t_id)
 
         if user_info is None:
@@ -61,17 +62,17 @@ def register_handlers(bot: telebot.TeleBot):
         else:
             logger.log_event(t_id, "START BOT", f"Existing user {t_id}")
 
-        if not user_info.get("language"):
-            context.set_user_info_field(t_id, "language", t_language_code)
-            context.save_user_info(t_id)
-        else:
-            t_language_code = user_info.get("language")
+        # Always set language to Russian
+        context.set_user_info_field(t_id, "language", t_language_code)
+        context.save_user_info(t_id)
 
         _ensure_user_dir(user_info["id"])
 
+        # Ensure user context is fully initialized before rendering
+        user_info = context.get_user_info(t_id)
+
         if user_info is None or _needs_initial_setup(user_info):
-            lang_name = get_language_name(t_language_code)
-            flag = get_language_flag(t_language_code)
+            # Skip language selection, go directly to welcome
             welcome_mid = render_node(
                 bot,
                 t_id,
@@ -79,14 +80,14 @@ def register_handlers(bot: telebot.TeleBot):
             )
             if welcome_mid is not None:
                 context.set_user_info_field(t_id, "welcome_message_id", welcome_mid)
+            # Go directly to consent (skip language_confirm)
             render_node(
                 bot,
                 t_id,
-                engine.next("welcome") or "language_confirm",
-                fmt={"language": lang_name, "flag": flag},
+                "consent",
                 menu=consent_menu,
             )
-            logger.log_event(t_id, "LANGUAGE_CONFIRM", t_language_code)
+            logger.log_event(t_id, "SKIP_LANGUAGE_CONFIRM", t_language_code)
             return
         print("START from", message.chat.id, "text=", repr(message.text), "date=", message.date)
         render_node(bot, t_id, "main_menu", menu=main_menu)

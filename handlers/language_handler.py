@@ -20,10 +20,12 @@ def register_handlers(bot: telebot.TeleBot):
         message_id = call.message.message_id
         language = call.data
         state = bot.get_state(t_id)
+
         if state == SurveyStates.language.name:
-            context.set_user_info_field(t_id, "language", language)
+            # Always set to Russian
+            context.set_user_info_field(t_id, "language", "ru")
             context.save_user_info(t_id)
-            logger.log_event(t_id, "SET LANGUAGE", language)
+            logger.log_event(t_id, "SET LANGUAGE_AUTO_RU", "ru")
             # 1) Update the initial welcome message in-place
             welcome_mid = context.get_user_info_field(t_id, "welcome_message_id")
             if welcome_mid:
@@ -32,36 +34,23 @@ def register_handlers(bot: telebot.TeleBot):
             render_node(
                 bot,
                 t_id,
-                engine.next("language") or "consent",
+                "consent",
                 message_id=message_id,
+                menu=consent_menu,
             )
 
         if state == SurveyStates.language_confirm:
-            context.set_user_info_field(t_id, "language", language)
+            # Always set to Russian
+            context.set_user_info_field(t_id, "language", "ru")
             context.save_user_info(t_id)
-            logger.log_event(t_id, "SET LANGUAGE", language)
+            logger.log_event(t_id, "SET LANGUAGE_AUTO_RU", "ru")
 
-            render_node(bot, t_id, "consent", message_id=message_id)
+            render_node(bot, t_id, "consent", message_id=message_id, menu=consent_menu)
 
         if state == EditProfileStates.editing_profile.name:
-            logger.log_event(t_id, "CHANGE LANGUAGE", "")
-            bot.set_state(t_id, EditProfileStates.language, call.message.chat.id)
-            render_node(
-                bot,
-                t_id,
-                "language_reselect",
-                message_id=message_id,
-                menu=lambda _tid: language_menu(),
-            )
-
-
-        elif state == EditProfileStates.language.name:
-            context.set_user_info_field(t_id, "language", language)
-            context.save_user_info(t_id)
-            logger.log_event(t_id, "SET LANGUAGE", language)
-
-            state_chat_id = get_state_chat_id(t_id)
-            bot.set_state(t_id, EditProfileStates.editing_profile, state_chat_id)
+            # Language is locked to Russian, go back to profile
+            logger.log_event(t_id, "LANGUAGE_LOCKED_RU", "")
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
             bot.edit_message_text(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
@@ -69,5 +58,22 @@ def register_handlers(bot: telebot.TeleBot):
                 parse_mode='HTML',
                 reply_markup=profile_menu(t_id),
             )
+
+        elif state == EditProfileStates.language.name:
+            # Language is locked to Russian, go back to profile
+            context.set_user_info_field(t_id, "language", "ru")
+            context.save_user_info(t_id)
+            logger.log_event(t_id, "LANGUAGE_LOCKED_RU", "ru")
+
+            bot.set_state(t_id, EditProfileStates.editing_profile, call.message.chat.id)
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=get_user_profile(t_id),
+                parse_mode='HTML',
+                reply_markup=profile_menu(t_id),
+            )
+
+
 
 

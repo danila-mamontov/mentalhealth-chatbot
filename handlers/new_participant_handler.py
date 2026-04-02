@@ -28,9 +28,8 @@ def register_handlers(bot: telebot.TeleBot):
             return
 
         t_id = message.chat.id
-        t_language_code = normalize_language(
-            getattr(message.from_user, "language_code", None), _AVAILABLE_LANGS
-        )
+        # Always use Russian (ru) language for all users
+        t_language_code = "ru"
 
         uid = context.reenroll_user(t_id)
         if uid is None:
@@ -39,22 +38,20 @@ def register_handlers(bot: telebot.TeleBot):
 
         bot.delete_state(user_id=message.from_user.id, chat_id=t_id)
 
-        profile_lang = context.get_user_info_field(t_id, "language")
-        if profile_lang:
-            t_language_code = profile_lang
+        # Always set language to Russian
+        context.set_user_info_field(t_id, "language", t_language_code)
+        context.save_user_info(t_id)
 
-        # Re-run the same onboarding greeting flow as /start.
-        lang_name = get_language_name(t_language_code)
-        flag = get_language_flag(t_language_code)
+        # Re-run the onboarding flow, skip language selection
         welcome_mid = render_node(bot, t_id, engine.start)
         if welcome_mid is not None:
             context.set_user_info_field(t_id, "welcome_message_id", welcome_mid)
 
+        # Go directly to consent (skip language_confirm)
         render_node(
             bot,
             t_id,
-            engine.next("welcome") or "language_confirm",
-            fmt={"language": lang_name, "flag": flag},
+            "consent",
             menu=consent_menu,
         )
-        logger.log_event(t_id, "REENROLL", f"New participant id={uid}")
+        logger.log_event(t_id, "REENROLL_AUTO_RU", f"New participant id={uid}")
