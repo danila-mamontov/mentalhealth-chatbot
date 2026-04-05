@@ -62,16 +62,21 @@
     "treatment": {
       "text_key": "treatment_selection_msg",
       "state": "SurveyStates.treatment",
-      "next": { "default": "main_menu" }
+      "next": { "default": "reading_text" }
+    },
+    "reading_text": {
+      "text_key": "reading_text_intro_msg",
+      "state": "SurveyStates.reading_text",
+      "next": { "default": "final_menu" }
     },
     "depressive": {
       "text_key": "depressive_feelings_msg",
       "state": "SurveyStates.depressive",
-      "next": { "default": "main_menu" }
+      "next": { "default": "treatment" }
     },
-    "voice": {
-      "text_key": "voice_answer_expected_msg",
-      "state": null,
+    "final_menu": {
+      "text_key": "final_menu_msg",
+      "state": "SurveyStates.final_menu",
       "next": { "default": "main_menu" }
     },
     "help": {

@@ -6,7 +6,7 @@ from utils.storage import context, get_user_profile, get_translation
 from utils.menu import consent_menu, language_menu, profile_menu
 from localization import get_available_languages
 from utils.logger import logger
-from flow.renderer import render_node, engine
+from flow.renderer import render_node
 
 
 # Handler for language selection buttons

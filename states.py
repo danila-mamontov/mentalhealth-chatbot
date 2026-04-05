@@ -14,6 +14,7 @@ class SurveyStates(StatesGroup):
 
     phq9 = State()
     main = State()
+    reading_text = State()
 
     treatment = State()
     depressive = State()

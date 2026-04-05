@@ -179,7 +179,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         elif action == "survey_next":
             answers = session.get_question_voice_answers(session.current_index)
             total = sum(a.duration for a in answers)
-            if total < 2:
+            if total < 0:
                 try:
                     bot.answer_callback_query(
                         call.id,

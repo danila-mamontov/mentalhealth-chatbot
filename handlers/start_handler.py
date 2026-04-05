@@ -7,17 +7,10 @@ from telebot.types import CallbackQuery, Message
 from states import SurveyStates
 from config import RESPONSES_DIR
 from utils.storage import context, get_translation
-from localization import (
-    get_available_languages,
-    get_language_name,
-    get_language_flag,
-    normalize_language,
-)
 from utils.menu import main_menu, consent_menu, language_menu
 from utils.logger import logger
 from flow.renderer import render_node, engine
 
-_AVAILABLE_LANGS = get_available_languages()
 
 
 def _ensure_user_dir(user_id: int) -> Path:

@@ -5,7 +5,7 @@ from telebot.types import CallbackQuery
 from states import SurveyStates
 from utils.menu import consent_menu, language_menu
 from utils.logger import logger
-from flow.renderer import render_node, engine
+from flow.renderer import render_node
 
 
 def register_handlers(bot: telebot.TeleBot):

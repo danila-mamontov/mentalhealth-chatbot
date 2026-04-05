@@ -23,6 +23,8 @@ from handlers import (
     treatment_handler,
     depressive_handler,
     new_participant_handler,
+    reading_text_handler,
+    final_menu_handler,
 )
 # Validate flow config early (fail fast on misconfiguration)
 from flow import renderer as _flow_renderer
@@ -61,8 +63,10 @@ goto_handler.register_handlers(bot)
 main_menu_handler.register_handlers(bot)
 phq9_survey_handler.register_handlers(bot)
 main_survey_handler.register_handlers(bot)
+reading_text_handler.register_handlers(bot)
 treatment_handler.register_handlers(bot)
 depressive_handler.register_handlers(bot)
+final_menu_handler.register_handlers(bot)
 voice_handler.register_handlers(bot)
 help_handler.register_handlers(bot)
 

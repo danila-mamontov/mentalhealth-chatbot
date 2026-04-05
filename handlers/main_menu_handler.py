@@ -1,6 +1,6 @@
 import telebot
 from survey import get_main_question,get_phq9_question_and_options, keycap_numbers
-from utils.menu import survey_menu, phq9_menu
+from utils.menu import survey_menu, phq9_menu, yes_no_menu
 from handlers.main_survey_handler import get_controls_placeholder
 from utils.storage import context, get_translation
 from utils.logger import logger
@@ -8,6 +8,45 @@ from states import SurveyStates
 from survey import phq9_survey
 
 def register_handlers(bot: telebot.TeleBot):
+    @bot.message_handler(commands=['test_skip'])
+    def handle_test_skip_command(message: telebot.types.Message):
+        """Skip main survey and go directly to depressive question for testing."""
+        t_id = message.chat.id
+        logger.log_event(t_id, "TEST SKIP SURVEY", "started")
+
+        # Send depressive question directly
+        bot.send_message(
+            t_id,
+            get_translation(t_id, "depressive_feelings_msg"),
+            parse_mode="HTML",
+            reply_markup=yes_no_menu(t_id),
+        )
+        bot.set_state(t_id, SurveyStates.depressive, t_id)
+
+    @bot.message_handler(commands=['test_last'])
+    def handle_test_last_command(message: telebot.types.Message):
+        """Skip everything and go directly to reading text stage for testing."""
+        t_id = message.chat.id
+        logger.log_event(t_id, "TEST SKIP TO READING TEXT", "started")
+
+        # Set dummy values for depressive and treatment
+        context.set_user_info_field(t_id, "depressive", "yes")
+        context.set_user_info_field(t_id, "treatment", "yes")
+        context.save_user_info(t_id)
+
+        # Send reading text intro and content
+        reading_text_intro = get_translation(t_id, "reading_text_intro_msg")
+        reading_text_content = get_translation(t_id, "reading_text_content_msg")
+        reading_text_instruction = get_translation(t_id, "reading_text_instruction_msg")
+
+        bot.send_message(
+            t_id,
+            reading_text_intro + "\n\n" + reading_text_content + "\n\n" + reading_text_instruction,
+            parse_mode="HTML",
+        )
+        bot.set_state(t_id, SurveyStates.reading_text, t_id)
+
+    # ...existing code...
     @bot.callback_query_handler(func=lambda call: call.data.startswith("menu_"))
     def handle_menu_buttons(call):
         t_id = call.message.chat.id

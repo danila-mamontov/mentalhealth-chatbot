@@ -16,19 +16,19 @@ def register_handlers(bot: telebot.TeleBot):
         context.save_user_info(t_id)
         logger.log_event(t_id, "SET TREATMENT",treatment)
 
-        # Format end_main_survey_msg with user_id from database
-        end_survey_text = get_translation(t_id, "end_main_survey_msg")
-        db_user_id = context._get_id(t_id)
-        if db_user_id is not None:
-            end_survey_text = end_survey_text.format(user_id=db_user_id)
+        # Move to reading text stage
+        reading_text_intro = get_translation(t_id, "reading_text_intro_msg")
+        reading_text_content = get_translation(t_id, "reading_text_content_msg")
+        reading_text_instruction = get_translation(t_id, "reading_text_instruction_msg")
 
         bot.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
-            text=end_survey_text
-            + "\n\n"
-            + get_translation(t_id, "final_menu_msg"),
+            text=reading_text_intro + "\n\n" + reading_text_content + "\n\n" + reading_text_instruction,
             parse_mode="HTML",
-            reply_markup=final_menu(t_id),
         )
-        bot.set_state(t_id, SurveyStates.final_menu, call.message.chat.id)
+        # Store message ID for later editing to final menu
+        context.set_user_info_field(t_id, "message_to_del", call.message.message_id)
+        bot.set_state(t_id, SurveyStates.reading_text, call.message.chat.id)
+        logger.log_event(t_id, "READING TEXT STAGE", "started")
+
