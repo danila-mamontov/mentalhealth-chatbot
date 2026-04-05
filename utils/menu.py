@@ -91,9 +91,7 @@ def main_menu(t_id):
     markup.add(
                 InlineKeyboardButton(get_translation(t_id, 'phq9_survey_button_msg'), callback_data="menu_start_phq9_survey"),
                 InlineKeyboardButton(get_translation(t_id, "open_profile_button_msg"), callback_data="profile_open"),
-                # InlineKeyboardButton(get_translation(t_id,'main_survey_button_msg'), callback_data="menu_start_main_survey"),
-                # InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
-               InlineKeyboardButton(text=get_translation(t_id,"share_bot_button_msg"),switch_inline_query=get_translation(t_id,"share_bot_text_msg"))
+                InlineKeyboardButton(text=get_translation(t_id,"share_bot_button_msg"),switch_inline_query=get_translation(t_id,"share_bot_text_msg"))
                )
 
     return markup
@@ -102,7 +100,6 @@ def final_menu(t_id):
     InlineKeyboardMarkup, InlineKeyboardButton = _types()
     markup = InlineKeyboardMarkup(row_width=1)
     markup.add(
-        # InlineKeyboardButton(url="http://health-bot.dialogue-systems.org/", text=get_translation(t_id, "website_msg")),
         InlineKeyboardButton(text=get_translation(t_id,"share_bot_button_msg"),switch_inline_query=get_translation(t_id,"share_bot_text_msg"))
     )
     return markup
@@ -154,8 +151,9 @@ def survey_menu(t_id, question_index: int, voice_count: int = 0):
 def profile_menu(t_id):
     InlineKeyboardMarkup, InlineKeyboardButton = _types()
     markup = InlineKeyboardMarkup(row_width=1)
-    markup.add(InlineKeyboardButton(get_translation(t_id, "change_language_button_msg"),
-                                    callback_data="set_language_change"),
+    markup.add(
+                # InlineKeyboardButton(get_translation(t_id, "change_language_button_msg"),
+                #                     callback_data="set_language_change"),
                InlineKeyboardButton(get_translation(t_id, "change_gender_button_msg"),
                                     callback_data="set_gender_change"),
                 InlineKeyboardButton(get_translation(t_id, "change_age_button_msg"),
@@ -169,4 +167,11 @@ def phq9_menu(index ,options):
     for i, option in enumerate(options):
         markup.add(InlineKeyboardButton(emoji_mapping[i + 1] + '\t' + option, callback_data=f"answer_{index}_{i}"))
 
+    return markup
+
+def confirm_menu(t_id):
+    """Menu with only confirmation button (yes)."""
+    InlineKeyboardMarkup, InlineKeyboardButton = _types()
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(InlineKeyboardButton("✅ " + get_translation(t_id, "yes_msg"), callback_data="yes"))
     return markup

@@ -73,11 +73,9 @@ handlers = [
     'consent_handler',
     'language_handler',
     'treatment_handler',
-    'depression_handler',
     'depressive_handler',
     'main_menu_handler',
     'phq9_survey_handler',
-    'wbmms_survey_handler',
     'voice_handler',
 ]
 

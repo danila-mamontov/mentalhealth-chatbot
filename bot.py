@@ -42,8 +42,6 @@ class telebot_custom(telebot.TeleBot):
 if LOCAL_SERVER_MODE:
     print("Running in local server mode")
     telebot.apihelper.API_URL = API_URL
-else:
-    pass
 bot = telebot_custom(BOT_TOKEN, state_storage=StateMemoryStorage())
 bot.add_custom_filter(custom_filters.StateFilter(bot))
 

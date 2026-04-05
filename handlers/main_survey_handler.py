@@ -10,7 +10,6 @@ from survey_session import SurveyManager, SurveySession
 from utils.menu import survey_menu, yes_no_menu
 from utils.storage import context, get_translation
 from survey import keycap_numbers, get_main_question
-from utils.storage import context, get_translation
 from utils.logger import logger
 from config import RESPONSES_DIR
 from states import SurveyStates
@@ -179,7 +178,7 @@ def register_handlers(bot: telebot.TeleBot) -> None:
         elif action == "survey_next":
             answers = session.get_question_voice_answers(session.current_index)
             total = sum(a.duration for a in answers)
-            if total < 0:
+            if total < 5:
                 try:
                     bot.answer_callback_query(
                         call.id,

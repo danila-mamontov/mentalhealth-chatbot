@@ -5,6 +5,8 @@ from utils.db import (
     get_connection,
     init_db,
     delete_user_records,
+    get_survey_progress,
+    get_first_unanswered_question,
 )
 
 init_db()
@@ -46,14 +48,6 @@ def load_user_info(t_id):
         "SELECT * FROM user_profile WHERE t_id=? ORDER BY id DESC LIMIT 1", (t_id,)
     ).fetchone()
     return dict(row) if row else None
-
-def get_state_chat_id(t_id, uid=None):
-    """Generate a unique FSM chat_id for a participant to isolate states between participants on same t_id."""
-    if uid is None:
-        uid = context._get_id(t_id)
-    if uid is None:
-        return str(t_id)
-    return f"{t_id}_{uid}"
 
 def get_user_profile(t_id):
     text = get_translation(t_id, "profile_template_msg")
@@ -107,6 +101,10 @@ class UserContext:
             "survey_message_id": None,
             "survey_controls_id": None,
             "welcome_message_id": None,
+            "reading_text_file_id": None,
+            "reading_text_confirm_msg_id": None,
+            "reading_text_voice_msg_id": None,
+            "reading_text_total_duration": None,
         })
 
     def _set_active_uid(self, t_id, uid):
@@ -147,6 +145,10 @@ class UserContext:
                 "survey_message_id": None,
                 "survey_controls_id": None,
                 "welcome_message_id": None,
+                "reading_text_file_id": None,
+                "reading_text_confirm_msg_id": None,
+                "reading_text_voice_msg_id": None,
+                "reading_text_total_duration": None,
             }
 
     def delete_user(self, t_id):
@@ -188,7 +190,7 @@ class UserContext:
         return profile
 
     def get_user_info_field(self, t_id, field):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"} or field.startswith("phq_"):
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id", "reading_text_file_id", "reading_text_confirm_msg_id", "reading_text_voice_msg_id", "reading_text_total_duration"} or field.startswith("phq_"):
             uid = self._get_id(t_id)
             if uid is None:
                 return None
@@ -207,7 +209,7 @@ class UserContext:
         return value
 
     def set_user_info_field(self, t_id, field, value):
-        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id"} or field.startswith("phq_"):
+        if field in {"current_question_index", "vm_ids", "message_to_del", "survey_message_id", "survey_controls_id", "welcome_message_id", "reading_text_file_id", "reading_text_confirm_msg_id", "reading_text_voice_msg_id", "reading_text_total_duration"} or field.startswith("phq_"):
             uid = self._get_id(t_id)
             if uid is None:
                 return
@@ -273,56 +275,15 @@ class UserContext:
             "survey_message_id": None,
             "survey_controls_id": None,
             "welcome_message_id": None,
+            "reading_text_file_id": None,
+            "reading_text_confirm_msg_id": None,
+            "reading_text_voice_msg_id": None,
+            "reading_text_total_duration": None,
         }
         return uid
 
 context = UserContext()
 context.load_user_context()
 
-#     user_context = ContextVar("user_context", default={})
-#
-#
-#
-#     def load_user_info(user_id):
-#         if not os.path.exists(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv")):
-#             return None
-#         df = pd.read_csv(os.path.join(RESPONSES_DIR, f"{user_id}", "user_info.csv"))
-#         return df.iloc[0].to_dict()
-#
-#     def load_user_context():
-#         for root, dirs, files in os.walk(RESPONSES_DIR):
-#             for file in files:
-#                 if file == "user_info.csv":
-#                     user_id = int(os.path.basename(root))
-#                     user_info = load_user_info(user_id)
-#                     user_info["current_question_index"] = 0
-#                     user_data = user_context.get()
-#                     user_data[user_id] = user_info
-#                     user_context.set(user_data)
-#
-#     def get_user_info(user_id):
-#         user_data = user_context.get()
-#         return user_data.get(user_id)
-#
-#     def get_user_info_field(user_id, field):
-#         user_info = get_user_info(user_id)
-#         field_value = user_info.get(field)
-#         if field == "user_id" or field == "age":
-#             return int(field_value)
-#         else:
-#             return field_value
-#
-#     def set_user_info_field(user_id, field, value):
-#         user_data = user_context.get()
-#         user_info = user_data.get(user_id)
-#         user_info[field] = value
-#         user_data[user_id] = user_info
-#         user_context.set(user_data)
-#
-#     def add_new_user(user_id):
-#         user_data = user_context.get()
-#         user_data[user_id] = {"user_id": user_id,"gender": None,"age": None,"language": None,"current_question_index": 0}
-#         user_context.set(user_data)
-#
-# load_user_context()
-#
+# Re-export get_survey_progress and get_first_unanswered_question from db module for convenience
+__all__ = ['context', 'get_translation', 'get_user_profile', 'get_survey_progress', 'get_first_unanswered_question']

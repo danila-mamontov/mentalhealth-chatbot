@@ -92,20 +92,3 @@ def register_handlers(bot: telebot.TeleBot):
             t_id, f"VOICE MAIN QUESTION {current_question}", f"answer id {file_unique_id}"
         )
 
-        # if audio_duration < 5:
-        #     bot.send_message(message.chat.id, "⚠️ Голосовое сообщение слишком короткое!")
-        # else:
-        #     timestamp = message.date
-        #     current_question = context.get_user_info_field(t_id, "current_question_index")
-        #
-        #     filename = f"{t_id}_{timestamp}_{current_question}.ogg"
-        #     file_path = os.path.join(RESPONSES_DIR, f"{t_id}", "audio", filename)
-        #     with open(file_path, 'wb') as f:
-        #         downloaded_file = bot.download_file(file_info.file_path)
-        #         f.write(downloaded_file)
-        #     pd.DataFrame({'t_id': [t_id],'timestamp': [timestamp], 'duration': [audio_duration]}).to_csv("stats.csv", mode='a', header=False, index=False)
-        #
-        #
-        #     context.set_user_info_field(t_id, "current_question_index", current_question + 1)
-        #     logger.log_event(t_id, f"VOICE WBMMS QUESTION {current_question}", f"answer {filename}")
-        #     ask_next_main_question(bot, t_id)

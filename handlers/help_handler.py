@@ -7,4 +7,3 @@ def register_handlers(bot):
     def handle_help(message):
         t_id = message.chat.id
         bot.send_message(t_id, get_translation(t_id, "help_msg"), parse_mode="HTML")
-        print("HELP from", message.chat.id, "text=", repr(message.text), "date=", message.date)

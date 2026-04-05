@@ -409,3 +409,112 @@ def delete_user_records(user_id: int) -> None:
     c.execute("DELETE FROM logs WHERE user_id= ?", (user_id,))
     conn.commit()
     update_stats()
+
+
+def get_survey_progress(user_id: int) -> dict:
+    """Get survey progress for a user.
+
+    Returns dict with keys:
+    - 'phq_completed': bool - True if PHQ9 survey is completed
+    - 'main_survey_completed': bool - True if all main survey questions are answered
+    - 'depressive_answered': bool - True if depressive question is answered
+    - 'treatment_answered': bool - True if treatment question is answered
+    - 'reading_text_completed': bool - True if reading text is completed
+    - 'next_stage': str - name of the next incomplete stage
+    """
+    conn = get_connection()
+    c = conn.cursor()
+
+    # Check if user exists in database
+    user_row = c.execute("SELECT * FROM user_profile WHERE id=?", (user_id,)).fetchone()
+    if not user_row:
+        return {
+            'phq_completed': False,
+            'main_survey_completed': False,
+            'depressive_answered': False,
+            'treatment_answered': False,
+            'reading_text_completed': False,
+            'next_stage': 'phq9'
+        }
+
+    user_dict = dict(user_row)
+
+    # Check PHQ9 completion
+    phq_row = c.execute("SELECT sum FROM phq_answers WHERE user_id=?", (user_id,)).fetchone()
+    phq_completed = phq_row is not None
+
+    # Check main survey completion - must have answers for ALL 14 questions
+    answered_questions = c.execute(
+        "SELECT DISTINCT question_id FROM main_voice WHERE user_id=? AND question_id < 14",
+        (user_id,)
+    ).fetchall()
+    answered_ids = {row['question_id'] for row in answered_questions}
+    main_survey_completed = len(answered_ids) == 14
+
+    # Check depressive question
+    depressive_answered = user_dict.get('depressive') is not None
+
+    # Check treatment question
+    treatment_answered = user_dict.get('treatment') is not None
+
+    # Check reading text completion (different from main survey - it's a text reading task)
+    # We differentiate by checking if there are any records AND if treatment/depressive are answered
+    reading_text_completed = False
+    if depressive_answered and treatment_answered:
+        # If we have both depressive and treatment answered, and we have audio, it's reading text
+        reading_row = c.execute(
+            "SELECT COUNT(*) as cnt FROM main_voice WHERE user_id=? AND question_id >= 14",
+            (user_id,)
+        ).fetchone()
+        reading_text_completed = reading_row and reading_row['cnt'] > 0
+
+    # Determine next stage
+    next_stage = None
+    if not phq_completed:
+        next_stage = 'phq9'
+    elif not main_survey_completed:
+        next_stage = 'main_survey'
+    elif not depressive_answered:
+        next_stage = 'depressive'
+    elif not treatment_answered:
+        next_stage = 'treatment'
+    elif not reading_text_completed:
+        next_stage = 'reading_text'
+    else:
+        next_stage = 'final_menu'
+
+    return {
+        'phq_completed': phq_completed,
+        'main_survey_completed': main_survey_completed,
+        'depressive_answered': depressive_answered,
+        'treatment_answered': treatment_answered,
+        'reading_text_completed': reading_text_completed,
+        'next_stage': next_stage
+    }
+
+
+def get_first_unanswered_question(user_id: int) -> int:
+    """Get the index of the first main survey question without voice answers.
+
+    Returns 0 if no answers yet, otherwise returns the index of first question without answer.
+    """
+    conn = get_connection()
+    c = conn.cursor()
+
+    # Get all question IDs that have voice answers for this user
+    answered_questions = c.execute(
+        "SELECT DISTINCT question_id FROM main_voice WHERE user_id=?",
+        (user_id,)
+    ).fetchall()
+
+    answered_ids = {row['question_id'] for row in answered_questions}
+
+    # Find first question without answer (start from 0)
+    for i in range(14):  # Assuming 14 questions in main survey
+        if i not in answered_ids:
+            return i
+
+    # All questions answered
+    return 14
+
+

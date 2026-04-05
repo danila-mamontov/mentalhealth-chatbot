@@ -47,16 +47,11 @@
     "main_menu": {
       "text_key": "main_menu_msg",
       "state": "SurveyStates.main_menu",
-      "next": { "phq9": "phq9_survey", "wbmms": "wbmms_survey", "help": "help" }
+      "next": { "phq9": "phq9_survey", "help": "help" }
     },
     "phq9_survey": {
       "text_key": "intro_phq9_msg",
       "state": "SurveyStates.phq9",
-      "next": { "default": "main_menu" }
-    },
-    "wbmms_survey": {
-      "text_key": "intro_main_msg",
-      "state": "SurveyStates.wbmms",
       "next": { "default": "main_menu" }
     },
     "treatment": {
